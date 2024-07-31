@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package classer.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "class/api/classer/v1;v1";
+
+service Classer {
+    // Sends a greeting
+    rpc GetClass (GetClassRequest) returns (GetClassResponse) {
+        option (google.api.http) = {
+            get: "/class/getall/{week,stu_id,semester,year}"
+        };
+    }
+    rpc GetOneClass (GetOneClassRequest) returns (GetOneClassResponse) {
+        option (google.api.http) = {
+            get: "/class/getone/{stu_id,day,dur,semester,year}"
+        };
+    }
+    rpc AddClass(AddClassRequest) returns (AddClassResponse) {
+        option (google.api.http) = {
+            post: "/class/add"
+            body: "*"
+        };
+    }
+    rpc DeleteClass(DeleteClassRequest) returns (DeleteClassResponse) {
+        option (google.api.http) = {
+            delete: "/class/delete/{id}"
+        };
+    }
+
+}
+
+message GetClassRequest {
+    int64 week=1;   //周几的课表
+    string stu_id=2;    //学号
+    string semester=3; // 学期
+    string year=4; //学年
+}
+message GetClassResponse {
+    repeated Class classes=1; //课表
+}
+
+message GetOneClassRequest {
+    string stu_id=1;    //学号
+    int64 day=2;    //星期几
+    string dur=3;   //第几节
+    string semester=4; // 学期
+    string year=5; //学年
+}
+message GetOneClassResponse {
+    repeated ClassInfo infos =1; //课程信息(可能有多个(加课后导致的))
+}
+
+message AddClassRequest {
+    string stu_id=1;//学号
+    string name=2;//课程名称
+    string dur_class=3;//第几节
+    string where=4;//地点
+    string teacher=5;//教师
+    int64  weeks=6; //哪些周
+    string semester=7; // 学期
+    string year=8; //学年
+    int64 day=9;//星期几
+    double credit=10; //学分
+}
+
+message AddClassResponse {
+    string msg=1;
+}
+
+message DeleteClassRequest {
+    string id=1; //课程标识
+}
+message DeleteClassResponse {
+    string msg=1;
+}
+message  ClassInfo {
+
+    int64 day=1; //星期几
+    string teacher=2;   //任课教师
+    string where=3; //上课地点
+    string class_when=4;//上课是第几节（如1-2,3,4）
+    string week_duration=5; //上课的周数
+    string classname=6;//课程名称
+    double credit=7; //学分
+    bool add=8;//是否为手动添加
+    int64 weeks=9; //哪些周
+    string stu_id =10; //学号
+    string semester=11; //学期
+    string year=12; //学年
+    string id=13;//课程唯一标识
+}
+message Class {
+    ClassInfo info =1;
+    bool thisweek=2; //是否是本周
+}
+
