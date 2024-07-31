@@ -12,6 +12,7 @@ import (
 	"class/internal/data"
 	log2 "class/internal/log"
 	"class/internal/pkg/crawler"
+	"class/internal/registry"
 	"class/internal/server"
 	"class/internal/service"
 	"github.com/go-kratos/kratos/v2"
@@ -25,7 +26,7 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Registry, logger log.Logger) (*kratos.App, func(), error) {
 	db := data.NewDB(confData)
 	database := data.NewGormDatabase(db)
 	client := data.NewRedisDB(confData)
@@ -41,7 +42,8 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*
 	classerService := service.NewClasserService(classUsercase)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
 	httpServer := server.NewHTTPServer(confServer, classerService, logger)
-	app := newApp(logger, grpcServer, httpServer)
+	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
+	app := newApp(logger, grpcServer, httpServer, etcdRegistry)
 	return app, func() {
 		cleanup()
 	}, nil
