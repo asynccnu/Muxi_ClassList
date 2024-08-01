@@ -30,7 +30,7 @@ func NewClassCrawler(logger log.Logger) biz.ClassCrawler {
 }
 
 // GetClassInfos 获取课程信息
-func (c *Crawler) GetClassInfos(ctx context.Context, client *http.Client, xnm, xqm string) ([]*biz.ClassInfo, error) {
+func (c *Crawler) GetClassInfos(ctx context.Context, client *http.Client, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
 
 	var reply CrawReply
 	tmp1 := GetXNM(xnm)
@@ -40,7 +40,7 @@ func (c *Crawler) GetClassInfos(ctx context.Context, client *http.Client, xnm, x
 	req, err := http.NewRequest("POST", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N2151", data)
 	if err != nil {
 		c.log.Errorf("pkg/crawler/crawler.go/GetClassInfos: Error creating request:%v \n", err)
-		return nil, errcode.ErrCrawler
+		return nil, nil, errcode.ErrCrawler
 	}
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
@@ -60,28 +60,31 @@ func (c *Crawler) GetClassInfos(ctx context.Context, client *http.Client, xnm, x
 	resp, err := client.Do(req)
 	if err != nil {
 		c.log.Errorf("pkg/crawler/crawler.go/GetClassInfos: client.Do(req) failed: %v\n", err)
-		return nil, errcode.ErrCrawler
+		return nil, nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
 		c.log.Errorf("pkg/crawler/crawler.go/GetClassInfos: json.NewDecoder(resp.Body).Decode(&reply):%v\n", err)
-		return nil, errcode.ErrCrawler
+		return nil, nil, errcode.ErrCrawler
 	}
-	infos, err := ToClassInfo(reply, xnm, xqm)
+	infos, Scs, err := ToClassInfo(reply, xnm, xqm)
 	if err != nil {
 		c.log.Errorf("pkg/crawler/crawler.go/GetClassInfos: ToClassInfo(reply, xnm, xqm):%v\n", err)
-		return nil, errcode.ErrCrawler
+		return nil, nil, errcode.ErrCrawler
 	}
-	return infos, nil
+	return infos, Scs, nil
 }
-func ToClassInfo(reply CrawReply, xnm, xqm string) ([]*biz.ClassInfo, error) {
+func ToClassInfo(reply CrawReply, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
 	var infos = make([]*biz.ClassInfo, 0)
+	var Scs = make([]*biz.StudentCourse, 0)
 	for _, v := range reply.KbList {
+		//课程信息
 		var info = &biz.ClassInfo{}
-		//info.ClassID = v.Kch                          //课程ID
-		info.StuID = reply.Xsxx.Xh                    //学号
+		//var Sc = &biz.StudentCourse{}
+		info.ClassId = v.Kch //课程编号
+		//info.StuID = reply.Xsxx.Xh                    //学号
 		info.Day, _ = strconv.ParseInt(v.Xqj, 10, 64) //星期几
 		info.Teacher = v.Xm                           //教师姓名
 		info.Where = v.Cdmc                           //上课地点
@@ -89,24 +92,32 @@ func ToClassInfo(reply CrawReply, xnm, xqm string) ([]*biz.ClassInfo, error) {
 		info.WeekDuration = v.Zcd                     //上课的周数
 		info.Classname = v.Kcmc                       //课程名称
 		info.Credit, _ = strconv.ParseFloat(v.Xf, 64) //学分
-		info.IsManuallyAdded = false                  //是否为手动添加
 		info.Weeks = 0
 		info.Semester = xqm //学期
 		info.Year = xnm     //学年
-		info.UpdateID()     //更新ID
-		// 8周,11-15周(单)
+		info.UpdateID()     //课程ID
 		//添加周数
 		weeks, err := ParseWeeks(v.Zcd)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-
 		for _, week := range weeks {
 			info.AddWeek(week)
 		}
+		//-----------------------------------------------------
+		//学生与课程的映射关系
+		Sc := &biz.StudentCourse{
+			StuID:           reply.Xsxx.Xh,
+			ClaID:           info.ID,
+			Year:            xnm,
+			Semester:        xqm,
+			IsManuallyAdded: false,
+		}
+		Sc.UpdateID()               //更新ID
 		infos = append(infos, info) //添加课程
+		Scs = append(Scs, Sc)       //添加"学生与课程的映射关系"
 	}
-	return infos, nil
+	return infos, Scs, nil
 }
 func GetXNM(s string) string {
 	// 定义正则表达式模式

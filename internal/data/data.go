@@ -68,7 +68,7 @@ func NewDB(c *conf.Data) *gorm.DB {
 	if err != nil {
 		panic("connect mysql failed")
 	}
-	if err := db.AutoMigrate(); err != nil {
+	if err := db.AutoMigrate(&biz.ClassInfo{}, &biz.StudentCourse{}); err != nil {
 		panic(err)
 	}
 	return db

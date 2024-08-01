@@ -9,7 +9,7 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"gorm.io/gorm"
 	"strings"
-	"time"
+	"sync"
 )
 
 type classrepo struct {
@@ -23,44 +23,104 @@ func NewClassRepo(data *Data, log log2.LogerPrinter) biz.ClassRepo {
 		log:  log,
 	}
 }
-func (c classrepo) SaveClassInfo(ctx context.Context, clas []*biz.ClassInfo) error {
-	tx := c.Data.db.Table(biz.ClassInfoTableName).WithContext(ctx).Begin()
-	for _, cl := range clas {
+func (c classrepo) SaveClassInfo(ctx context.Context, clas []*biz.ClassInfo, Scs []*biz.StudentCourse) error {
+	var err1, err2 error
+	tx := c.Data.db.WithContext(ctx).Begin() // 统一事务处理
 
-		err := tx.Create(&cl).Error()
-		if err != nil {
-			c.log.FuncError(tx.Create, err)
-			tx.Rollback()
-			return errcode.ErrCourseSave
-		}
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
 
-		//缓存
-		err = c.Data.cache.Set(cl.GetKey(), cl, 24*7*time.Hour)
-		if err != nil {
-			c.log.FuncError(c.Data.cache.Set, err)
-		}
-	}
-
-	return tx.Commit()
-}
-
-func (c classrepo) AddClassInfo(ctx context.Context, cla *biz.ClassInfo) error {
-	db := c.Data.db.Table(biz.ClassInfoTableName).WithContext(ctx)
-	err := db.Create(cla).Error()
-	if err != nil {
-		c.log.FuncError(db.Create, err)
-		return errcode.ErrClassUpdate
-	}
+	// 处理 ClassInfo
 	go func() {
-		err = c.Data.cache.Set(cla.GetKey(), cla, 24*7*time.Hour)
-		if err != nil {
-			c.log.FuncError(c.Data.cache.Set, err)
+		defer wg.Done()
+		for _, cl := range clas {
+			if err := tx.Table(biz.ClassInfoTableName).Create(&cl).Error(); err != nil {
+				c.log.FuncError(tx.Create, err)
+				err1 = err // 记录错误
+				return
+			}
+			// TODO: 缓存
 		}
 	}()
+
+	// 处理 StudentCourse
+	go func() {
+		defer wg.Done()
+		for _, sc := range Scs {
+			if err := tx.Table(biz.StudentCourseTableName).Create(&sc).Error(); err != nil {
+				c.log.FuncError(tx.Create, err)
+				err2 = err // 记录错误
+				return
+			}
+			// TODO: 缓存
+		}
+	}()
+
+	wg.Wait()
+
+	// 在 Wait 之后检查错误，如果存在任何一个错误则回滚
+	if err1 != nil || err2 != nil {
+		tx.Rollback()
+		return errcode.ErrCourseSave
+	}
+
+	// 如果没有错误，提交事务
+	if err := tx.Commit(); err != nil {
+		return errcode.ErrCourseSave
+	}
+
+	return nil
+}
+
+func (c classrepo) AddClassInfo(ctx context.Context, cla *biz.ClassInfo, sc *biz.StudentCourse) error {
+	var err1, err2 error
+	tx := c.Data.db.WithContext(ctx).Begin() // 统一事务处理
+
+	// 使用 sync.WaitGroup 等待两个并发操作完成
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// 处理 ClassInfo
+	go func() {
+		defer wg.Done()
+		if err := tx.Table(biz.ClassInfoTableName).Create(cla).Error(); err != nil {
+			c.log.FuncError(tx.Create, err)
+			err1 = err // 记录错误
+			return
+		}
+		// TODO: 缓存
+	}()
+
+	// 处理 StudentCourse
+	go func() {
+		defer wg.Done()
+		if err := tx.Table(biz.StudentCourseTableName).Create(sc).Error(); err != nil {
+			c.log.FuncError(tx.Create, err)
+			err2 = err // 记录错误
+			return
+		}
+		// TODO: 缓存
+	}()
+
+	// 等待所有 goroutine 完成
+	wg.Wait()
+
+	// 检查错误并进行回滚
+	if err1 != nil || err2 != nil {
+		tx.Rollback()
+		return errcode.ErrClassUpdate
+	}
+
+	// 提交事务
+	if err := tx.Commit(); err != nil {
+		return errcode.ErrClassUpdate
+	}
+
 	return nil
 }
 
 func (c classrepo) GetSpecificClassInfo(ctx context.Context, id string, xnm, xqm string, day int64, dur string) ([]*biz.ClassInfo, error) {
+	//TODO:重构
 	var classes = make([]*biz.ClassInfo, 0)
 	var keys []string
 	cacheGet := true
@@ -97,6 +157,8 @@ func (c classrepo) GetSpecificClassInfo(ctx context.Context, id string, xnm, xqm
 	return classes, nil
 }
 func (c classrepo) GetClasses(ctx context.Context, id string, xnm, xqm string) ([]*biz.ClassInfo, error) {
+	//TODO:重构
+
 	db := c.Data.db.Table(biz.ClassInfoTableName).WithContext(ctx)
 	var classes = make([]*biz.ClassInfo, 0)
 	cacheGet := true

@@ -10,8 +10,8 @@ import (
 
 // ClassRepo 数据持久化接口
 type ClassRepo interface {
-	SaveClassInfo(ctx context.Context, cla []*ClassInfo) error
-	AddClassInfo(ctx context.Context, cla *ClassInfo) error
+	SaveClassInfo(ctx context.Context, clas []*ClassInfo, Scs []*StudentCourse) error
+	AddClassInfo(ctx context.Context, cla *ClassInfo, sc *StudentCourse) error
 	GetSpecificClassInfo(ctx context.Context, id string, xnm, xqm string, day int64, dur string) ([]*ClassInfo, error)
 	GetClasses(ctx context.Context, id string, xnm, xqm string) ([]*ClassInfo, error)
 	DeleteClass(ctx context.Context, id string) error
@@ -19,7 +19,7 @@ type ClassRepo interface {
 
 // ClassCrawler 课程爬虫接口
 type ClassCrawler interface {
-	GetClassInfos(ctx context.Context, client *http.Client, xnm, xqm string) ([]*ClassInfo, error)
+	GetClassInfos(ctx context.Context, client *http.Client, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
 }
 
 type ClassUsercase struct {
