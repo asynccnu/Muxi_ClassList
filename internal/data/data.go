@@ -41,6 +41,8 @@ type Cache interface {
 	ScanKeys(pattern string) ([]string, error)
 	GetClassInfo(key string) (*biz.ClassInfo, error)
 	DeleteKey(key string) error
+	AddEleToZset(stu_id string, cla_id string, day, st, end int64) error
+	GetClassIDFromZset(stuId string) ([]string, error)
 }
 
 // NewData .

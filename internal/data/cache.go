@@ -24,6 +24,17 @@ func (r *RedisCache) Set(key string, value interface{}, expiration time.Duration
 	}
 	return r.client.Set(key, val, expiration).Err()
 }
+func (r *RedisCache) AddEleToZset(stuId string, claId string, day, st, end int64) error {
+	score := float64(day)*100 + float64(st+end)/2.0
+	err := r.client.ZAdd(GenerateZsetName(stuId), redis.Z{
+		Member: claId,
+		Score:  score,
+	}).Err()
+	return err
+}
+func (r *RedisCache) GetClassIDFromZset(stuId string) ([]string, error) {
+	return r.client.ZRange(GenerateZsetName(stuId), 0, -1).Result()
+}
 func (r *RedisCache) Scan(cursor uint64, match string, count int64) ([]string, uint64, error) {
 	return r.client.Scan(cursor, match, count).Result()
 }
@@ -59,4 +70,7 @@ func (r *RedisCache) ScanKeys(pattern string) ([]string, error) {
 func (r *RedisCache) DeleteKey(key string) error {
 	err := r.client.Del(key).Err()
 	return err
+}
+func GenerateZsetName(stu_id string) string {
+	return "stu_id:" + stu_id
 }
