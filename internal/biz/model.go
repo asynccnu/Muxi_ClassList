@@ -82,8 +82,8 @@ func (ci *ClassInfo) GetStartAndEndFromClassWhen() (int64, int64) {
 	return -1, -1
 }
 func (ci *ClassInfo) UpdateID() {
-	ci.ID = fmt.Sprintf("%s:%s:%s:%d:%s:%s:%s:%d", ci.ClassId, ci.Year, ci.Semester, ci.Day, ci.ClassWhen, ci.Teacher, ci.Where, ci.Weeks)
+	ci.ID = fmt.Sprintf("Class:%s:%s:%s:%d:%s:%s:%s:%d", ci.ClassId, ci.Year, ci.Semester, ci.Day, ci.ClassWhen, ci.Teacher, ci.Where, ci.Weeks)
 }
 func (sc *StudentCourse) UpdateID() {
-	sc.ID = fmt.Sprintf("%s:%s:%s:%s", sc.StuID, sc.ClaID, sc.Year, sc.Semester)
+	sc.ID = fmt.Sprintf("StuAndCla:%s:%s:%s:%s", sc.StuID, sc.ClaID, sc.Year, sc.Semester)
 }

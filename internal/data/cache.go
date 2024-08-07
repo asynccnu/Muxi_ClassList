@@ -3,6 +3,7 @@ package data
 import (
 	"class/internal/biz"
 	"encoding/json"
+	"fmt"
 	"github.com/go-redis/redis"
 	"time"
 )
@@ -24,16 +25,14 @@ func (r *RedisCache) Set(key string, value interface{}, expiration time.Duration
 	}
 	return r.client.Set(key, val, expiration).Err()
 }
-func (r *RedisCache) AddEleToZset(stuId string, claId string, day, st, end int64) error {
-	score := float64(day)*100 + float64(st+end)/2.0
-	err := r.client.ZAdd(GenerateZsetName(stuId), redis.Z{
-		Member: claId,
-		Score:  score,
-	}).Err()
+func (r *RedisCache) AddEleToSet(stuId string, xnm, xqm, claId string) error {
+	//score := float64(day)*100 + float64(st+end)/2.0
+	err := r.client.SAdd(GenerateSetName(stuId, xnm, xqm), claId).Err()
+	//TODO:设置过期时间
 	return err
 }
-func (r *RedisCache) GetClassIDFromZset(stuId string) ([]string, error) {
-	return r.client.ZRange(GenerateZsetName(stuId), 0, -1).Result()
+func (r *RedisCache) GetClassIDFromSet(stuId, xnm, xqm string) ([]string, error) {
+	return r.client.SMembers(GenerateSetName(stuId, xnm, xqm)).Result()
 }
 func (r *RedisCache) Scan(cursor uint64, match string, count int64) ([]string, uint64, error) {
 	return r.client.Scan(cursor, match, count).Result()
@@ -71,6 +70,6 @@ func (r *RedisCache) DeleteKey(key string) error {
 	err := r.client.Del(key).Err()
 	return err
 }
-func GenerateZsetName(stu_id string) string {
-	return "stu_id:" + stu_id
+func GenerateSetName(stuId, xnm, xqm string) string {
+	return fmt.Sprintf("StuAndCla:%s:%s:%s", stuId, xnm, xqm)
 }

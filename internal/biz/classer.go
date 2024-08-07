@@ -38,6 +38,7 @@ func NewClassUsercase(repo ClassRepo, crawler ClassCrawler, log log2.LogerPrinte
 
 func (cluc *ClassUsercase) GetClasses(ctx context.Context, id string, week int64, xnm, xqm string, client *http.Client) ([]*Class, error) {
 	var classInfos = make([]*ClassInfo, 0)
+	var Scs = make([]*StudentCourse, 0)
 	var classes = make([]*Class, 0)
 	var err error
 	classInfos, err = cluc.Repo.GetClasses(ctx, id, xnm, xqm)
@@ -45,20 +46,19 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, id string, week int64
 		//如果数据库中没有就去爬
 		if errors.Is(err, errcode.ErrClassNotFound) {
 
-			classInfos, err = cluc.Crawler.GetClassInfos(ctx, client, xnm, xqm)
+			classInfos, Scs, err = cluc.Crawler.GetClassInfos(ctx, client, xnm, xqm)
 
 			if err != nil {
 				cluc.log.FuncError(cluc.Crawler.GetClassInfos, err)
 				return nil, err
 			}
 			go func() {
-				err := cluc.Repo.SaveClassInfo(ctx, classInfos)
+				err := cluc.Repo.SaveClassInfo(ctx, classInfos, Scs)
 				if err != nil {
 					cluc.log.FuncError(cluc.Repo.SaveClassInfo, err)
 				}
 			}()
 		}
-
 		return nil, err
 	}
 
@@ -82,8 +82,16 @@ func (cluc *ClassUsercase) FindClass(ctx context.Context, id string, xnm, xqm st
 	}
 	return classInfos, nil
 }
-func (cluc *ClassUsercase) AddClass(ctx context.Context, info *ClassInfo) error {
-	err := cluc.Repo.AddClassInfo(ctx, info)
+func (cluc *ClassUsercase) AddClass(ctx context.Context, stuId string, info *ClassInfo) error {
+	sc := &StudentCourse{
+		StuID:           stuId,
+		ClaID:           info.ID,
+		Year:            info.Year,
+		Semester:        info.Semester,
+		IsManuallyAdded: true,
+	}
+	sc.UpdateID()
+	err := cluc.Repo.AddClassInfo(ctx, info, sc)
 	if err != nil {
 		cluc.log.FuncError(cluc.Repo.AddClassInfo, err)
 		return err

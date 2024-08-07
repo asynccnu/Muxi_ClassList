@@ -31,9 +31,10 @@ type Database interface {
 	Commit() error
 	Rollback()
 	Error() error
-	GetClassInfos(id, xnm, xqm string) ([]*biz.ClassInfo, error)
-	GetSpecificClassInfos(id string, xnm, xqm string, day int64, dur string) ([]*biz.ClassInfo, error)
-	DeleteClassInfo(id string) error
+	GetClassInfos(ctx context.Context, id, xnm, xqm string) ([]*biz.ClassInfo, error)
+	GetSpecificClassInfos(ctx context.Context, claId string) (*biz.ClassInfo, error)
+	DeleteClassInfo(ctx context.Context, id string) error
+	GetClassIds(ctx context.Context, stuId string) ([]string, error)
 }
 type Cache interface {
 	Set(key string, value interface{}, expiration time.Duration) error
@@ -41,8 +42,8 @@ type Cache interface {
 	ScanKeys(pattern string) ([]string, error)
 	GetClassInfo(key string) (*biz.ClassInfo, error)
 	DeleteKey(key string) error
-	AddEleToZset(stu_id string, cla_id string, day, st, end int64) error
-	GetClassIDFromZset(stuId string) ([]string, error)
+	AddEleToSet(stuId string, xnm, xqm, claId string) error
+	GetClassIDFromSet(stuId, xnm, qnm string) ([]string, error)
 }
 
 // NewData .

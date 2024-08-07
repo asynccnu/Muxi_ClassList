@@ -51,17 +51,27 @@ func (g *GormDatabase) Rollback() {
 func (g *GormDatabase) Error() error {
 	return g.err
 }
-func (g *GormDatabase) GetClassInfos(id, xnm, xqm string) ([]*biz.ClassInfo, error) {
+func (g *GormDatabase) GetClassInfos(ctx context.Context, claId, xnm, xqm string) ([]*biz.ClassInfo, error) {
 	classInfos := make([]*biz.ClassInfo, 0)
-	err := g.db.Where("stu_id = ? AND year = ? AND semester = ?", id, xnm, xqm).Find(&classInfos).Error
+	db := g.db.Table(biz.ClassInfoTableName).WithContext(ctx)
+	err := db.Where("class_id = ? AND year = ? AND semester = ?", claId, xnm, xqm).Find(&classInfos).Error
 	return classInfos, err
 }
-func (g *GormDatabase) GetSpecificClassInfos(id string, xnm, xqm string, day int64, dur string) ([]*biz.ClassInfo, error) {
-	classInfos := make([]*biz.ClassInfo, 0)
-	err := g.db.Where("stu_id = ? AND year = ?  AND semester = ? AND day = ? AND class_when = ? ", id, xnm, xqm, day, dur).Find(&classInfos).Error
-	return classInfos, err
+func (g *GormDatabase) GetSpecificClassInfos(ctx context.Context, Id string) (*biz.ClassInfo, error) {
+	classInfo := &biz.ClassInfo{}
+	db := g.db.Table(biz.ClassInfoTableName).WithContext(ctx)
+	err := db.Where("id = ?", Id).First(&classInfo).Error
+	return classInfo, err
 }
-func (g *GormDatabase) DeleteClassInfo(id string) error {
+func (g *GormDatabase) DeleteClassInfo(ctx context.Context, id string) error {
 	err := g.db.Where("id =?", id).Delete(&biz.ClassInfo{}).Error
 	return err
+}
+func (g *GormDatabase) GetClassIds(ctx context.Context, stuId string) ([]string, error) {
+	var classIds []string
+	db := g.db.Table(biz.StudentCourseTableName).WithContext(ctx)
+	err := db.Where("stu_id = ?", stuId).
+		Select("cla_id").
+		Pluck("cla_id", &classIds).Error
+	return classIds, err
 }
