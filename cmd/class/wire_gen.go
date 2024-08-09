@@ -10,7 +10,7 @@ import (
 	"class/internal/biz"
 	"class/internal/conf"
 	"class/internal/data"
-	log2 "class/internal/log"
+	"class/internal/logPrinter"
 	"class/internal/pkg/crawler"
 	"class/internal/registry"
 	"class/internal/server"
@@ -27,16 +27,17 @@ import (
 
 // wireApp init kratos application.
 func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Registry, logger log.Logger) (*kratos.App, func(), error) {
-	db := data.NewDB(confData)
-	database := data.NewGormDatabase(db)
+	logerPrinter := logPrinter.NewLogger(logger)
+	classInfoDBRepo := data.NewClassInfoDBRepo(logerPrinter)
 	client := data.NewRedisDB(confData)
-	cache := data.NewRedisCache(client)
-	dataData, cleanup, err := data.NewData(database, cache, logger)
-	if err != nil {
-		return nil, nil, err
-	}
-	logerPrinter := log2.NewLogger(logger)
-	classRepo := data.NewClassRepo(dataData, logerPrinter)
+	classInfoCacheRepo := data.NewClassInfoCacheRepo(client, logerPrinter)
+	classInfoRepo := biz.NewClassInfoRepo(classInfoDBRepo, classInfoCacheRepo)
+	txController := data.NewTxController()
+	db := data.NewDB(confData)
+	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(logerPrinter)
+	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(client, logerPrinter)
+	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
+	classRepo := biz.NewClassRepo(classInfoRepo, txController, db, studentAndCourseRepo, logerPrinter)
 	classCrawler := crawler.NewClassCrawler(logger)
 	classUsercase := biz.NewClassUsercase(classRepo, classCrawler, logerPrinter)
 	classerService := service.NewClasserService(classUsercase)
@@ -45,6 +46,5 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
 	app := newApp(logger, grpcServer, httpServer, etcdRegistry)
 	return app, func() {
-		cleanup()
 	}, nil
 }

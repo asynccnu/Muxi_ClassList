@@ -9,7 +9,7 @@ import (
 	"class/internal/biz"
 	"class/internal/conf"
 	"class/internal/data"
-	log2 "class/internal/log"
+	log2 "class/internal/logPrinter"
 	"class/internal/pkg"
 	"class/internal/registry"
 	"class/internal/server"

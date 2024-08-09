@@ -3,8 +3,6 @@ package data
 import (
 	"class/internal/biz"
 	"class/internal/conf"
-	"context"
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis"
 	"github.com/google/wire"
 	"gorm.io/driver/mysql"
@@ -15,47 +13,21 @@ import (
 	"time"
 )
 
+const (
+	Expiration = 7 * 24 * time.Hour
+)
+
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewClassRepo, NewDB, NewRedisDB, NewGormDatabase, NewRedisCache)
+var ProviderSet = wire.NewSet(
+	NewDB,
+	NewRedisDB,
+	NewStudentAndCourseDBRepo,
+	NewStudentAndCourseCacheRepo,
+	NewClassInfoDBRepo,
+	NewClassInfoCacheRepo,
+	NewTxController)
 
 // Data .
-type Data struct {
-	db    Database
-	cache Cache
-}
-type Database interface {
-	Begin() Database
-	Create(value interface{}) Database
-	WithContext(ctx context.Context) Database
-	Table(name string) Database
-	Commit() error
-	Rollback()
-	Error() error
-	GetClassInfos(ctx context.Context, id, xnm, xqm string) ([]*biz.ClassInfo, error)
-	GetSpecificClassInfos(ctx context.Context, claId string) (*biz.ClassInfo, error)
-	DeleteClassInfo(ctx context.Context, id string) error
-	GetClassIds(ctx context.Context, stuId string) ([]string, error)
-}
-type Cache interface {
-	Set(key string, value interface{}, expiration time.Duration) error
-	Scan(cursor uint64, match string, count int64) ([]string, uint64, error)
-	ScanKeys(pattern string) ([]string, error)
-	GetClassInfo(key string) (*biz.ClassInfo, error)
-	DeleteKey(key string) error
-	AddEleToSet(stuId string, xnm, xqm, claId string) error
-	GetClassIDFromSet(stuId, xnm, qnm string) ([]string, error)
-}
-
-// NewData .
-func NewData(db Database, cache Cache, logger log.Logger) (*Data, func(), error) {
-	cleanup := func() {
-		log.NewHelper(logger).Info("closing the data resources")
-	}
-	return &Data{
-		db:    db,
-		cache: cache,
-	}, cleanup, nil
-}
 
 // NewDB 连接mysql数据库
 func NewDB(c *conf.Data) *gorm.DB {

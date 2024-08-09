@@ -1,4 +1,4 @@
-package log
+package logPrinter
 
 import (
 	"github.com/go-kratos/kratos/v2/log"

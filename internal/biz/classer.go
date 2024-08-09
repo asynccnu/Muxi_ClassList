@@ -2,48 +2,97 @@ package biz
 
 import (
 	"class/internal/errcode"
-	log2 "class/internal/log"
+	log2 "class/internal/logPrinter"
 	"context"
 	"errors"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
-// ClassRepo 数据持久化接口
-type ClassRepo interface {
-	SaveClassInfo(ctx context.Context, clas []*ClassInfo, Scs []*StudentCourse) error
-	AddClassInfo(ctx context.Context, cla *ClassInfo, sc *StudentCourse) error
-	GetSpecificClassInfo(ctx context.Context, id string, xnm, xqm string, day int64, dur string) ([]*ClassInfo, error)
-	GetClasses(ctx context.Context, id string, xnm, xqm string) ([]*ClassInfo, error)
-	DeleteClass(ctx context.Context, id string) error
+type TxController interface {
+	Begin(ctx context.Context, db *gorm.DB) *gorm.DB
+	RollBack(ctx context.Context, tx *gorm.DB)
+	Commit(ctx context.Context, tx *gorm.DB) error
+}
+type ClassInfoDBRepo interface {
+	SaveClassInfosToDB(ctx context.Context, tx *gorm.DB, classInfo []*ClassInfo) error
+	AddClassInfoToDB(ctx context.Context, tx *gorm.DB, classInfo *ClassInfo) error
+	GetClassInfoFromDB(ctx context.Context, db *gorm.DB, ID string) (*ClassInfo, error)
+	DeleteClassInfoInDB(ctx context.Context, tx *gorm.DB, ID string) error
+	UpdateClassInfoInDB(ctx context.Context, tx *gorm.DB, classInfo *ClassInfo) error
+}
+type ClassInfoCacheRepo interface {
+	SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*ClassInfo) error
+	AddClassInfoToCache(ctx context.Context, key string, classInfo *ClassInfo) error
+	GetClassesFromCache(ctx context.Context, key string) (*ClassInfo, error)
+	DeleteClassInfoFromCache(ctx context.Context, key string) error
+	UpdateClassInfoInCache(ctx context.Context, key string, classInfo *ClassInfo) error
+}
+type StudentAndCourseDBRepo interface {
+	SaveStudentAndCourseToDB(ctx context.Context, tx *gorm.DB, sc *StudentCourse) error
+	SaveManyStudentAndCourseToDB(ctx context.Context, tx *gorm.DB, scs []*StudentCourse) error
+	GetClassIDsFromSCInDB(ctx context.Context, db *gorm.DB, stuId, xnm, xqm string) ([]string, error)
+	DeleteStudentAndCourseInDB(ctx context.Context, tx *gorm.DB, ID string) error
+}
+type StudentAndCourseCacheRepo interface {
+	SaveManyStudentAndCourseToCache(ctx context.Context, key string, classIds []string) error
+	AddStudentAndCourseToCache(ctx context.Context, key string, ClassId string) error
+	GetClassIdsFromCache(ctx context.Context, key string) ([]string, error)
+	DeleteStudentAndCourseFromCache(ctx context.Context, key string, ClassId string) error
 }
 
 // ClassCrawler 课程爬虫接口
 type ClassCrawler interface {
 	GetClassInfos(ctx context.Context, client *http.Client, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
 }
-
-type ClassUsercase struct {
-	Repo    ClassRepo
-	Crawler ClassCrawler
-	log     log2.LogerPrinter
+type ClassInfoRepo struct {
+	DB    ClassInfoDBRepo
+	Cache ClassInfoCacheRepo
+}
+type StudentAndCourseRepo struct {
+	DB    StudentAndCourseDBRepo
+	Cache StudentAndCourseCacheRepo
 }
 
-func NewClassUsercase(repo ClassRepo, crawler ClassCrawler, log log2.LogerPrinter) *ClassUsercase {
-	return &ClassUsercase{
-		Repo:    repo,
-		Crawler: crawler,
-		log:     log,
+func NewClassInfoRepo(DB ClassInfoDBRepo, Cache ClassInfoCacheRepo) *ClassInfoRepo {
+	return &ClassInfoRepo{
+		DB:    DB,
+		Cache: Cache,
+	}
+}
+func NewStudentAndCourseRepo(DB StudentAndCourseDBRepo, Cache StudentAndCourseCacheRepo) *StudentAndCourseRepo {
+	return &StudentAndCourseRepo{
+		DB:    DB,
+		Cache: Cache,
 	}
 }
 
-func (cluc *ClassUsercase) GetClasses(ctx context.Context, id string, week int64, xnm, xqm string, client *http.Client) ([]*Class, error) {
-	var classInfos = make([]*ClassInfo, 0)
+type ClassUsercase struct {
+	ClassRepo *ClassRepo
+	Crawler   ClassCrawler
+	log       log2.LogerPrinter
+}
+
+func NewClassUsercase(classRepo *ClassRepo, crawler ClassCrawler, log log2.LogerPrinter) *ClassUsercase {
+	return &ClassUsercase{
+		ClassRepo: classRepo,
+		Crawler:   crawler,
+		log:       log,
+	}
+}
+
+
+func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, client *http.Client) ([]*Class, error) {
+	//var classInfos = make([]*ClassInfo, 0)
 	var Scs = make([]*StudentCourse, 0)
 	var classes = make([]*Class, 0)
 	var err error
-	classInfos, err = cluc.Repo.GetClasses(ctx, id, xnm, xqm)
+
+
+	classInfos, err := cluc.ClassRepo.GetAllClasses(ctx, StuId, xnm, xqm)
 	if err != nil {
-		//如果数据库中没有就去爬
+		
 		if errors.Is(err, errcode.ErrClassNotFound) {
 
 			classInfos, Scs, err = cluc.Crawler.GetClassInfos(ctx, client, xnm, xqm)
@@ -52,15 +101,18 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, id string, week int64
 				cluc.log.FuncError(cluc.Crawler.GetClassInfos, err)
 				return nil, err
 			}
+
+			
 			go func() {
-				err := cluc.Repo.SaveClassInfo(ctx, classInfos, Scs)
+				err := cluc.ClassRepo.SaveClasses(ctx, StuId, xnm, xqm, classInfos, Scs)
 				if err != nil {
-					cluc.log.FuncError(cluc.Repo.SaveClassInfo, err)
+					cluc.log.FuncError(cluc.ClassRepo.SaveClasses, err)
 				}
 			}()
 		}
 		return nil, err
 	}
+
 
 	for _, classInfo := range classInfos {
 		thisWeek := classInfo.SearchWeek(week)
@@ -73,11 +125,11 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, id string, week int64
 
 	return classes, nil
 }
-func (cluc *ClassUsercase) FindClass(ctx context.Context, id string, xnm, xqm string, day int64, dur string) ([]*ClassInfo, error) {
+func (cluc *ClassUsercase) FindClass(ctx context.Context, stuId string, xnm, xqm string, day int64, dur string) ([]*ClassInfo, error) {
 
-	classInfos, err := cluc.Repo.GetSpecificClassInfo(ctx, id, xnm, xqm, day, dur)
+	classInfos, err := cluc.ClassRepo.GetSpecificClassInfo(ctx, stuId, xnm, xqm, day, dur)
 	if err != nil {
-		cluc.log.FuncError(cluc.Repo.GetSpecificClassInfo, err)
+		cluc.log.FuncError(cluc.ClassRepo.GetSpecificClassInfo, err)
 		return nil, err
 	}
 	return classInfos, nil
@@ -91,17 +143,17 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuId string, info *Cla
 		IsManuallyAdded: true,
 	}
 	sc.UpdateID()
-	err := cluc.Repo.AddClassInfo(ctx, info, sc)
+	err := cluc.ClassRepo.AddClass(ctx, info, sc, info.Year, info.Semester)
 	if err != nil {
-		cluc.log.FuncError(cluc.Repo.AddClassInfo, err)
+		cluc.log.FuncError(cluc.ClassRepo.AddClass, err)
 		return err
 	}
 	return nil
 }
-func (cluc *ClassUsercase) DeleteClass(ctx context.Context, id string) error {
-	err := cluc.Repo.DeleteClass(ctx, id)
+func (cluc *ClassUsercase) DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error {
+	err := cluc.ClassRepo.DeleteClass(ctx, classId, stuId, xnm, xqm)
 	if err != nil {
-		cluc.log.FuncError(cluc.Repo.DeleteClass, err)
+		cluc.log.FuncError(cluc.ClassRepo.DeleteClass, err)
 		return err
 	}
 	return nil

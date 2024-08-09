@@ -39,7 +39,7 @@ func (c *Crawler) GetClassInfos(ctx context.Context, client *http.Client, xnm, x
 	var data = strings.NewReader(formdata)
 	req, err := http.NewRequest("POST", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N2151", data)
 	if err != nil {
-		c.log.Errorf("pkg/crawler/crawler.go/GetClassInfos: Error creating request:%v \n", err)
+		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: Error creating request:%v \n", err)
 		return nil, nil, errcode.ErrCrawler
 	}
 	req.Header.Set("Accept", "*/*")
@@ -59,19 +59,19 @@ func (c *Crawler) GetClassInfos(ctx context.Context, client *http.Client, xnm, x
 	req.Header.Set("sec-ch-ua-platform", `"Windows"`)
 	resp, err := client.Do(req)
 	if err != nil {
-		c.log.Errorf("pkg/crawler/crawler.go/GetClassInfos: client.Do(req) failed: %v\n", err)
+		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: client.Do(req) failed: %v\n", err)
 		return nil, nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
-		c.log.Errorf("pkg/crawler/crawler.go/GetClassInfos: json.NewDecoder(resp.Body).Decode(&reply):%v\n", err)
+		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: json.NewDecoder(resp.Body).Decode(&reply):%v\n", err)
 		return nil, nil, errcode.ErrCrawler
 	}
 	infos, Scs, err := ToClassInfo(reply, xnm, xqm)
 	if err != nil {
-		c.log.Errorf("pkg/crawler/crawler.go/GetClassInfos: ToClassInfo(reply, xnm, xqm):%v\n", err)
+		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: ToClassInfo(reply, xnm, xqm):%v\n", err)
 		return nil, nil, errcode.ErrCrawler
 	}
 	return infos, Scs, nil
