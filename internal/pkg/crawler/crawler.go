@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -17,6 +16,7 @@ import (
 var mp = map[string]string{
 	"1": "3",
 	"2": "12",
+	"3": "16",
 }
 
 type Crawler struct {
@@ -83,7 +83,7 @@ func ToClassInfo(reply CrawReply, xnm, xqm string) ([]*biz.ClassInfo, []*biz.Stu
 		//课程信息
 		var info = &biz.ClassInfo{}
 		//var Sc = &biz.StudentCourse{}
-		info.ClassId = v.Kch //课程编号
+		//info.ClassId = v.Kch //课程编号
 		//info.StuID = reply.Xsxx.Xh                    //学号
 		info.Day, _ = strconv.ParseInt(v.Xqj, 10, 64) //星期几
 		info.Teacher = v.Xm                           //教师姓名
@@ -120,17 +120,17 @@ func ToClassInfo(reply CrawReply, xnm, xqm string) ([]*biz.ClassInfo, []*biz.Stu
 	return infos, Scs, nil
 }
 func GetXNM(s string) string {
-	// 定义正则表达式模式
-	re := regexp.MustCompile(`^(\d{4})-\d{4}$`)
+	// // 定义正则表达式模式
+	// re := regexp.MustCompile(`^(\d{4})-\d{4}$`)
 
-	// 查找字符串中与正则表达式模式匹配的部分
-	matches := re.FindStringSubmatch(s)
+	// // 查找字符串中与正则表达式模式匹配的部分
+	// matches := re.FindStringSubmatch(s)
 
-	// 检查是否匹配成功
-	if len(matches) > 1 {
-		return matches[1] // 第一个捕获组是我们需要的部分
-	}
-	return ""
+	// // 检查是否匹配成功
+	// if len(matches) > 1 {
+	// 	return matches[1] // 第一个捕获组是我们需要的部分
+	// }
+	return s
 }
 func GetXQM(s string) string {
 	return mp[s]

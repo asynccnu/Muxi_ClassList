@@ -22,20 +22,17 @@ const _ = http.SupportPackageIsVersion1
 const OperationClasserAddClass = "/classer.v1.Classer/AddClass"
 const OperationClasserDeleteClass = "/classer.v1.Classer/DeleteClass"
 const OperationClasserGetClass = "/classer.v1.Classer/GetClass"
-const OperationClasserGetOneClass = "/classer.v1.Classer/GetOneClass"
 
 type ClasserHTTPServer interface {
 	AddClass(context.Context, *AddClassRequest) (*AddClassResponse, error)
 	DeleteClass(context.Context, *DeleteClassRequest) (*DeleteClassResponse, error)
 	// GetClass Sends a greeting
 	GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error)
-	GetOneClass(context.Context, *GetOneClassRequest) (*GetOneClassResponse, error)
 }
 
 func RegisterClasserHTTPServer(s *http.Server, srv ClasserHTTPServer) {
 	r := s.Route("/")
 	r.GET("/class/getall/{week:,stu_id,semester,year}", _Classer_GetClass0_HTTP_Handler(srv))
-	r.GET("/class/getone/{stu_id:,day,dur,semester,year}", _Classer_GetOneClass0_HTTP_Handler(srv))
 	r.POST("/class/add", _Classer_AddClass0_HTTP_Handler(srv))
 	r.DELETE("/class/delete/{id}", _Classer_DeleteClass0_HTTP_Handler(srv))
 }
@@ -58,28 +55,6 @@ func _Classer_GetClass0_HTTP_Handler(srv ClasserHTTPServer) func(ctx http.Contex
 			return err
 		}
 		reply := out.(*GetClassResponse)
-		return ctx.Result(200, reply)
-	}
-}
-
-func _Classer_GetOneClass0_HTTP_Handler(srv ClasserHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in GetOneClassRequest
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, OperationClasserGetOneClass)
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.GetOneClass(ctx, req.(*GetOneClassRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*GetOneClassResponse)
 		return ctx.Result(200, reply)
 	}
 }
@@ -132,7 +107,6 @@ type ClasserHTTPClient interface {
 	AddClass(ctx context.Context, req *AddClassRequest, opts ...http.CallOption) (rsp *AddClassResponse, err error)
 	DeleteClass(ctx context.Context, req *DeleteClassRequest, opts ...http.CallOption) (rsp *DeleteClassResponse, err error)
 	GetClass(ctx context.Context, req *GetClassRequest, opts ...http.CallOption) (rsp *GetClassResponse, err error)
-	GetOneClass(ctx context.Context, req *GetOneClassRequest, opts ...http.CallOption) (rsp *GetOneClassResponse, err error)
 }
 
 type ClasserHTTPClientImpl struct {
@@ -174,19 +148,6 @@ func (c *ClasserHTTPClientImpl) GetClass(ctx context.Context, in *GetClassReques
 	pattern := "/class/getall/{week:,stu_id,semester,year}"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationClasserGetClass))
-	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (c *ClasserHTTPClientImpl) GetOneClass(ctx context.Context, in *GetOneClassRequest, opts ...http.CallOption) (*GetOneClassResponse, error) {
-	var out GetOneClassResponse
-	pattern := "/class/getone/{stu_id:,day,dur,semester,year}"
-	path := binding.EncodeURL(pattern, in, true)
-	opts = append(opts, http.Operation(OperationClasserGetOneClass))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

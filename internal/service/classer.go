@@ -5,7 +5,6 @@ import (
 	"class/internal/biz"
 	"class/internal/errcode"
 	"context"
-	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
@@ -47,54 +46,36 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 		Classes: pclasses,
 	}, nil
 }
-func (s *ClasserService) GetOneClass(ctx context.Context, req *pb.GetOneClassRequest) (*pb.GetOneClassResponse, error) {
-	pinfos := make([]*pb.ClassInfo, 0)
-	if !CheckSY(req.Semester, req.Year) {
-		return &pb.GetOneClassResponse{}, errcode.ErrParam
-	}
-	infos, err := s.Clu.FindClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetDay(), req.Dur)
-	if err != nil {
-		return &pb.GetOneClassResponse{}, err
-	}
-	for _, info := range infos {
-		pinfo := HandleClass(info)
-		pinfos = append(pinfos, pinfo)
-	}
-	return &pb.GetOneClassResponse{
-		Infos: pinfos,
-	}, nil
-}
 func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) (*pb.AddClassResponse, error) {
 	if !CheckSY(req.Semester, req.Year) || req.GetWeeks() <= 0 {
 		return &pb.AddClassResponse{}, errcode.ErrParam
 	}
 	weekDur := FormatWeeks(ParseWeeks(req.Weeks))
 	var classInfo = &biz.ClassInfo{
-		StuID:           req.GetStuId(),
-		Day:             req.GetDay(),
-		Teacher:         req.GetTeacher(),
-		Where:           req.GetTeacher(),
-		ClassWhen:       req.GetDurClass(),
-		WeekDuration:    weekDur,
-		Classname:       req.GetName(),
-		Credit:          req.GetCredit(),
-		IsManuallyAdded: true,
-		Weeks:           req.GetWeeks(),
-		Semester:        req.GetSemester(),
-		Year:            req.GetYear(),
+		Day:          req.GetDay(),
+		Teacher:      req.GetTeacher(),
+		Where:        req.GetTeacher(),
+		ClassWhen:    req.GetDurClass(),
+		WeekDuration: weekDur,
+		Classname:    req.GetName(),
+		Credit:       req.GetCredit(),
+		Weeks:        req.GetWeeks(),
+		Semester:     req.GetSemester(),
+		Year:         req.GetYear(),
 	}
 	classInfo.UpdateID()
-	err := s.Clu.AddClass(ctx, classInfo)
+	err := s.Clu.AddClass(ctx, req.GetStuId(), classInfo)
 	if err != nil {
 		return &pb.AddClassResponse{}, err
 	}
 
 	return &pb.AddClassResponse{
+		Id:  classInfo.ID,
 		Msg: "成功添加",
 	}, nil
 }
 func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassRequest) (*pb.DeleteClassResponse, error) {
-	err := s.Clu.DeleteClass(ctx, req.GetId())
+	err := s.Clu.DeleteClass(ctx, req.GetId(), req.GetStuId(), req.GetYear(), req.GetSemester())
 	if err != nil {
 		return &pb.DeleteClassResponse{}, err
 	}
@@ -102,13 +83,12 @@ func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassReq
 		Msg: "成功删除",
 	}, nil
 }
+
 func CheckSY(semester, year string) bool {
-	var y1, y2 int
+
 	var tag1, tag2 bool
-	fmt.Sscanf(year, "%d-%d", &y1, &y2)
-	if y2 == y1+1 {
-		tag1 = true
-	} else {
+	y, err := strconv.Atoi(year)
+	if err != nil || y < 2006 {
 		tag1 = false
 	}
 	if semester == "1" || semester == "2" || semester == "3" {
@@ -128,12 +108,10 @@ func HandleClass(info *biz.ClassInfo) *pb.ClassInfo {
 		WeekDuration: info.WeekDuration,
 		Classname:    info.Classname,
 		Credit:       info.Credit,
-		Add:          info.IsManuallyAdded,
 		Weeks:        info.Weeks,
 		Id:           info.ID,
 		Semester:     info.Semester,
 		Year:         info.Year,
-		StuId:        info.StuID,
 	}
 }
 func ParseWeeks(weeks int64) []int {

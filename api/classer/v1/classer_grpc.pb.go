@@ -20,7 +20,6 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	Classer_GetClass_FullMethodName    = "/classer.v1.Classer/GetClass"
-	Classer_GetOneClass_FullMethodName = "/classer.v1.Classer/GetOneClass"
 	Classer_AddClass_FullMethodName    = "/classer.v1.Classer/AddClass"
 	Classer_DeleteClass_FullMethodName = "/classer.v1.Classer/DeleteClass"
 )
@@ -31,7 +30,6 @@ const (
 type ClasserClient interface {
 	// Sends a greeting
 	GetClass(ctx context.Context, in *GetClassRequest, opts ...grpc.CallOption) (*GetClassResponse, error)
-	GetOneClass(ctx context.Context, in *GetOneClassRequest, opts ...grpc.CallOption) (*GetOneClassResponse, error)
 	AddClass(ctx context.Context, in *AddClassRequest, opts ...grpc.CallOption) (*AddClassResponse, error)
 	DeleteClass(ctx context.Context, in *DeleteClassRequest, opts ...grpc.CallOption) (*DeleteClassResponse, error)
 }
@@ -47,15 +45,6 @@ func NewClasserClient(cc grpc.ClientConnInterface) ClasserClient {
 func (c *classerClient) GetClass(ctx context.Context, in *GetClassRequest, opts ...grpc.CallOption) (*GetClassResponse, error) {
 	out := new(GetClassResponse)
 	err := c.cc.Invoke(ctx, Classer_GetClass_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *classerClient) GetOneClass(ctx context.Context, in *GetOneClassRequest, opts ...grpc.CallOption) (*GetOneClassResponse, error) {
-	out := new(GetOneClassResponse)
-	err := c.cc.Invoke(ctx, Classer_GetOneClass_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +75,6 @@ func (c *classerClient) DeleteClass(ctx context.Context, in *DeleteClassRequest,
 type ClasserServer interface {
 	// Sends a greeting
 	GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error)
-	GetOneClass(context.Context, *GetOneClassRequest) (*GetOneClassResponse, error)
 	AddClass(context.Context, *AddClassRequest) (*AddClassResponse, error)
 	DeleteClass(context.Context, *DeleteClassRequest) (*DeleteClassResponse, error)
 	mustEmbedUnimplementedClasserServer()
@@ -98,9 +86,6 @@ type UnimplementedClasserServer struct {
 
 func (UnimplementedClasserServer) GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetClass not implemented")
-}
-func (UnimplementedClasserServer) GetOneClass(context.Context, *GetOneClassRequest) (*GetOneClassResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOneClass not implemented")
 }
 func (UnimplementedClasserServer) AddClass(context.Context, *AddClassRequest) (*AddClassResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddClass not implemented")
@@ -135,24 +120,6 @@ func _Classer_GetClass_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ClasserServer).GetClass(ctx, req.(*GetClassRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Classer_GetOneClass_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOneClassRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ClasserServer).GetOneClass(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Classer_GetOneClass_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClasserServer).GetOneClass(ctx, req.(*GetOneClassRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -203,10 +170,6 @@ var Classer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetClass",
 			Handler:    _Classer_GetClass_Handler,
-		},
-		{
-			MethodName: "GetOneClass",
-			Handler:    _Classer_GetOneClass_Handler,
 		},
 		{
 			MethodName: "AddClass",

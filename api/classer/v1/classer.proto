@@ -4,6 +4,7 @@ package classer.v1;
 
 import "google/api/annotations.proto";
 
+
 option go_package = "class/api/classer/v1;v1";
 
 service Classer {
@@ -11,11 +12,6 @@ service Classer {
     rpc GetClass (GetClassRequest) returns (GetClassResponse) {
         option (google.api.http) = {
             get: "/class/getall/{week,stu_id,semester,year}"
-        };
-    }
-    rpc GetOneClass (GetOneClassRequest) returns (GetOneClassResponse) {
-        option (google.api.http) = {
-            get: "/class/getone/{stu_id,day,dur,semester,year}"
         };
     }
     rpc AddClass(AddClassRequest) returns (AddClassResponse) {
@@ -42,21 +38,11 @@ message GetClassResponse {
     repeated Class classes=1; //课表
 }
 
-message GetOneClassRequest {
-    string stu_id=1;    //学号
-    int64 day=2;    //星期几
-    string dur=3;   //第几节
-    string semester=4; // 学期
-    string year=5; //学年
-}
-message GetOneClassResponse {
-    repeated ClassInfo infos =1; //课程信息(可能有多个(加课后导致的))
-}
 
 message AddClassRequest {
     string stu_id=1;//学号
     string name=2;//课程名称
-    string dur_class=3;//第几节
+    string dur_class=3;//第几节 '形如 "1-3","1-1"'
     string where=4;//地点
     string teacher=5;//教师
     int64  weeks=6; //哪些周
@@ -67,17 +53,20 @@ message AddClassRequest {
 }
 
 message AddClassResponse {
-    string msg=1;
+    string id=1; //添加的课程ID
+    string msg=2;
 }
 
 message DeleteClassRequest {
     string id=1; //课程标识
+    string stuId=2; //学号
+    string year=3;//学年  "2024" 代表"2024-2025学年"
+    string semester=4;//学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
 }
 message DeleteClassResponse {
     string msg=1;
 }
 message  ClassInfo {
-
     int64 day=1; //星期几
     string teacher=2;   //任课教师
     string where=3; //上课地点
@@ -85,12 +74,11 @@ message  ClassInfo {
     string week_duration=5; //上课的周数
     string classname=6;//课程名称
     double credit=7; //学分
-    bool add=8;//是否为手动添加
+    // bool add=8;//是否为手动添加
     int64 weeks=9; //哪些周
-    string stu_id =10; //学号
-    string semester=11; //学期
-    string year=12; //学年
-    string id=13;//课程唯一标识
+    string semester=10; //学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
+    string year=11; //学年  "2024" 代表"2024-2025学年"
+    string id=12;//课程唯一标识
 }
 message Class {
     ClassInfo info =1;
