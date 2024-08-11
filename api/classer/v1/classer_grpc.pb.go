@@ -22,6 +22,7 @@ const (
 	Classer_GetClass_FullMethodName    = "/classer.v1.Classer/GetClass"
 	Classer_AddClass_FullMethodName    = "/classer.v1.Classer/AddClass"
 	Classer_DeleteClass_FullMethodName = "/classer.v1.Classer/DeleteClass"
+	Classer_UpdateClass_FullMethodName = "/classer.v1.Classer/UpdateClass"
 )
 
 // ClasserClient is the client API for Classer service.
@@ -32,6 +33,7 @@ type ClasserClient interface {
 	GetClass(ctx context.Context, in *GetClassRequest, opts ...grpc.CallOption) (*GetClassResponse, error)
 	AddClass(ctx context.Context, in *AddClassRequest, opts ...grpc.CallOption) (*AddClassResponse, error)
 	DeleteClass(ctx context.Context, in *DeleteClassRequest, opts ...grpc.CallOption) (*DeleteClassResponse, error)
+	UpdateClass(ctx context.Context, in *UpdateClassRequest, opts ...grpc.CallOption) (*UpdateClassResponse, error)
 }
 
 type classerClient struct {
@@ -69,6 +71,15 @@ func (c *classerClient) DeleteClass(ctx context.Context, in *DeleteClassRequest,
 	return out, nil
 }
 
+func (c *classerClient) UpdateClass(ctx context.Context, in *UpdateClassRequest, opts ...grpc.CallOption) (*UpdateClassResponse, error) {
+	out := new(UpdateClassResponse)
+	err := c.cc.Invoke(ctx, Classer_UpdateClass_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ClasserServer is the server API for Classer service.
 // All implementations must embed UnimplementedClasserServer
 // for forward compatibility
@@ -77,6 +88,7 @@ type ClasserServer interface {
 	GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error)
 	AddClass(context.Context, *AddClassRequest) (*AddClassResponse, error)
 	DeleteClass(context.Context, *DeleteClassRequest) (*DeleteClassResponse, error)
+	UpdateClass(context.Context, *UpdateClassRequest) (*UpdateClassResponse, error)
 	mustEmbedUnimplementedClasserServer()
 }
 
@@ -92,6 +104,9 @@ func (UnimplementedClasserServer) AddClass(context.Context, *AddClassRequest) (*
 }
 func (UnimplementedClasserServer) DeleteClass(context.Context, *DeleteClassRequest) (*DeleteClassResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteClass not implemented")
+}
+func (UnimplementedClasserServer) UpdateClass(context.Context, *UpdateClassRequest) (*UpdateClassResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateClass not implemented")
 }
 func (UnimplementedClasserServer) mustEmbedUnimplementedClasserServer() {}
 
@@ -160,6 +175,24 @@ func _Classer_DeleteClass_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Classer_UpdateClass_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateClassRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClasserServer).UpdateClass(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Classer_UpdateClass_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClasserServer).UpdateClass(ctx, req.(*UpdateClassRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Classer_ServiceDesc is the grpc.ServiceDesc for Classer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -178,6 +211,10 @@ var Classer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteClass",
 			Handler:    _Classer_DeleteClass_Handler,
+		},
+		{
+			MethodName: "UpdateClass",
+			Handler:    _Classer_UpdateClass_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

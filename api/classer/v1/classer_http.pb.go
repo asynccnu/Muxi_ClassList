@@ -22,19 +22,22 @@ const _ = http.SupportPackageIsVersion1
 const OperationClasserAddClass = "/classer.v1.Classer/AddClass"
 const OperationClasserDeleteClass = "/classer.v1.Classer/DeleteClass"
 const OperationClasserGetClass = "/classer.v1.Classer/GetClass"
+const OperationClasserUpdateClass = "/classer.v1.Classer/UpdateClass"
 
 type ClasserHTTPServer interface {
 	AddClass(context.Context, *AddClassRequest) (*AddClassResponse, error)
 	DeleteClass(context.Context, *DeleteClassRequest) (*DeleteClassResponse, error)
 	// GetClass Sends a greeting
 	GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error)
+	UpdateClass(context.Context, *UpdateClassRequest) (*UpdateClassResponse, error)
 }
 
 func RegisterClasserHTTPServer(s *http.Server, srv ClasserHTTPServer) {
 	r := s.Route("/")
-	r.GET("/class/getall/{week:,stu_id,semester,year}", _Classer_GetClass0_HTTP_Handler(srv))
+	r.GET("/class/get/{week:,stu_id,semester,year}", _Classer_GetClass0_HTTP_Handler(srv))
 	r.POST("/class/add", _Classer_AddClass0_HTTP_Handler(srv))
 	r.DELETE("/class/delete/{id}", _Classer_DeleteClass0_HTTP_Handler(srv))
+	r.PUT("/class/update", _Classer_UpdateClass0_HTTP_Handler(srv))
 }
 
 func _Classer_GetClass0_HTTP_Handler(srv ClasserHTTPServer) func(ctx http.Context) error {
@@ -103,10 +106,33 @@ func _Classer_DeleteClass0_HTTP_Handler(srv ClasserHTTPServer) func(ctx http.Con
 	}
 }
 
+func _Classer_UpdateClass0_HTTP_Handler(srv ClasserHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in UpdateClassRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationClasserUpdateClass)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.UpdateClass(ctx, req.(*UpdateClassRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*UpdateClassResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
 type ClasserHTTPClient interface {
 	AddClass(ctx context.Context, req *AddClassRequest, opts ...http.CallOption) (rsp *AddClassResponse, err error)
 	DeleteClass(ctx context.Context, req *DeleteClassRequest, opts ...http.CallOption) (rsp *DeleteClassResponse, err error)
 	GetClass(ctx context.Context, req *GetClassRequest, opts ...http.CallOption) (rsp *GetClassResponse, err error)
+	UpdateClass(ctx context.Context, req *UpdateClassRequest, opts ...http.CallOption) (rsp *UpdateClassResponse, err error)
 }
 
 type ClasserHTTPClientImpl struct {
@@ -145,11 +171,24 @@ func (c *ClasserHTTPClientImpl) DeleteClass(ctx context.Context, in *DeleteClass
 
 func (c *ClasserHTTPClientImpl) GetClass(ctx context.Context, in *GetClassRequest, opts ...http.CallOption) (*GetClassResponse, error) {
 	var out GetClassResponse
-	pattern := "/class/getall/{week:,stu_id,semester,year}"
+	pattern := "/class/get/{week:,stu_id,semester,year}"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationClasserGetClass))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *ClasserHTTPClientImpl) UpdateClass(ctx context.Context, in *UpdateClassRequest, opts ...http.CallOption) (*UpdateClassResponse, error) {
+	var out UpdateClassResponse
+	pattern := "/class/update"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationClasserUpdateClass))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "PUT", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

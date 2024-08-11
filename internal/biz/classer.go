@@ -20,7 +20,7 @@ type ClassInfoDBRepo interface {
 	AddClassInfoToDB(ctx context.Context, tx *gorm.DB, classInfo *ClassInfo) error
 	GetClassInfoFromDB(ctx context.Context, db *gorm.DB, ID string) (*ClassInfo, error)
 	DeleteClassInfoInDB(ctx context.Context, tx *gorm.DB, ID string) error
-	UpdateClassInfoInDB(ctx context.Context, tx *gorm.DB, classInfo *ClassInfo) error
+	//UpdateClassInfoInDB(ctx context.Context, tx *gorm.DB, classInfo *ClassInfo) error
 }
 type ClassInfoCacheRepo interface {
 	SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*ClassInfo) error
@@ -82,17 +82,15 @@ func NewClassUsercase(classRepo *ClassRepo, crawler ClassCrawler, log log2.Loger
 	}
 }
 
-
 func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, client *http.Client) ([]*Class, error) {
 	//var classInfos = make([]*ClassInfo, 0)
 	var Scs = make([]*StudentCourse, 0)
 	var classes = make([]*Class, 0)
 	var err error
 
-
 	classInfos, err := cluc.ClassRepo.GetAllClasses(ctx, StuId, xnm, xqm)
 	if err != nil {
-		
+
 		if errors.Is(err, errcode.ErrClassNotFound) {
 
 			classInfos, Scs, err = cluc.Crawler.GetClassInfos(ctx, client, xnm, xqm)
@@ -102,7 +100,6 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 				return nil, err
 			}
 
-			
 			go func() {
 				err := cluc.ClassRepo.SaveClasses(ctx, StuId, xnm, xqm, classInfos, Scs)
 				if err != nil {
@@ -112,7 +109,6 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 		}
 		return nil, err
 	}
-
 
 	for _, classInfo := range classInfos {
 		thisWeek := classInfo.SearchWeek(week)

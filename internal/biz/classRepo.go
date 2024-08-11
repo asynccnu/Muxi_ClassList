@@ -25,7 +25,7 @@ func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl TxController, db *gorm.DB, Sac 
 		Sac:     Sac,
 		log:     log,
 		db:      db,
-        TxCtrl:  TxCtrl,
+		TxCtrl:  TxCtrl,
 	}
 }
 
@@ -74,32 +74,34 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, stuId, xnm, xqm string) 
 	cacheGet := true
 	key1 := GenerateSetName(stuId, xnm, xqm)
 	claIds, err := cla.Sac.Cache.GetClassIdsFromCache(ctx, key1)
-	if err != nil {
+	if err != nil || len(claIds) == 0 {
 		cla.log.FuncError(cla.Sac.Cache.GetClassIdsFromCache, err)
-		cacheGet = false
-	}
-	if len(claIds) == 0 {
-		cacheGet = false
-	} else {
-		for _, classId := range claIds {
-			key := classId
-			classInfo, err := cla.ClaRepo.Cache.GetClassesFromCache(ctx, key)
-			if err != nil {
-				cla.log.FuncError(cla.ClaRepo.Cache.GetClassesFromCache, err)
-				cacheGet = false
-			}
-			classInfos = append(classInfos, classInfo)
-		}
-	}
-	//缓存获取失败
-	if !cacheGet {
-		classIds, err := cla.Sac.DB.GetClassIDsFromSCInDB(ctx, cla.db, stuId, xnm, xqm)
+		claIds, err = cla.Sac.DB.GetClassIDsFromSCInDB(ctx, cla.db, stuId, xnm, xqm)
 		if err != nil {
 			cla.log.FuncError(cla.Sac.DB.GetClassIDsFromSCInDB, err)
 			return nil, errcode.ErrClassNotFound
 		}
-
-		for _, Id := range classIds {
+		go func() {
+			//缓存获取失败的话就再次去缓存
+			err := cla.Sac.Cache.SaveManyStudentAndCourseToCache(ctx, key1, claIds)
+			if err != nil {
+				cla.log.FuncError(cla.Sac.Cache.SaveManyStudentAndCourseToCache, err)
+			}
+		}()
+	}
+	for _, classId := range claIds {
+		key := classId
+		classInfo, err := cla.ClaRepo.Cache.GetClassesFromCache(ctx, key)
+		if err != nil {
+			cla.log.FuncError(cla.ClaRepo.Cache.GetClassesFromCache, err)
+			cacheGet = false
+			classInfos = classInfos[:0]
+			break
+		}
+		classInfos = append(classInfos, classInfo)
+	}
+	if !cacheGet {
+		for _, Id := range claIds {
 			classInfo, err := cla.ClaRepo.DB.GetClassInfoFromDB(ctx, cla.db, Id)
 			if err != nil {
 				cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
@@ -107,6 +109,17 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, stuId, xnm, xqm string) 
 			}
 			classInfos = append(classInfos, classInfo)
 		}
+		go func() {
+			//缓存
+			var classIds = make([]string, 0)
+			for _, v := range classInfos {
+				classIds = append(classIds, v.ID)
+			}
+			err := cla.ClaRepo.Cache.SaveManyClassInfosToCache(ctx, classIds, classInfos)
+			if err != nil {
+				cla.log.FuncError(cla.ClaRepo.Cache.SaveManyClassInfosToCache, err)
+			}
+		}()
 	}
 	return classInfos, nil
 }
@@ -204,10 +217,10 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, classId string, stuId stri
 		cla.TxCtrl.RollBack(ctx, tx)
 		return errcode.ErrClassDelete
 	}
-	err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, tx, fmt.Sprintf("StuAndCla:%s:%s:%s:%s", stuId, classId, xnm, xqm))
+	err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, tx, GenerateSCID(stuId, classId, xnm, xqm))
 	if err != nil {
 		cla.log.FuncError(cla.Sac.DB.DeleteStudentAndCourseInDB, err)
-		tx.Rollback()
+		cla.TxCtrl.RollBack(ctx, tx)
 		return errcode.ErrClassDelete
 	}
 	err = cla.TxCtrl.Commit(ctx, tx)
@@ -228,7 +241,51 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, classId string, stuId stri
 	}
 	return nil
 }
+func (cla ClassRepo) UpdateClass(ctx context.Context, newClassInfo *ClassInfo, newSc *StudentCourse, stuId, oldClassId, xnm, xqm string) error {
+	tx := cla.TxCtrl.Begin(ctx, cla.db)
+	//添加新的课程信息
+	err := cla.ClaRepo.DB.AddClassInfoToDB(ctx, tx, newClassInfo)
+	if err != nil {
+		cla.log.FuncError(cla.ClaRepo.DB.AddClassInfoToDB, err)
+		cla.TxCtrl.RollBack(ctx, tx)
+		return errcode.ErrClassUpdate
+	}
+	//删除原本的学生与课程的对应关系
+	err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, tx, GenerateSCID(stuId, oldClassId, xnm, xqm))
+	if err != nil {
+		cla.log.FuncError(cla.Sac.DB.DeleteStudentAndCourseInDB, err)
+		cla.TxCtrl.RollBack(ctx, tx)
+		return errcode.ErrClassUpdate
+	}
+	//添加新的对应关系
+	err = cla.Sac.DB.SaveStudentAndCourseToDB(ctx, tx, newSc)
+	if err != nil {
+		cla.log.FuncError(cla.Sac.DB.SaveStudentAndCourseToDB, err)
+		cla.TxCtrl.RollBack(ctx, tx)
+		return errcode.ErrClassUpdate
+	}
+	err = cla.TxCtrl.Commit(ctx, tx)
+	if err != nil {
+		return errcode.ErrClassUpdate
+	}
+	// 缓存相关操作
+	go func() {
+		err = cla.ClaRepo.Cache.AddClassInfoToCache(ctx, newClassInfo.ID, newClassInfo)
+		if err != nil {
+			cla.log.FuncError(cla.ClaRepo.Cache.AddClassInfoToCache, err)
+		}
+		err = cla.Sac.Cache.DeleteStudentAndCourseFromCache(ctx, GenerateSetName(stuId, xnm, xqm), oldClassId)
+		if err != nil {
+			cla.log.FuncError(cla.Sac.Cache.DeleteStudentAndCourseFromCache, err)
+		}
+		err = cla.Sac.Cache.AddStudentAndCourseToCache(ctx, GenerateSetName(stuId, xnm, xqm), newSc.ClaID)
+		if err != nil {
+			cla.log.FuncError(cla.Sac.Cache.AddStudentAndCourseToCache, err)
+		}
+	}()
+	return nil
 
+}
 func GenerateSetName(stuId, xnm, xqm string) string {
 	return fmt.Sprintf("StuAndCla:%s:%s:%s", stuId, xnm, xqm)
 }

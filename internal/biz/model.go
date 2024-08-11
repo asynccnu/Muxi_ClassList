@@ -17,9 +17,9 @@ type Class struct {
 	ThisWeek bool       //是否是本周
 }
 type ClassInfo struct {
-	ID           string `gorm:"primaryKey;column:id" json:"id"` //集合了课程信息的字符串，便于标识（课程ID）
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID        string `gorm:"primaryKey;column:id" json:"id"` //集合了课程信息的字符串，便于标识（课程ID）
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	//ClassId      string  `gorm:"column:class_id" json:"class_id"`           //课程编号
 	Day          int64   `gorm:"column:day" json:"day"`                     //星期几
 	Teacher      string  `gorm:"column:teacher" json:"teacher"`             //任课教师
@@ -86,4 +86,7 @@ func (ci *ClassInfo) UpdateID() {
 }
 func (sc *StudentCourse) UpdateID() {
 	sc.ID = fmt.Sprintf("StuAndCla:%s:%s:%s:%s", sc.StuID, sc.ClaID, sc.Year, sc.Semester)
+}
+func GenerateSCID(stuId, classId, xnm, xqm string) string {
+	return fmt.Sprintf("StuAndCla:%s:%s:%s:%s", stuId, classId, xnm, xqm)
 }
