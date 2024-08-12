@@ -83,7 +83,44 @@ func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassReq
 		Msg: "成功删除",
 	}, nil
 }
-
+func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassRequest) (*pb.UpdateClassResponse, error) {
+	if !CheckSY(req.Semester, req.GetYear()) || req.GetWeeks() <= 0 {
+		return &pb.UpdateClassResponse{}, errcode.ErrParam
+	}
+	weekDur := FormatWeeks(ParseWeeks(req.GetWeeks()))
+	oldclassInfo, err := s.Clu.SearchClass(ctx, req.GetClassId())
+	if err != nil {
+		return &pb.UpdateClassResponse{
+			Msg: "修改失败",
+		}, err
+	}
+	oldclassInfo.Day = req.GetDay()
+	oldclassInfo.Teacher = req.GetTeacher()
+	oldclassInfo.Where = req.GetTeacher()
+	oldclassInfo.ClassWhen = req.GetDurClass()
+	oldclassInfo.WeekDuration = weekDur
+	oldclassInfo.Classname = req.GetName()
+	oldclassInfo.Weeks = req.GetWeeks()
+	oldclassInfo.UpdateID()
+	newSc := &biz.StudentCourse{
+		StuID:           req.GetStuId(),
+		ClaID:           oldclassInfo.ID,
+		Year:            oldclassInfo.Year,
+		Semester:        oldclassInfo.Semester,
+		IsManuallyAdded: false,
+	}
+	newSc.UpdateID()
+	err = s.Clu.UpdateClass(ctx, oldclassInfo, newSc, req.GetStuId(), req.GetClassId(), req.GetYear(), req.GetSemester())
+	if err != nil {
+		return &pb.UpdateClassResponse{
+			Msg: "修改失败",
+		}, err
+	}
+	return &pb.UpdateClassResponse{
+		ClassId: oldclassInfo.ID,
+		Msg:     "成功修改",
+	}, nil
+}
 func CheckSY(semester, year string) bool {
 
 	var tag1, tag2 bool

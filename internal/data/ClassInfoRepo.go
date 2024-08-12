@@ -72,7 +72,7 @@ func (c classInfoCacheRepo) AddClassInfoToCache(ctx context.Context, key string,
 	return nil
 }
 
-func (c classInfoCacheRepo) GetClassesFromCache(ctx context.Context, key string) (*biz.ClassInfo, error) {
+func (c classInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key string) (*biz.ClassInfo, error) {
 	var classInfo = &biz.ClassInfo{}
 	val, err := c.rdb.Get(key).Result()
 	if err != nil {

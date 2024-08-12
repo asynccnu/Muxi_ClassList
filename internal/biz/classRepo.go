@@ -91,9 +91,9 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, stuId, xnm, xqm string) 
 	}
 	for _, classId := range claIds {
 		key := classId
-		classInfo, err := cla.ClaRepo.Cache.GetClassesFromCache(ctx, key)
+		classInfo, err := cla.ClaRepo.Cache.GetClassInfoFromCache(ctx, key)
 		if err != nil {
-			cla.log.FuncError(cla.ClaRepo.Cache.GetClassesFromCache, err)
+			cla.log.FuncError(cla.ClaRepo.Cache.GetClassInfoFromCache, err)
 			cacheGet = false
 			classInfos = classInfos[:0]
 			break
@@ -123,52 +123,24 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, stuId, xnm, xqm string) 
 	}
 	return classInfos, nil
 }
-func (cla ClassRepo) GetSpecificClassInfo(ctx context.Context, stuId, xnm, xqm string, day int64, dur string) ([]*ClassInfo, error) {
-	var classInfos = make([]*ClassInfo, 0)
-	cacheGet := true
-	key1 := GenerateSetName(stuId, xnm, xqm)
-	claIds, err := cla.Sac.Cache.GetClassIdsFromCache(ctx, key1)
+func (cla ClassRepo) GetSpecificClassInfo(ctx context.Context, classId string) (*ClassInfo, error) {
+	classInfo, err := cla.ClaRepo.Cache.GetClassInfoFromCache(ctx, classId)
 	if err != nil {
-		cla.log.FuncError(cla.Sac.Cache.GetClassIdsFromCache, err)
-		cacheGet = false
-	}
-	if len(claIds) == 0 {
-		cacheGet = false
-	} else {
-		for _, Id := range claIds {
-			if !Check(Id, day, dur) {
-				continue
-			} //筛选符合要求的ID
-			key := Id
-			classInfo, err := cla.ClaRepo.Cache.GetClassesFromCache(ctx, key)
-			if err != nil {
-				cla.log.FuncError(cla.ClaRepo.Cache.GetClassesFromCache, err)
-				cacheGet = false
-			}
-			classInfos = append(classInfos, classInfo)
-		}
-	}
-	//缓存获取失败
-	if !cacheGet {
-		classIds, err := cla.Sac.DB.GetClassIDsFromSCInDB(ctx, cla.db, stuId, xnm, xqm)
+		cla.log.FuncError(cla.ClaRepo.Cache.GetClassInfoFromCache, err)
+		classInfo, err = cla.ClaRepo.DB.GetClassInfoFromDB(ctx, cla.db, classId)
 		if err != nil {
-			cla.log.FuncError(cla.Sac.DB.GetClassIDsFromSCInDB, err)
+			cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
 			return nil, errcode.ErrClassNotFound
 		}
-
-		for _, Id := range classIds {
-			if !Check(Id, day, dur) {
-				continue
-			} //筛选符合要求的ID
-			classInfo, err := cla.ClaRepo.DB.GetClassInfoFromDB(ctx, cla.db, Id)
+		go func() {
+			// 缓存
+			err := cla.ClaRepo.Cache.AddClassInfoToCache(ctx, classId, classInfo)
 			if err != nil {
-				cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
-				return nil, errcode.ErrClassNotFound
+				cla.log.FuncError(cla.ClaRepo.Cache.AddClassInfoToCache, err)
 			}
-			classInfos = append(classInfos, classInfo)
-		}
+		}()
 	}
-	return classInfos, nil
+	return classInfo, nil
 }
 func (cla ClassRepo) AddClass(ctx context.Context, classInfo *ClassInfo, sc *StudentCourse, xnm, xqm string) error {
 	tx := cla.TxCtrl.Begin(ctx, cla.db) // 统一事务处理

@@ -25,7 +25,7 @@ type ClassInfoDBRepo interface {
 type ClassInfoCacheRepo interface {
 	SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*ClassInfo) error
 	AddClassInfoToCache(ctx context.Context, key string, classInfo *ClassInfo) error
-	GetClassesFromCache(ctx context.Context, key string) (*ClassInfo, error)
+	GetClassInfoFromCache(ctx context.Context, key string) (*ClassInfo, error)
 	DeleteClassInfoFromCache(ctx context.Context, key string) error
 	UpdateClassInfoInCache(ctx context.Context, key string, classInfo *ClassInfo) error
 }
@@ -121,15 +121,17 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 
 	return classes, nil
 }
-func (cluc *ClassUsercase) FindClass(ctx context.Context, stuId string, xnm, xqm string, day int64, dur string) ([]*ClassInfo, error) {
 
-	classInfos, err := cluc.ClassRepo.GetSpecificClassInfo(ctx, stuId, xnm, xqm, day, dur)
-	if err != nil {
-		cluc.log.FuncError(cluc.ClassRepo.GetSpecificClassInfo, err)
-		return nil, err
-	}
-	return classInfos, nil
-}
+//func (cluc *ClassUsercase) FindClass(ctx context.Context, stuId string, xnm, xqm string, day int64, dur string) ([]*ClassInfo, error) {
+//
+//	classInfos, err := cluc.ClassRepo.GetSpecificClassInfo(ctx, stuId, xnm, xqm, day, dur)
+//	if err != nil {
+//		cluc.log.FuncError(cluc.ClassRepo.GetSpecificClassInfo, err)
+//		return nil, err
+//	}
+//	return classInfos, nil
+//}
+
 func (cluc *ClassUsercase) AddClass(ctx context.Context, stuId string, info *ClassInfo) error {
 	sc := &StudentCourse{
 		StuID:           stuId,
@@ -150,6 +152,22 @@ func (cluc *ClassUsercase) DeleteClass(ctx context.Context, classId string, stuI
 	err := cluc.ClassRepo.DeleteClass(ctx, classId, stuId, xnm, xqm)
 	if err != nil {
 		cluc.log.FuncError(cluc.ClassRepo.DeleteClass, err)
+		return err
+	}
+	return nil
+}
+func (cluc *ClassUsercase) SearchClass(ctx context.Context, classId string) (*ClassInfo, error) {
+	classInfo, err := cluc.ClassRepo.GetSpecificClassInfo(ctx, classId)
+	if err != nil {
+		cluc.log.FuncError(cluc.ClassRepo.GetSpecificClassInfo, err)
+		return nil, err
+	}
+	return classInfo, nil
+}
+func (cluc *ClassUsercase) UpdateClass(ctx context.Context, newClassInfo *ClassInfo, newSc *StudentCourse, stuId, oldClassId, xnm, xqm string) error {
+	err := cluc.ClassRepo.UpdateClass(ctx, newClassInfo, newSc, stuId, oldClassId, xnm, xqm)
+	if err != nil {
+		cluc.log.FuncError(cluc.ClassRepo.UpdateClass, err)
 		return err
 	}
 	return nil
