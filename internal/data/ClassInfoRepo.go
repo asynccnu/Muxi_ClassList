@@ -14,7 +14,8 @@ import (
 )
 
 type classInfoDBRepo struct {
-	log log.LogerPrinter
+	data *Data
+	log  log.LogerPrinter
 }
 type classInfoCacheRepo struct {
 	rdb *redis.Client
@@ -110,13 +111,13 @@ func (c classInfoCacheRepo) UpdateClassInfoInCache(ctx context.Context, key stri
 	return nil
 }
 
-func (c classInfoDBRepo) SaveClassInfosToDB(ctx context.Context, tx *gorm.DB, classInfo []*biz.ClassInfo) error {
-	tx = tx.Table(biz.ClassInfoTableName).WithContext(ctx)
+func (c classInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*biz.ClassInfo) error {
+	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
 	for _, cla := range classInfo {
-		if err := tx.Create(cla).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
+		if err := db.Create(cla).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
 			DoNothing: true,
 		}).Error; err != nil {
-			c.log.FuncError(tx.Create, err)
+			c.log.FuncError(db.Create, err)
 			return errcode.ErrCourseSave
 
 		}
@@ -124,20 +125,20 @@ func (c classInfoDBRepo) SaveClassInfosToDB(ctx context.Context, tx *gorm.DB, cl
 	return nil
 }
 
-func (c classInfoDBRepo) AddClassInfoToDB(ctx context.Context, tx *gorm.DB, classInfo *biz.ClassInfo) error {
-	tx = tx.Table(biz.ClassInfoTableName).WithContext(ctx)
-	err := tx.Create(classInfo).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
+func (c classInfoDBRepo) AddClassInfoToDB(ctx context.Context, classInfo *biz.ClassInfo) error {
+	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
+	err := db.Create(classInfo).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
 		DoNothing: true,
 	}).Error
 	if err != nil {
-		c.log.FuncError(tx.Create, err)
+		c.log.FuncError(db.Create, err)
 		return errcode.ErrClassUpdate
 	}
 	return nil
 }
 
-func (c classInfoDBRepo) GetClassInfoFromDB(ctx context.Context, db *gorm.DB, ID string) (*biz.ClassInfo, error) {
-	db = db.Table(biz.ClassInfoTableName).WithContext(ctx)
+func (c classInfoDBRepo) GetClassInfoFromDB(ctx context.Context, ID string) (*biz.ClassInfo, error) {
+	db := c.data.Mysql.Table(biz.ClassInfoTableName).WithContext(ctx)
 	cla := &biz.ClassInfo{}
 	err := db.Where("id =?", ID).First(cla).Error
 	if err != nil {
@@ -153,21 +154,21 @@ func (c classInfoDBRepo) GetClassInfoFromDB(ctx context.Context, db *gorm.DB, ID
 	return cla, err
 }
 
-func (c classInfoDBRepo) DeleteClassInfoInDB(ctx context.Context, tx *gorm.DB, ID string) error {
-	tx = tx.Table(biz.ClassInfoTableName).WithContext(ctx)
-	err := tx.Where("id =?", ID).Delete(&biz.ClassInfo{}).Error
+func (c classInfoDBRepo) DeleteClassInfoInDB(ctx context.Context, ID string) error {
+	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
+	err := db.Where("id =?", ID).Delete(&biz.ClassInfo{}).Error
 	if err != nil {
-		c.log.FuncError(tx.Where, err)
+		c.log.FuncError(db.Where, err)
 		return errcode.ErrClassDelete
 	}
 	return nil
 }
 
-func (c classInfoDBRepo) UpdateClassInfoInDB(ctx context.Context, tx *gorm.DB, classInfo *biz.ClassInfo) error {
-	tx = tx.Table(biz.ClassInfoTableName).WithContext(ctx)
-	err := tx.Save(classInfo).Error
+func (c classInfoDBRepo) UpdateClassInfoInDB(ctx context.Context, classInfo *biz.ClassInfo) error {
+	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
+	err := db.Save(classInfo).Error
 	if err != nil {
-		c.log.FuncError(tx.Save, err)
+		c.log.FuncError(db.Save, err)
 		return errcode.ErrClassUpdate
 	}
 	return nil

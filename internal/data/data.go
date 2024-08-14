@@ -3,6 +3,7 @@ package data
 import (
 	"class/internal/biz"
 	"class/internal/conf"
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis"
 	"github.com/google/wire"
 	"gorm.io/driver/mysql"
@@ -19,6 +20,7 @@ const (
 
 // ProviderSet is data providers.
 var ProviderSet = wire.NewSet(
+	NewData,
 	NewDB,
 	NewRedisDB,
 	NewStudentAndCourseDBRepo,
@@ -28,6 +30,19 @@ var ProviderSet = wire.NewSet(
 	NewTxController)
 
 // Data .
+type Data struct {
+	Mysql *gorm.DB
+}
+
+// NewData .
+func NewData(c *conf.Data, mysqlDB *gorm.DB, logger log.Logger) (*Data, func(), error) {
+	cleanup := func() {
+		log.NewHelper(logger).Info("closing the data resources")
+	}
+	return &Data{
+		Mysql: mysqlDB,
+	}, cleanup, nil
+}
 
 // NewDB 连接mysql数据库
 func NewDB(c *conf.Data) *gorm.DB {

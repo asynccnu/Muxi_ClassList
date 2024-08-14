@@ -6,66 +6,11 @@ import (
 	"context"
 	"errors"
 	"net/http"
-
-	"gorm.io/gorm"
 )
-
-type TxController interface {
-	Begin(ctx context.Context, db *gorm.DB) *gorm.DB
-	RollBack(ctx context.Context, tx *gorm.DB)
-	Commit(ctx context.Context, tx *gorm.DB) error
-}
-type ClassInfoDBRepo interface {
-	SaveClassInfosToDB(ctx context.Context, tx *gorm.DB, classInfo []*ClassInfo) error
-	AddClassInfoToDB(ctx context.Context, tx *gorm.DB, classInfo *ClassInfo) error
-	GetClassInfoFromDB(ctx context.Context, db *gorm.DB, ID string) (*ClassInfo, error)
-	DeleteClassInfoInDB(ctx context.Context, tx *gorm.DB, ID string) error
-	//UpdateClassInfoInDB(ctx context.Context, tx *gorm.DB, classInfo *ClassInfo) error
-}
-type ClassInfoCacheRepo interface {
-	SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*ClassInfo) error
-	AddClassInfoToCache(ctx context.Context, key string, classInfo *ClassInfo) error
-	GetClassInfoFromCache(ctx context.Context, key string) (*ClassInfo, error)
-	DeleteClassInfoFromCache(ctx context.Context, key string) error
-	UpdateClassInfoInCache(ctx context.Context, key string, classInfo *ClassInfo) error
-}
-type StudentAndCourseDBRepo interface {
-	SaveStudentAndCourseToDB(ctx context.Context, tx *gorm.DB, sc *StudentCourse) error
-	SaveManyStudentAndCourseToDB(ctx context.Context, tx *gorm.DB, scs []*StudentCourse) error
-	GetClassIDsFromSCInDB(ctx context.Context, db *gorm.DB, stuId, xnm, xqm string) ([]string, error)
-	DeleteStudentAndCourseInDB(ctx context.Context, tx *gorm.DB, ID string) error
-}
-type StudentAndCourseCacheRepo interface {
-	SaveManyStudentAndCourseToCache(ctx context.Context, key string, classIds []string) error
-	AddStudentAndCourseToCache(ctx context.Context, key string, ClassId string) error
-	GetClassIdsFromCache(ctx context.Context, key string) ([]string, error)
-	DeleteStudentAndCourseFromCache(ctx context.Context, key string, ClassId string) error
-}
 
 // ClassCrawler 课程爬虫接口
 type ClassCrawler interface {
 	GetClassInfos(ctx context.Context, client *http.Client, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
-}
-type ClassInfoRepo struct {
-	DB    ClassInfoDBRepo
-	Cache ClassInfoCacheRepo
-}
-type StudentAndCourseRepo struct {
-	DB    StudentAndCourseDBRepo
-	Cache StudentAndCourseCacheRepo
-}
-
-func NewClassInfoRepo(DB ClassInfoDBRepo, Cache ClassInfoCacheRepo) *ClassInfoRepo {
-	return &ClassInfoRepo{
-		DB:    DB,
-		Cache: Cache,
-	}
-}
-func NewStudentAndCourseRepo(DB StudentAndCourseDBRepo, Cache StudentAndCourseCacheRepo) *StudentAndCourseRepo {
-	return &StudentAndCourseRepo{
-		DB:    DB,
-		Cache: Cache,
-	}
 }
 
 type ClassUsercase struct {

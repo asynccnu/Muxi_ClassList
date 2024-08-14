@@ -6,12 +6,12 @@ import (
 	log "class/internal/logPrinter"
 	"context"
 	"github.com/go-redis/redis"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type studentAndCourseDBRepo struct {
-	log log.LogerPrinter
+	data *Data
+	log  log.LogerPrinter
 }
 type studentAndCourseCacheRepo struct {
 	rdb *redis.Client
@@ -93,47 +93,47 @@ func (s studentAndCourseCacheRepo) DeleteStudentAndCourseFromCache(ctx context.C
 	return nil
 }
 
-func (s studentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context, tx *gorm.DB, scs []*biz.StudentCourse) error {
-	tx = tx.Table(biz.StudentCourseTableName).WithContext(ctx)
+func (s studentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context, scs []*biz.StudentCourse) error {
+	db := s.data.DB(ctx).Table(biz.StudentCourseTableName).WithContext(ctx)
 
 	// 处理 StudentCourse
 	for _, sc := range scs {
-		if err := tx.Create(sc).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
+		if err := db.Create(sc).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
 			DoNothing: true,
 		}).Error; err != nil {
-			s.log.FuncError(tx.Create, err)
+			s.log.FuncError(db.Create, err)
 			return errcode.ErrCourseSave
 		}
 	}
 	return nil
 }
 
-func (s studentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, tx *gorm.DB, sc *biz.StudentCourse) error {
-	tx = tx.Table(biz.StudentCourseTableName).WithContext(ctx)
-	err := tx.Create(sc).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
+func (s studentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc *biz.StudentCourse) error {
+	db := s.data.DB(ctx).Table(biz.StudentCourseTableName).WithContext(ctx)
+	err := db.Create(sc).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
 		DoNothing: true,
 	}).Error
 	if err != nil {
-		s.log.FuncError(tx.Create, err)
+		s.log.FuncError(db.Create, err)
 		return errcode.ErrClassUpdate
 	}
 	return nil
 }
 
-func (s studentAndCourseDBRepo) GetClassIDsFromSCInDB(ctx context.Context, db *gorm.DB, stuId, xnm, xqm string) ([]string, error) {
+func (s studentAndCourseDBRepo) GetClassIDsFromSCInDB(ctx context.Context, stuId, xnm, xqm string) ([]string, error) {
 	var classIds []string
-	db = db.Table(biz.StudentCourseTableName).WithContext(ctx)
+	db := s.data.Mysql.Table(biz.StudentCourseTableName).WithContext(ctx)
 	err := db.Where("stu_id = ? AND year = ? AND semester", stuId, xnm, xqm).
 		Select("cla_id").
 		Pluck("cla_id", &classIds).Error
 	return classIds, err
 }
 
-func (s studentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Context, tx *gorm.DB, ID string) error {
-	tx = tx.Table(biz.StudentCourseTableName).WithContext(ctx)
-	err := tx.Where("id =?", ID).Delete(&biz.StudentCourse{}).Error
+func (s studentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Context, ID string) error {
+	db := s.data.DB(ctx).Table(biz.StudentCourseTableName).WithContext(ctx)
+	err := db.Where("id =?", ID).Delete(&biz.StudentCourse{}).Error
 	if err != nil {
-		s.log.FuncError(tx.Delete, err)
+		s.log.FuncError(db.Delete, err)
 		return errcode.ErrClassDelete
 	}
 	return nil

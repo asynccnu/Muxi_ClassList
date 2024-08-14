@@ -7,50 +7,43 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-
-	"gorm.io/gorm"
 )
 
 type ClassRepo struct {
 	ClaRepo *ClassInfoRepo
 	Sac     *StudentAndCourseRepo
-	db      *gorm.DB
-	TxCtrl  TxController //控制事务的开启
+	TxCtrl  Transaction //控制事务的开启
 	log     log.LogerPrinter
 }
 
-func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl TxController, db *gorm.DB, Sac *StudentAndCourseRepo, log log.LogerPrinter) *ClassRepo {
+func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl Transaction, Sac *StudentAndCourseRepo, log log.LogerPrinter) *ClassRepo {
 	return &ClassRepo{
 		ClaRepo: ClaRepo,
 		Sac:     Sac,
 		log:     log,
-		db:      db,
 		TxCtrl:  TxCtrl,
 	}
 }
 
 func (cla ClassRepo) SaveClasses(ctx context.Context, stuId, xnm, xqm string, claInfos []*ClassInfo, scs []*StudentCourse) error {
-	// 处理 ClassInfo
-	tx := cla.TxCtrl.Begin(ctx, cla.db)
-	err1 := cla.ClaRepo.DB.SaveClassInfosToDB(ctx, tx, claInfos)
-	if err1 != nil {
-		cla.log.FuncError(cla.ClaRepo.DB.SaveClassInfosToDB, err1)
-		cla.TxCtrl.RollBack(ctx, tx)
-		return errcode.ErrCourseSave
+	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
+		err1 := cla.ClaRepo.DB.SaveClassInfosToDB(ctx, claInfos)
+		if err1 != nil {
+			cla.log.FuncError(cla.ClaRepo.DB.SaveClassInfosToDB, err1)
+			return errcode.ErrCourseSave
+		}
+		err2 := cla.Sac.DB.SaveManyStudentAndCourseToDB(ctx, scs)
+		if err2 != nil {
+			cla.log.FuncError(cla.Sac.DB.SaveManyStudentAndCourseToDB, err2)
+			return errcode.ErrCourseSave
+		}
+		return nil
+	})
+	if errTx != nil {
+		return errTx
 	}
-	err2 := cla.Sac.DB.SaveManyStudentAndCourseToDB(ctx, tx, scs)
-	if err2 != nil {
-		cla.log.FuncError(cla.Sac.DB.SaveManyStudentAndCourseToDB, err2)
-		cla.TxCtrl.RollBack(ctx, tx)
-		return errcode.ErrCourseSave
-	}
-	err := cla.TxCtrl.Commit(ctx, tx)
-	if err != nil {
-		cla.log.FuncError(cla.TxCtrl.Commit, err)
-		return errcode.ErrCourseSave
-	}
-	go func() {
 
+	go func() {
 		//缓存
 		var classIds = make([]string, 0)
 		key := GenerateSetName(stuId, xnm, xqm)
@@ -76,7 +69,7 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, stuId, xnm, xqm string) 
 	claIds, err := cla.Sac.Cache.GetClassIdsFromCache(ctx, key1)
 	if err != nil || len(claIds) == 0 {
 		cla.log.FuncError(cla.Sac.Cache.GetClassIdsFromCache, err)
-		claIds, err = cla.Sac.DB.GetClassIDsFromSCInDB(ctx, cla.db, stuId, xnm, xqm)
+		claIds, err = cla.Sac.DB.GetClassIDsFromSCInDB(ctx, stuId, xnm, xqm)
 		if err != nil {
 			cla.log.FuncError(cla.Sac.DB.GetClassIDsFromSCInDB, err)
 			return nil, errcode.ErrClassNotFound
@@ -102,7 +95,7 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, stuId, xnm, xqm string) 
 	}
 	if !cacheGet {
 		for _, Id := range claIds {
-			classInfo, err := cla.ClaRepo.DB.GetClassInfoFromDB(ctx, cla.db, Id)
+			classInfo, err := cla.ClaRepo.DB.GetClassInfoFromDB(ctx, Id)
 			if err != nil {
 				cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
 				return nil, errcode.ErrClassNotFound
@@ -127,7 +120,7 @@ func (cla ClassRepo) GetSpecificClassInfo(ctx context.Context, classId string) (
 	classInfo, err := cla.ClaRepo.Cache.GetClassInfoFromCache(ctx, classId)
 	if err != nil {
 		cla.log.FuncError(cla.ClaRepo.Cache.GetClassInfoFromCache, err)
-		classInfo, err = cla.ClaRepo.DB.GetClassInfoFromDB(ctx, cla.db, classId)
+		classInfo, err = cla.ClaRepo.DB.GetClassInfoFromDB(ctx, classId)
 		if err != nil {
 			cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
 			return nil, errcode.ErrClassNotFound
@@ -143,26 +136,22 @@ func (cla ClassRepo) GetSpecificClassInfo(ctx context.Context, classId string) (
 	return classInfo, nil
 }
 func (cla ClassRepo) AddClass(ctx context.Context, classInfo *ClassInfo, sc *StudentCourse, xnm, xqm string) error {
-	tx := cla.TxCtrl.Begin(ctx, cla.db) // 统一事务处理
-	// 处理 ClassInfo
-	if err := cla.ClaRepo.DB.AddClassInfoToDB(ctx, tx, classInfo); err != nil {
-		cla.log.FuncError(cla.ClaRepo.DB.AddClassInfoToDB, err)
-		cla.TxCtrl.RollBack(ctx, tx)
-		return errcode.ErrClassUpdate
-	}
+	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
+		if err := cla.ClaRepo.DB.AddClassInfoToDB(ctx, classInfo); err != nil {
+			cla.log.FuncError(cla.ClaRepo.DB.AddClassInfoToDB, err)
+			return errcode.ErrClassUpdate
+		}
 
-	// 处理 StudentCourse
-	if err := cla.Sac.DB.SaveStudentAndCourseToDB(ctx, tx, sc); err != nil {
-		cla.log.FuncError(cla.Sac.DB.SaveStudentAndCourseToDB, err)
-		cla.TxCtrl.RollBack(ctx, tx)
-		return errcode.ErrClassUpdate
+		// 处理 StudentCourse
+		if err := cla.Sac.DB.SaveStudentAndCourseToDB(ctx, sc); err != nil {
+			cla.log.FuncError(cla.Sac.DB.SaveStudentAndCourseToDB, err)
+			return errcode.ErrClassUpdate
+		}
+		return nil
+	})
+	if errTx != nil {
+		return errTx
 	}
-
-	// 提交事务
-	if err := cla.TxCtrl.Commit(ctx, tx); err != nil {
-		return errcode.ErrClassUpdate
-	}
-
 	// 在事务成功提交后，异步处理缓存更新
 	go func() {
 		// 课程信息缓存
@@ -181,26 +170,25 @@ func (cla ClassRepo) AddClass(ctx context.Context, classInfo *ClassInfo, sc *Stu
 	return nil
 }
 func (cla ClassRepo) DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error {
-	//删除数据库
-	tx := cla.TxCtrl.Begin(ctx, cla.db)
-	err := cla.ClaRepo.DB.DeleteClassInfoInDB(ctx, tx, classId)
-	if err != nil {
-		cla.log.FuncError(cla.ClaRepo.DB.DeleteClassInfoInDB, err)
-		cla.TxCtrl.RollBack(ctx, tx)
-		return errcode.ErrClassDelete
+	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
+		err := cla.ClaRepo.DB.DeleteClassInfoInDB(ctx, classId)
+		if err != nil {
+			cla.log.FuncError(cla.ClaRepo.DB.DeleteClassInfoInDB, err)
+			return errcode.ErrClassDelete
+		}
+		err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, GenerateSCID(stuId, classId, xnm, xqm))
+		if err != nil {
+			cla.log.FuncError(cla.Sac.DB.DeleteStudentAndCourseInDB, err)
+			return errcode.ErrClassDelete
+		}
+		return nil
+	})
+	if errTx != nil {
+		return errTx
 	}
-	err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, tx, GenerateSCID(stuId, classId, xnm, xqm))
-	if err != nil {
-		cla.log.FuncError(cla.Sac.DB.DeleteStudentAndCourseInDB, err)
-		cla.TxCtrl.RollBack(ctx, tx)
-		return errcode.ErrClassDelete
-	}
-	err = cla.TxCtrl.Commit(ctx, tx)
-	if err != nil {
-		return errcode.ErrClassDelete
-	}
+
 	//删除缓存
-	err = cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, classId)
+	err := cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, classId)
 	if err != nil {
 		cla.log.FuncError(cla.ClaRepo.Cache.DeleteClassInfoFromCache, err)
 		return errcode.ErrClassDelete
@@ -214,35 +202,34 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, classId string, stuId stri
 	return nil
 }
 func (cla ClassRepo) UpdateClass(ctx context.Context, newClassInfo *ClassInfo, newSc *StudentCourse, stuId, oldClassId, xnm, xqm string) error {
-	tx := cla.TxCtrl.Begin(ctx, cla.db)
-	//添加新的课程信息
-	err := cla.ClaRepo.DB.AddClassInfoToDB(ctx, tx, newClassInfo)
-	if err != nil {
-		cla.log.FuncError(cla.ClaRepo.DB.AddClassInfoToDB, err)
-		cla.TxCtrl.RollBack(ctx, tx)
-		return errcode.ErrClassUpdate
+	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
+		//添加新的课程信息
+		err := cla.ClaRepo.DB.AddClassInfoToDB(ctx, newClassInfo)
+		if err != nil {
+			cla.log.FuncError(cla.ClaRepo.DB.AddClassInfoToDB, err)
+			return errcode.ErrClassUpdate
+		}
+		//删除原本的学生与课程的对应关系
+		err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, GenerateSCID(stuId, oldClassId, xnm, xqm))
+		if err != nil {
+			cla.log.FuncError(cla.Sac.DB.DeleteStudentAndCourseInDB, err)
+			return errcode.ErrClassUpdate
+		}
+		//添加新的对应关系
+		err = cla.Sac.DB.SaveStudentAndCourseToDB(ctx, newSc)
+		if err != nil {
+			cla.log.FuncError(cla.Sac.DB.SaveStudentAndCourseToDB, err)
+			return errcode.ErrClassUpdate
+		}
+		return nil
+	})
+	if errTx != nil {
+		return errTx
 	}
-	//删除原本的学生与课程的对应关系
-	err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, tx, GenerateSCID(stuId, oldClassId, xnm, xqm))
-	if err != nil {
-		cla.log.FuncError(cla.Sac.DB.DeleteStudentAndCourseInDB, err)
-		cla.TxCtrl.RollBack(ctx, tx)
-		return errcode.ErrClassUpdate
-	}
-	//添加新的对应关系
-	err = cla.Sac.DB.SaveStudentAndCourseToDB(ctx, tx, newSc)
-	if err != nil {
-		cla.log.FuncError(cla.Sac.DB.SaveStudentAndCourseToDB, err)
-		cla.TxCtrl.RollBack(ctx, tx)
-		return errcode.ErrClassUpdate
-	}
-	err = cla.TxCtrl.Commit(ctx, tx)
-	if err != nil {
-		return errcode.ErrClassUpdate
-	}
+
 	// 缓存相关操作
 	go func() {
-		err = cla.ClaRepo.Cache.AddClassInfoToCache(ctx, newClassInfo.ID, newClassInfo)
+		err := cla.ClaRepo.Cache.AddClassInfoToCache(ctx, newClassInfo.ID, newClassInfo)
 		if err != nil {
 			cla.log.FuncError(cla.ClaRepo.Cache.AddClassInfoToCache, err)
 		}
