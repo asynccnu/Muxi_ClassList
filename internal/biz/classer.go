@@ -5,12 +5,11 @@ import (
 	log2 "class/internal/logPrinter"
 	"context"
 	"errors"
-	"net/http"
 )
 
 // ClassCrawler 课程爬虫接口
 type ClassCrawler interface {
-	GetClassInfos(ctx context.Context, client *http.Client, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
+	GetClassInfos(ctx context.Context, cookie string, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
 }
 
 type ClassUsercase struct {
@@ -27,7 +26,7 @@ func NewClassUsercase(classRepo *ClassRepo, crawler ClassCrawler, log log2.Loger
 	}
 }
 
-func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, client *http.Client) ([]*Class, error) {
+func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, cookie string) ([]*Class, error) {
 	//var classInfos = make([]*ClassInfo, 0)
 	var Scs = make([]*StudentCourse, 0)
 	var classes = make([]*Class, 0)
@@ -38,7 +37,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 
 		if errors.Is(err, errcode.ErrClassNotFound) {
 
-			classInfos, Scs, err = cluc.Crawler.GetClassInfos(ctx, client, xnm, xqm)
+			classInfos, Scs, err = cluc.Crawler.GetClassInfos(ctx, cookie, xnm, xqm)
 
 			if err != nil {
 				cluc.log.FuncError(cluc.Crawler.GetClassInfos, err)

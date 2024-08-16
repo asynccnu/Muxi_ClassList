@@ -1,0 +1,35 @@
+# yaml 配置
+version: "3.7"
+services:
+  ClassMysql:
+    image: mysql
+    restart: "always"
+    ports:
+      - "13306:3306"
+    # 账号密码
+    environment:
+      MYSQL_ROOT_PASSWORD: "12345678"
+      MYSQL_DATABASE: "MuxiClass"
+    # 文件夹以及文件映射
+    volumes:
+      - "./mysql/data:/var/lib/mysql"
+  ClassRedis:
+    # 镜像版本号
+    image: redis
+    # 端口号
+    ports:
+      - "16379:6379"
+    # 失败后总是重启
+    restart: "always"
+    # 文件夹以及文件映射
+    volumes:
+      - "./redis/data:/data"
+  Muxi_ClassList:
+    image: "Muxi_ClassList:v1"
+    restart: "always"
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+    depends_on:
+      - ClassMysql
+      - ClassRedis

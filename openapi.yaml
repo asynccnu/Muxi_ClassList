@@ -1,0 +1,220 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: Classer API
+    version: 0.0.1
+paths:
+    /class/add:
+        post:
+            tags:
+                - Classer
+            operationId: Classer_AddClass
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/classer.v1.AddClassRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/classer.v1.AddClassResponse'
+    /class/delete/{id}:
+        delete:
+            tags:
+                - Classer
+            operationId: Classer_DeleteClass
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: stuId
+                  in: query
+                  schema:
+                    type: string
+                - name: year
+                  in: query
+                  schema:
+                    type: string
+                - name: semester
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/classer.v1.DeleteClassResponse'
+    /class/get/{week,stu_id,semester,year}:
+        get:
+            tags:
+                - Classer
+            description: Sends a greeting
+            operationId: Classer_GetClass
+            parameters:
+                - name: week,stu_id,semester,year
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: week
+                  in: query
+                  schema:
+                    type: string
+                - name: stuId
+                  in: query
+                  schema:
+                    type: string
+                - name: semester
+                  in: query
+                  schema:
+                    type: string
+                - name: year
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/classer.v1.GetClassResponse'
+    /class/update:
+        put:
+            tags:
+                - Classer
+            operationId: Classer_UpdateClass
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/classer.v1.UpdateClassRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/classer.v1.UpdateClassResponse'
+components:
+    schemas:
+        classer.v1.AddClassRequest:
+            type: object
+            properties:
+                stuId:
+                    type: string
+                name:
+                    type: string
+                durClass:
+                    type: string
+                where:
+                    type: string
+                teacher:
+                    type: string
+                weeks:
+                    type: string
+                semester:
+                    type: string
+                year:
+                    type: string
+                day:
+                    type: string
+                credit:
+                    type: number
+                    format: double
+        classer.v1.AddClassResponse:
+            type: object
+            properties:
+                id:
+                    type: string
+                msg:
+                    type: string
+        classer.v1.Class:
+            type: object
+            properties:
+                info:
+                    $ref: '#/components/schemas/classer.v1.ClassInfo'
+                thisweek:
+                    type: boolean
+        classer.v1.ClassInfo:
+            type: object
+            properties:
+                day:
+                    type: string
+                teacher:
+                    type: string
+                where:
+                    type: string
+                classWhen:
+                    type: string
+                weekDuration:
+                    type: string
+                classname:
+                    type: string
+                credit:
+                    type: number
+                    format: double
+                weeks:
+                    type: string
+                    description: bool add=8;//是否为手动添加
+                semester:
+                    type: string
+                year:
+                    type: string
+                id:
+                    type: string
+        classer.v1.DeleteClassResponse:
+            type: object
+            properties:
+                msg:
+                    type: string
+        classer.v1.GetClassResponse:
+            type: object
+            properties:
+                classes:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/classer.v1.Class'
+        classer.v1.UpdateClassRequest:
+            type: object
+            properties:
+                stuId:
+                    type: string
+                name:
+                    type: string
+                durClass:
+                    type: string
+                where:
+                    type: string
+                teacher:
+                    type: string
+                weeks:
+                    type: string
+                semester:
+                    type: string
+                year:
+                    type: string
+                day:
+                    type: string
+                classId:
+                    type: string
+        classer.v1.UpdateClassResponse:
+            type: object
+            properties:
+                msg:
+                    type: string
+                classId:
+                    type: string
+tags:
+    - name: Classer

@@ -5,7 +5,6 @@ import (
 	"class/internal/biz"
 	"class/internal/errcode"
 	"context"
-	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -23,14 +22,14 @@ func NewClasserService(clu *biz.ClassUsercase) *ClasserService {
 }
 
 func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) (*pb.GetClassResponse, error) {
-	var cli *http.Client //TODO:其他服务给的*http.Client
+	var cookie string //TODO:其他服务给的cookie
 	pclasses := make([]*pb.Class, 0)
 
 	if !CheckSY(req.Semester, req.Year) || req.GetWeek() <= 0 {
 		return &pb.GetClassResponse{}, errcode.ErrParam
 	}
 
-	classes, err := s.Clu.GetClasses(ctx, req.GetStuId(), req.GetWeek(), req.GetYear(), req.GetSemester(), cli)
+	classes, err := s.Clu.GetClasses(ctx, req.GetStuId(), req.GetWeek(), req.GetYear(), req.GetSemester(), cookie)
 	if err != nil {
 		return &pb.GetClassResponse{}, err
 	}

@@ -30,8 +30,8 @@ func NewClassCrawler(logger log.Logger) biz.ClassCrawler {
 }
 
 // GetClassInfos 获取课程信息
-func (c *Crawler) GetClassInfos(ctx context.Context, client *http.Client, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
-
+func (c *Crawler) GetClassInfos(ctx context.Context, cookie string, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
+	client := &http.Client{}
 	var reply CrawReply
 	tmp1 := GetXNM(xnm)
 	tmp2 := GetXQM(xqm)
@@ -42,11 +42,11 @@ func (c *Crawler) GetClassInfos(ctx context.Context, client *http.Client, xnm, x
 		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: Error creating request:%v \n", err)
 		return nil, nil, errcode.ErrCrawler
 	}
+	req.Header.Set("Cookie", cookie) //设置cookie
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
 	req.Header.Set("Connection", "keep-alive")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
-	//req.Header.Set("Cookie", "JSESSIONID=AB63902D520F9FCB33BD3A0E3D9E93DE")
 	req.Header.Set("Origin", "https://xk.ccnu.edu.cn")
 	req.Header.Set("Referer", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151&layout=default")
 	req.Header.Set("Sec-Fetch-Dest", "empty")
