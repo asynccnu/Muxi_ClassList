@@ -27,6 +27,7 @@ var ProviderSet = wire.NewSet(
 	NewStudentAndCourseCacheRepo,
 	NewClassInfoDBRepo,
 	NewClassInfoCacheRepo,
+	NewTransaction,
 )
 
 // Data .

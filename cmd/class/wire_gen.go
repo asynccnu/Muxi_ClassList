@@ -32,12 +32,16 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	client := data.NewRedisDB(confData)
 	classInfoCacheRepo := data.NewClassInfoCacheRepo(client, logerPrinter)
 	classInfoRepo := biz.NewClassInfoRepo(classInfoDBRepo, classInfoCacheRepo)
-	txController := data.NewTxController()
 	db := data.NewDB(confData)
+	dataData, cleanup, err := data.NewData(confData, db, logger)
+	if err != nil {
+		return nil, nil, err
+	}
+	transaction := data.NewTransaction(dataData)
 	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(logerPrinter)
 	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(client, logerPrinter)
 	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
-	classRepo := biz.NewClassRepo(classInfoRepo, txController, db, studentAndCourseRepo, logerPrinter)
+	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logerPrinter)
 	classCrawler := crawler.NewClassCrawler(logger)
 	classUsercase := biz.NewClassUsercase(classRepo, classCrawler, logerPrinter)
 	classerService := service.NewClasserService(classUsercase)
@@ -46,5 +50,6 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
 	app := newApp(logger, grpcServer, httpServer, etcdRegistry)
 	return app, func() {
+		cleanup()
 	}, nil
 }
