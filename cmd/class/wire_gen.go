@@ -8,6 +8,7 @@ package main
 
 import (
 	"class/internal/biz"
+	"class/internal/client"
 	"class/internal/conf"
 	"class/internal/data"
 	"class/internal/logPrinter"
@@ -29,8 +30,8 @@ import (
 func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Registry, logger log.Logger) (*kratos.App, func(), error) {
 	logerPrinter := logPrinter.NewLogger(logger)
 	classInfoDBRepo := data.NewClassInfoDBRepo(logerPrinter)
-	client := data.NewRedisDB(confData)
-	classInfoCacheRepo := data.NewClassInfoCacheRepo(client, logerPrinter)
+	redisClient := data.NewRedisDB(confData)
+	classInfoCacheRepo := data.NewClassInfoCacheRepo(redisClient, logerPrinter)
 	classInfoRepo := biz.NewClassInfoRepo(classInfoDBRepo, classInfoCacheRepo)
 	db := data.NewDB(confData)
 	dataData, cleanup, err := data.NewData(confData, db, logger)
@@ -39,15 +40,20 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	}
 	transaction := data.NewTransaction(dataData)
 	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(logerPrinter)
-	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(client, logerPrinter)
+	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, logerPrinter)
 	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
 	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logerPrinter)
 	classCrawler := crawler.NewClassCrawler(logger)
 	classUsercase := biz.NewClassUsercase(classRepo, classCrawler, logerPrinter)
-	classerService := service.NewClasserService(classUsercase)
+	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
+	ccnuServiceClient, err := client.NewClient(etcdRegistry, logger)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	classerService := service.NewClasserService(classUsercase, ccnuServiceClient)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
 	httpServer := server.NewHTTPServer(confServer, classerService, logger)
-	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
 	app := newApp(logger, grpcServer, httpServer, etcdRegistry)
 	return app, func() {
 		cleanup()

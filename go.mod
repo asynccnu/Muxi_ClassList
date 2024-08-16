@@ -5,6 +5,7 @@ go 1.21
 toolchain go1.22.0
 
 require (
+	github.com/asynccnu/ccnu-service v0.0.0-20240816114719-8cdd1143ceae
 	github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20240725023016-d6fca5e3e984
 	github.com/go-kratos/kratos/v2 v2.8.0
 	github.com/go-redis/redis v6.15.9+incompatible
@@ -20,7 +21,6 @@ require (
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
-	github.com/asynccnu/ccnu-service v0.0.0-20240816114719-8cdd1143ceae // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -36,7 +36,6 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.34.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
