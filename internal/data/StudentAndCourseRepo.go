@@ -6,7 +6,6 @@ import (
 	log "class/internal/logPrinter"
 	"context"
 	"github.com/go-redis/redis"
-	"gorm.io/gorm/clause"
 )
 
 type studentAndCourseDBRepo struct {
@@ -98,9 +97,7 @@ func (s studentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context
 
 	// 处理 StudentCourse
 	for _, sc := range scs {
-		if err := db.Create(sc).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
-			DoNothing: true,
-		}).Error; err != nil {
+		if err := db.FirstOrCreate(sc).Error; err != nil {
 			s.log.FuncError(db.Create, err)
 			return errcode.ErrCourseSave
 		}
@@ -110,9 +107,7 @@ func (s studentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context
 
 func (s studentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc *biz.StudentCourse) error {
 	db := s.data.DB(ctx).Table(biz.StudentCourseTableName).WithContext(ctx)
-	err := db.Create(sc).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
-		DoNothing: true,
-	}).Error
+	err := db.FirstOrCreate(sc).Error
 	if err != nil {
 		s.log.FuncError(db.Create, err)
 		return errcode.ErrClassUpdate

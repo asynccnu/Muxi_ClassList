@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type classInfoDBRepo struct {
@@ -114,9 +113,7 @@ func (c classInfoCacheRepo) UpdateClassInfoInCache(ctx context.Context, key stri
 func (c classInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*biz.ClassInfo) error {
 	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
 	for _, cla := range classInfo {
-		if err := db.Create(cla).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
-			DoNothing: true,
-		}).Error; err != nil {
+		if err := db.FirstOrCreate(cla).Error; err != nil {
 			c.log.FuncError(db.Create, err)
 			return errcode.ErrCourseSave
 
@@ -127,9 +124,7 @@ func (c classInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*bi
 
 func (c classInfoDBRepo) AddClassInfoToDB(ctx context.Context, classInfo *biz.ClassInfo) error {
 	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
-	err := db.Create(classInfo).Clauses(clause.OnConflict{ //如果主键冲突，忽略冲突
-		DoNothing: true,
-	}).Error
+	err := db.FirstOrCreate(classInfo).Error
 	if err != nil {
 		c.log.FuncError(db.Create, err)
 		return errcode.ErrClassUpdate
