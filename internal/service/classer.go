@@ -5,6 +5,7 @@ import (
 	"class/internal/biz"
 	"class/internal/errcode"
 	"context"
+	v1 "github.com/asynccnu/ccnu-service/api/ccnu_service/v1"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,16 +14,22 @@ import (
 type ClasserService struct {
 	pb.UnimplementedClasserServer
 	Clu *biz.ClassUsercase
+	Cs  v1.CCNUServiceClient
 }
 
-func NewClasserService(clu *biz.ClassUsercase) *ClasserService {
+func NewClasserService(clu *biz.ClassUsercase, cs v1.CCNUServiceClient) *ClasserService {
 	return &ClasserService{
 		Clu: clu,
+		Cs:  cs,
 	}
 }
 
 func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) (*pb.GetClassResponse, error) {
-	var cookie string //TODO:其他服务给的cookie
+	var cookie string
+	resp, err := s.Cs.GetCookie(ctx, &v1.GetCookieRequest{
+		Userid: req.GetStuId(),
+	})
+	cookie = resp.Cookie
 	pclasses := make([]*pb.Class, 0)
 
 	if !CheckSY(req.Semester, req.Year) || req.GetWeek() <= 0 {
