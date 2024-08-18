@@ -8,6 +8,8 @@ import (
 )
 
 // ClassCrawler 课程爬虫接口
+//
+//go:generate mockgen -source=./classer.go -destination=./mock/mock_classer_crawler.go -package=mock_biz
 type ClassCrawler interface {
 	GetClassInfos(ctx context.Context, cookie string, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
 }

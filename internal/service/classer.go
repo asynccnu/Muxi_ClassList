@@ -5,19 +5,29 @@ import (
 	"class/internal/biz"
 	"class/internal/errcode"
 	"context"
-	v1 "github.com/asynccnu/ccnu-service/api/ccnu_service/v1"
 	"sort"
 	"strconv"
 	"strings"
 )
 
+//go:generate mockgen -source=./classer.go -destination=./mock/mock_ClassCtrl.go -package=mock_service
+type ClassCtrl interface {
+	GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, cookie string) ([]*biz.Class, error)
+	AddClass(ctx context.Context, stuId string, info *biz.ClassInfo) error
+	DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error
+	SearchClass(ctx context.Context, classId string) (*biz.ClassInfo, error)
+	UpdateClass(ctx context.Context, newClassInfo *biz.ClassInfo, newSc *biz.StudentCourse, stuId, oldClassId, xnm, xqm string) error
+}
+type CCNUServiceProxy interface {
+	GetCookie(ctx context.Context, stu string) (string, error)
+}
 type ClasserService struct {
 	pb.UnimplementedClasserServer
-	Clu *biz.ClassUsercase
-	Cs  v1.CCNUServiceClient
+	Clu ClassCtrl
+	Cs  CCNUServiceProxy
 }
 
-func NewClasserService(clu *biz.ClassUsercase, cs v1.CCNUServiceClient) *ClasserService {
+func NewClasserService(clu ClassCtrl, cs CCNUServiceProxy) *ClasserService {
 	return &ClasserService{
 		Clu: clu,
 		Cs:  cs,
@@ -25,11 +35,10 @@ func NewClasserService(clu *biz.ClassUsercase, cs v1.CCNUServiceClient) *Classer
 }
 
 func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) (*pb.GetClassResponse, error) {
-	var cookie string
-	resp, err := s.Cs.GetCookie(ctx, &v1.GetCookieRequest{
-		Userid: req.GetStuId(),
-	})
-	cookie = resp.Cookie
+	cookie, err := s.Cs.GetCookie(ctx, req.GetStuId())
+	if err != nil {
+		return &pb.GetClassResponse{}, err
+	}
 	pclasses := make([]*pb.Class, 0)
 
 	if !CheckSY(req.Semester, req.Year) || req.GetWeek() <= 0 {

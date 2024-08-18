@@ -1,6 +1,7 @@
 package client
 
 import (
+	"class/internal/errcode"
 	"context"
 	v1 "github.com/asynccnu/ccnu-service/api/ccnu_service/v1"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
@@ -14,6 +15,23 @@ const (
 	CCNU_SERVICE = "discovery:///ccnu_service"
 )
 
+type CCNUService struct {
+	Cs v1.CCNUServiceClient
+}
+
+func NewCCNUService(cs v1.CCNUServiceClient) *CCNUService {
+	return &CCNUService{Cs: cs}
+}
+func (c *CCNUService) GetCookie(ctx context.Context, stu string) (string, error) {
+	resp, err := c.Cs.GetCookie(ctx, &v1.GetCookieRequest{
+		Userid: stu,
+	})
+	if err != nil {
+		return "", errcode.ErrCCNULogin
+	}
+	cookie := resp.Cookie
+	return cookie, nil
+}
 func NewClient(r *etcd.Registry, logger log.Logger) (v1.CCNUServiceClient, error) {
 	conn, err := grpc.DialInsecure(
 		context.Background(),
