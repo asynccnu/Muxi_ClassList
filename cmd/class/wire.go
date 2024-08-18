@@ -12,6 +12,7 @@ import (
 	"class/internal/data"
 	log2 "class/internal/logPrinter"
 	"class/internal/pkg"
+	"class/internal/pkg/crawler"
 	"class/internal/registry"
 	"class/internal/server"
 	"class/internal/service"
@@ -29,5 +30,14 @@ func wireApp(*conf.Server, *conf.Data, *conf.Registry, log.Logger) (*kratos.App,
 		log2.ProviderSet,
 		registry.ProviderSet,
 		service.ProviderSet,
-		client.ProviderSet, newApp))
+		client.ProviderSet,
+		newApp,
+		wire.Bind(new(biz.ClassCrawler), new(*crawler.Crawler)),
+		wire.Bind(new(biz.ClassInfoDBRepo), new(*data.ClassInfoDBRepo)),
+		wire.Bind(new(biz.ClassInfoCacheRepo), new(*data.ClassInfoCacheRepo)),
+		wire.Bind(new(biz.StudentAndCourseDBRepo), new(*data.StudentAndCourseDBRepo)),
+		wire.Bind(new(biz.StudentAndCourseCacheRepo), new(*data.StudentAndCourseCacheRepo)),
+		wire.Bind(new(service.ClassCtrl), new(*biz.ClassUsercase)),
+		wire.Bind(new(service.CCNUServiceProxy), new(*client.CCNUService)),
+	))
 }

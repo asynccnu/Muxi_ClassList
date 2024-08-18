@@ -8,27 +8,27 @@ import (
 	"github.com/go-redis/redis"
 )
 
-type studentAndCourseDBRepo struct {
+type StudentAndCourseDBRepo struct {
 	data *Data
 	log  log.LogerPrinter
 }
-type studentAndCourseCacheRepo struct {
+type StudentAndCourseCacheRepo struct {
 	rdb *redis.Client
 	log log.LogerPrinter
 }
 
-func NewStudentAndCourseDBRepo(log log.LogerPrinter) biz.StudentAndCourseDBRepo {
-	return &studentAndCourseDBRepo{
+func NewStudentAndCourseDBRepo(log log.LogerPrinter) *StudentAndCourseDBRepo {
+	return &StudentAndCourseDBRepo{
 		log: log,
 	}
 }
-func NewStudentAndCourseCacheRepo(rdb *redis.Client, log log.LogerPrinter) biz.StudentAndCourseCacheRepo {
-	return &studentAndCourseCacheRepo{
+func NewStudentAndCourseCacheRepo(rdb *redis.Client, log log.LogerPrinter) *StudentAndCourseCacheRepo {
+	return &StudentAndCourseCacheRepo{
 		rdb: rdb,
 		log: log,
 	}
 }
-func (s studentAndCourseCacheRepo) SaveManyStudentAndCourseToCache(ctx context.Context, key string, classIds []string) error {
+func (s StudentAndCourseCacheRepo) SaveManyStudentAndCourseToCache(ctx context.Context, key string, classIds []string) error {
 	err := s.rdb.Watch(func(tx *redis.Tx) error {
 		// 开始事务
 		_, err := tx.TxPipelined(func(pipe redis.Pipeliner) error {
@@ -58,7 +58,7 @@ func (s studentAndCourseCacheRepo) SaveManyStudentAndCourseToCache(ctx context.C
 
 	return nil
 }
-func (s studentAndCourseCacheRepo) AddStudentAndCourseToCache(ctx context.Context, key string, ClassId string) error {
+func (s StudentAndCourseCacheRepo) AddStudentAndCourseToCache(ctx context.Context, key string, ClassId string) error {
 
 	err := s.rdb.SAdd(key, ClassId).Err()
 	if err != nil {
@@ -74,7 +74,7 @@ func (s studentAndCourseCacheRepo) AddStudentAndCourseToCache(ctx context.Contex
 	return nil
 }
 
-func (s studentAndCourseCacheRepo) GetClassIdsFromCache(ctx context.Context, key string) ([]string, error) {
+func (s StudentAndCourseCacheRepo) GetClassIdsFromCache(ctx context.Context, key string) ([]string, error) {
 	res, err := s.rdb.SMembers(key).Result()
 	if err != nil {
 		s.log.FuncError(s.rdb.SMembers, err)
@@ -83,7 +83,7 @@ func (s studentAndCourseCacheRepo) GetClassIdsFromCache(ctx context.Context, key
 	return res, nil
 }
 
-func (s studentAndCourseCacheRepo) DeleteStudentAndCourseFromCache(ctx context.Context, key string, ClassId string) error {
+func (s StudentAndCourseCacheRepo) DeleteStudentAndCourseFromCache(ctx context.Context, key string, ClassId string) error {
 	_, err := s.rdb.SRem(key, ClassId).Result()
 	if err != nil {
 		s.log.FuncError(s.rdb.SRem, err)
@@ -92,7 +92,7 @@ func (s studentAndCourseCacheRepo) DeleteStudentAndCourseFromCache(ctx context.C
 	return nil
 }
 
-func (s studentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context, scs []*biz.StudentCourse) error {
+func (s StudentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context, scs []*biz.StudentCourse) error {
 	db := s.data.DB(ctx).Table(biz.StudentCourseTableName).WithContext(ctx)
 
 	// 处理 StudentCourse
@@ -105,7 +105,7 @@ func (s studentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context
 	return nil
 }
 
-func (s studentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc *biz.StudentCourse) error {
+func (s StudentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc *biz.StudentCourse) error {
 	db := s.data.DB(ctx).Table(biz.StudentCourseTableName).WithContext(ctx)
 	err := db.FirstOrCreate(sc).Error
 	if err != nil {
@@ -115,7 +115,7 @@ func (s studentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc
 	return nil
 }
 
-func (s studentAndCourseDBRepo) GetClassIDsFromSCInDB(ctx context.Context, stuId, xnm, xqm string) ([]string, error) {
+func (s StudentAndCourseDBRepo) GetClassIDsFromSCInDB(ctx context.Context, stuId, xnm, xqm string) ([]string, error) {
 	var classIds []string
 	db := s.data.Mysql.Table(biz.StudentCourseTableName).WithContext(ctx)
 	err := db.Where("stu_id = ? AND year = ? AND semester", stuId, xnm, xqm).
@@ -124,7 +124,7 @@ func (s studentAndCourseDBRepo) GetClassIDsFromSCInDB(ctx context.Context, stuId
 	return classIds, err
 }
 
-func (s studentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Context, ID string) error {
+func (s StudentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Context, ID string) error {
 	db := s.data.DB(ctx).Table(biz.StudentCourseTableName).WithContext(ctx)
 	err := db.Where("id =?", ID).Delete(&biz.StudentCourse{}).Error
 	if err != nil {

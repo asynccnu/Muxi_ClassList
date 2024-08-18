@@ -13,4 +13,5 @@ var (
 	ErrCourseSave    = errors.New(302, v1.ErrorReason_DB_SAVEERROR.String(), "课程保存失败")
 	ErrClassDelete   = errors.New(303, v1.ErrorReason_DB_DELETEERROR.String(), "课程删除失败")
 	ErrCrawler       = errors.New(304, v1.ErrorReason_Crawler_Error.String(), "爬取课表失败")
+	ErrCCNULogin     = errors.New(305, v1.ErrorReason_CCNULogin_Error.String(), "请求ccnu一站式登录服务错误")
 )

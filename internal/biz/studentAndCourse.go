@@ -2,12 +2,14 @@ package biz
 
 import "context"
 
+//go:generate mockgen -source=./studentAndCourse.go -destination=./mock/mock_studentAndCourse.go -package=mock_biz
 type StudentAndCourseDBRepo interface {
 	SaveManyStudentAndCourseToDB(ctx context.Context, scs []*StudentCourse) error
 	SaveStudentAndCourseToDB(ctx context.Context, sc *StudentCourse) error
 	GetClassIDsFromSCInDB(ctx context.Context, stuId, xnm, xqm string) ([]string, error)
 	DeleteStudentAndCourseInDB(ctx context.Context, ID string) error
 }
+
 type StudentAndCourseCacheRepo interface {
 	SaveManyStudentAndCourseToCache(ctx context.Context, key string, classIds []string) error
 	AddStudentAndCourseToCache(ctx context.Context, key string, ClassId string) error

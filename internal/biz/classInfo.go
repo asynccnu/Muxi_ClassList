@@ -2,6 +2,8 @@ package biz
 
 import "context"
 
+//go:generate mockgen -source=./classInfo.go -destination=./mock/mock_classInfo.go -package=mock_biz
+
 type ClassInfoDBRepo interface {
 	SaveClassInfosToDB(ctx context.Context, classInfo []*ClassInfo) error
 	AddClassInfoToDB(ctx context.Context, classInfo *ClassInfo) error
@@ -9,6 +11,7 @@ type ClassInfoDBRepo interface {
 	DeleteClassInfoInDB(ctx context.Context, ID string) error
 	//UpdateClassInfoInDB(ctx context.Context, tx *gorm.DB, classInfo *ClassInfo) error
 }
+
 type ClassInfoCacheRepo interface {
 	SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*ClassInfo) error
 	AddClassInfoToCache(ctx context.Context, key string, classInfo *ClassInfo) error

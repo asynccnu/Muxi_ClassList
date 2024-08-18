@@ -43,15 +43,16 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, logerPrinter)
 	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
 	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logerPrinter)
-	classCrawler := crawler.NewClassCrawler(logger)
-	classUsercase := biz.NewClassUsercase(classRepo, classCrawler, logerPrinter)
+	crawlerCrawler := crawler.NewClassCrawler(logger)
+	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, logerPrinter)
 	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
 	ccnuServiceClient, err := client.NewClient(etcdRegistry, logger)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	classerService := service.NewClasserService(classUsercase, ccnuServiceClient)
+	ccnuService := client.NewCCNUService(ccnuServiceClient)
+	classerService := service.NewClasserService(classUsercase, ccnuService)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
 	httpServer := server.NewHTTPServer(confServer, classerService, logger)
 	app := newApp(logger, grpcServer, httpServer, etcdRegistry)

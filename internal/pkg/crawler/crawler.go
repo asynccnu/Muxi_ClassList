@@ -20,18 +20,20 @@ var mp = map[string]string{
 }
 
 type Crawler struct {
-	log *log.Helper
+	log    *log.Helper
+	client *http.Client
 }
 
-func NewClassCrawler(logger log.Logger) biz.ClassCrawler {
+func NewClassCrawler(logger log.Logger) *Crawler {
 	return &Crawler{
-		log: log.NewHelper(logger),
+		log:    log.NewHelper(logger),
+		client: &http.Client{},
 	}
 }
 
 // GetClassInfos 获取课程信息
 func (c *Crawler) GetClassInfos(ctx context.Context, cookie string, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
-	client := &http.Client{}
+
 	var reply CrawReply
 	tmp1 := GetXNM(xnm)
 	tmp2 := GetXQM(xqm)
@@ -57,7 +59,7 @@ func (c *Crawler) GetClassInfos(ctx context.Context, cookie string, xnm, xqm str
 	req.Header.Set("sec-ch-ua", `"Microsoft Edge";v="123", "Not:A-Brand";v="8", "Chromium";v="123"`)
 	req.Header.Set("sec-ch-ua-mobile", "?0")
 	req.Header.Set("sec-ch-ua-platform", `"Windows"`)
-	resp, err := client.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: client.Do(req) failed: %v\n", err)
 		return nil, nil, errcode.ErrCrawler
