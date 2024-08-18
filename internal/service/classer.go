@@ -4,13 +4,11 @@ import (
 	pb "class/api/classer/v1"
 	"class/internal/biz"
 	"class/internal/errcode"
+	"class/internal/pkg/tool"
 	"context"
-	"sort"
-	"strconv"
-	"strings"
 )
 
-//go:generate mockgen -source=./classer.go -destination=./mock/mock_ClassCtrl.go -package=mock_service
+//go:generate mockgen -source=./classer.go -destination=./mock/mock_classer.go -package=mock_service
 type ClassCtrl interface {
 	GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, cookie string) ([]*biz.Class, error)
 	AddClass(ctx context.Context, stuId string, info *biz.ClassInfo) error
@@ -41,7 +39,7 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 	}
 	pclasses := make([]*pb.Class, 0)
 
-	if !CheckSY(req.Semester, req.Year) || req.GetWeek() <= 0 {
+	if !tool.CheckSY(req.Semester, req.Year) || req.GetWeek() <= 0 {
 		return &pb.GetClassResponse{}, errcode.ErrParam
 	}
 
@@ -62,10 +60,10 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 	}, nil
 }
 func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) (*pb.AddClassResponse, error) {
-	if !CheckSY(req.Semester, req.Year) || req.GetWeeks() <= 0 {
+	if !tool.CheckSY(req.Semester, req.Year) || req.GetWeeks() <= 0 {
 		return &pb.AddClassResponse{}, errcode.ErrParam
 	}
-	weekDur := FormatWeeks(ParseWeeks(req.Weeks))
+	weekDur := tool.FormatWeeks(tool.ParseWeeks(req.Weeks))
 	var classInfo = &biz.ClassInfo{
 		Day:          req.GetDay(),
 		Teacher:      req.GetTeacher(),
@@ -99,10 +97,10 @@ func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassReq
 	}, nil
 }
 func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassRequest) (*pb.UpdateClassResponse, error) {
-	if !CheckSY(req.Semester, req.GetYear()) || req.GetWeeks() <= 0 {
+	if !tool.CheckSY(req.Semester, req.GetYear()) || req.GetWeeks() <= 0 {
 		return &pb.UpdateClassResponse{}, errcode.ErrParam
 	}
-	weekDur := FormatWeeks(ParseWeeks(req.GetWeeks()))
+	weekDur := tool.FormatWeeks(tool.ParseWeeks(req.GetWeeks()))
 	oldclassInfo, err := s.Clu.SearchClass(ctx, req.GetClassId())
 	if err != nil {
 		return &pb.UpdateClassResponse{
@@ -136,21 +134,6 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 		Msg:     "成功修改",
 	}, nil
 }
-func CheckSY(semester, year string) bool {
-
-	var tag1, tag2 bool
-	y, err := strconv.Atoi(year)
-	if err != nil || y < 2006 {
-		tag1 = false
-	}
-	if semester == "1" || semester == "2" || semester == "3" {
-		tag2 = true
-	} else {
-		tag2 = false
-	}
-	return tag1 && tag2
-
-}
 func HandleClass(info *biz.ClassInfo) *pb.ClassInfo {
 	return &pb.ClassInfo{
 		Day:          info.Day,
@@ -165,73 +148,4 @@ func HandleClass(info *biz.ClassInfo) *pb.ClassInfo {
 		Semester:     info.Semester,
 		Year:         info.Year,
 	}
-}
-func ParseWeeks(weeks int64) []int {
-	if weeks <= 0 {
-		return []int{}
-	}
-	var weeksList []int
-	for i := 1; (1 << (i - 1)) <= weeks; i++ {
-		if weeks&(1<<(i-1)) != 0 {
-			weeksList = append(weeksList, i)
-		}
-	}
-	return weeksList
-}
-func FormatWeeks(weeks []int) string {
-	if len(weeks) == 0 {
-		return ""
-	}
-
-	// 对周数集合排序
-	sort.Ints(weeks)
-
-	var result strings.Builder
-	start := weeks[0]
-	end := start
-	isSingle := start%2 != 0
-	isMixed := false
-
-	// 检查是否是单周、双周还是混合
-	for _, week := range weeks {
-		if (week%2 == 0) != !isSingle {
-			isMixed = true
-		}
-	}
-
-	// 遍历周数集合，生成格式化字符串
-	for i := 1; i < len(weeks); i++ {
-		if weeks[i] == end+1 {
-			end = weeks[i]
-		} else {
-			if start == end {
-				result.WriteString(strconv.Itoa(start))
-			} else {
-				result.WriteString(strconv.Itoa(start) + "-" + strconv.Itoa(end))
-			}
-			result.WriteString(",")
-			start = weeks[i]
-			end = start
-		}
-	}
-
-	// 处理最后一段区间
-	if start == end {
-		result.WriteString(strconv.Itoa(start))
-	} else {
-		result.WriteString(strconv.Itoa(start) + "-" + strconv.Itoa(end))
-	}
-
-	// 添加 "(单)" 或 "(双)" 标识
-	if !isMixed {
-		if isSingle {
-			result.WriteString("周(单)")
-		} else {
-			result.WriteString("周(双)")
-		}
-	} else {
-		result.WriteString("周")
-	}
-
-	return result.String()
 }
