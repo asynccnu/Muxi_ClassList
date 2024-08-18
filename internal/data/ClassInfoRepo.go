@@ -21,9 +21,10 @@ type ClassInfoCacheRepo struct {
 	log log.LogerPrinter
 }
 
-func NewClassInfoDBRepo(log log.LogerPrinter) *ClassInfoDBRepo {
+func NewClassInfoDBRepo(data *Data, log log.LogerPrinter) *ClassInfoDBRepo {
 	return &ClassInfoDBRepo{
-		log: log,
+		log:  log,
+		data: data,
 	}
 }
 func NewClassInfoCacheRepo(rdb *redis.Client, log log.LogerPrinter) *ClassInfoCacheRepo {

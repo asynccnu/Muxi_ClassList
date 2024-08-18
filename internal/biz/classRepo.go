@@ -70,12 +70,19 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, stuId, xnm, xqm string) 
 	if err != nil || len(claIds) == 0 {
 		cla.log.FuncError(cla.Sac.Cache.GetClassIdsFromCache, err)
 		claIds, err = cla.Sac.DB.GetClassIDsFromSCInDB(ctx, stuId, xnm, xqm)
-		if err != nil {
+		if len(claIds) == 0 {
 			cla.log.FuncError(cla.Sac.DB.GetClassIDsFromSCInDB, err)
 			return nil, errcode.ErrClassNotFound
 		}
+		if err != nil {
+			cla.log.FuncError(cla.Sac.DB.GetClassIDsFromSCInDB, err)
+			return nil, errcode.ErrClassFound
+		}
 		go func() {
 			//缓存获取失败的话就再次去缓存
+			if claIds == nil {
+				return
+			}
 			err := cla.Sac.Cache.SaveManyStudentAndCourseToCache(ctx, key1, claIds)
 			if err != nil {
 				cla.log.FuncError(cla.Sac.Cache.SaveManyStudentAndCourseToCache, err)

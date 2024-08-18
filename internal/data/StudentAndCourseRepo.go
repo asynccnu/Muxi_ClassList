@@ -17,9 +17,10 @@ type StudentAndCourseCacheRepo struct {
 	log log.LogerPrinter
 }
 
-func NewStudentAndCourseDBRepo(log log.LogerPrinter) *StudentAndCourseDBRepo {
+func NewStudentAndCourseDBRepo(data *Data, log log.LogerPrinter) *StudentAndCourseDBRepo {
 	return &StudentAndCourseDBRepo{
-		log: log,
+		log:  log,
+		data: data,
 	}
 }
 func NewStudentAndCourseCacheRepo(rdb *redis.Client, log log.LogerPrinter) *StudentAndCourseCacheRepo {

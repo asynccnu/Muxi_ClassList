@@ -13,14 +13,21 @@ import (
 type ClassCrawler interface {
 	GetClassInfos(ctx context.Context, cookie string, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
 }
-
+type ClassRepoProxy interface {
+	SaveClasses(ctx context.Context, stuId, xnm, xqm string, claInfos []*ClassInfo, scs []*StudentCourse) error
+	GetAllClasses(ctx context.Context, stuId, xnm, xqm string) ([]*ClassInfo, error)
+	GetSpecificClassInfo(ctx context.Context, classId string) (*ClassInfo, error)
+	AddClass(ctx context.Context, classInfo *ClassInfo, sc *StudentCourse, xnm, xqm string) error
+	DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error
+	UpdateClass(ctx context.Context, newClassInfo *ClassInfo, newSc *StudentCourse, stuId, oldClassId, xnm, xqm string) error
+}
 type ClassUsercase struct {
-	ClassRepo *ClassRepo
+	ClassRepo ClassRepoProxy
 	Crawler   ClassCrawler
 	log       log2.LogerPrinter
 }
 
-func NewClassUsercase(classRepo *ClassRepo, crawler ClassCrawler, log log2.LogerPrinter) *ClassUsercase {
+func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, log log2.LogerPrinter) *ClassUsercase {
 	return &ClassUsercase{
 		ClassRepo: classRepo,
 		Crawler:   crawler,
@@ -45,7 +52,11 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 				cluc.log.FuncError(cluc.Crawler.GetClassInfos, err)
 				return nil, err
 			}
-
+			err = cluc.ClassRepo.SaveClasses(ctx, StuId, xnm, xqm, classInfos, Scs)
+			if err != nil {
+				cluc.log.FuncError(cluc.ClassRepo.SaveClasses, err)
+				return nil, err
+			}
 			go func() {
 				err := cluc.ClassRepo.SaveClasses(ctx, StuId, xnm, xqm, classInfos, Scs)
 				if err != nil {
@@ -53,7 +64,6 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 				}
 			}()
 		}
-		return nil, err
 	}
 
 	for _, classInfo := range classInfos {
