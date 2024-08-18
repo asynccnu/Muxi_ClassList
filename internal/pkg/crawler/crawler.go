@@ -3,10 +3,11 @@ package crawler
 import (
 	"class/internal/biz"
 	"class/internal/errcode"
+	"class/internal/logPrinter"
+	"class/internal/pkg/tool"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-kratos/kratos/v2/log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,28 +21,31 @@ var mp = map[string]string{
 }
 
 type Crawler struct {
-	log    *log.Helper
-	client *http.Client
+	logPrinter logPrinter.LogerPrinter
+	client     *http.Client
 }
 
-func NewClassCrawler(logger log.Logger) *Crawler {
+func NewClassCrawler(logPrinter logPrinter.LogerPrinter) *Crawler {
 	return &Crawler{
-		log:    log.NewHelper(logger),
-		client: &http.Client{},
+		logPrinter: logPrinter,
+		client:     &http.Client{},
 	}
 }
 
 // GetClassInfos 获取课程信息
 func (c *Crawler) GetClassInfos(ctx context.Context, cookie string, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
-
 	var reply CrawReply
+	yn := tool.CheckSY(xqm, xnm)
+	if !yn {
+		return nil, nil, errcode.ErrParam
+	}
 	tmp1 := GetXNM(xnm)
 	tmp2 := GetXQM(xqm)
 	formdata := fmt.Sprintf("xnm=%s&xqm=%s&kzlx=ck&xsdm=", tmp1, tmp2)
 	var data = strings.NewReader(formdata)
 	req, err := http.NewRequest("POST", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N2151", data)
 	if err != nil {
-		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: Error creating request:%v \n", err)
+		c.logPrinter.FuncError(http.NewRequest, err)
 		return nil, nil, errcode.ErrCrawler
 	}
 	req.Header.Set("Cookie", cookie) //设置cookie
@@ -61,19 +65,19 @@ func (c *Crawler) GetClassInfos(ctx context.Context, cookie string, xnm, xqm str
 	req.Header.Set("sec-ch-ua-platform", `"Windows"`)
 	resp, err := c.client.Do(req)
 	if err != nil {
-		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: client.Do(req) failed: %v\n", err)
+		c.logPrinter.FuncError(c.client.Do, err)
 		return nil, nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
-		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: json.NewDecoder(resp.Body).Decode(&reply):%v\n", err)
+		c.logPrinter.FuncError(json.NewDecoder(resp.Body).Decode, err)
 		return nil, nil, errcode.ErrCrawler
 	}
 	infos, Scs, err := ToClassInfo(reply, xnm, xqm)
 	if err != nil {
-		c.log.Errorf("pkg/crawler/crawler.go/GetAllClasses: ToClassInfo(reply, xnm, xqm):%v\n", err)
+		c.logPrinter.FuncError(ToClassInfo, err)
 		return nil, nil, errcode.ErrCrawler
 	}
 	return infos, Scs, nil
@@ -97,7 +101,6 @@ func ToClassInfo(reply CrawReply, xnm, xqm string) ([]*biz.ClassInfo, []*biz.Stu
 		info.Weeks = 0
 		info.Semester = xqm //学期
 		info.Year = xnm     //学年
-		info.UpdateID()     //课程ID
 		//添加周数
 		weeks, err := ParseWeeks(v.Zcd)
 		if err != nil {
@@ -106,6 +109,7 @@ func ToClassInfo(reply CrawReply, xnm, xqm string) ([]*biz.ClassInfo, []*biz.Stu
 		for _, week := range weeks {
 			info.AddWeek(week)
 		}
+		info.UpdateID() //课程ID
 		//-----------------------------------------------------
 		//学生与课程的映射关系
 		Sc := &biz.StudentCourse{
@@ -121,6 +125,7 @@ func ToClassInfo(reply CrawReply, xnm, xqm string) ([]*biz.ClassInfo, []*biz.Stu
 	}
 	return infos, Scs, nil
 }
+
 func GetXNM(s string) string {
 	// // 定义正则表达式模式
 	// re := regexp.MustCompile(`^(\d{4})-\d{4}$`)

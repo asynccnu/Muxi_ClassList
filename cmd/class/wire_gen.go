@@ -43,7 +43,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, logerPrinter)
 	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
 	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logerPrinter)
-	crawlerCrawler := crawler.NewClassCrawler(logger)
+	crawlerCrawler := crawler.NewClassCrawler(logerPrinter)
 	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, logerPrinter)
 	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
 	ccnuServiceClient, err := client.NewClient(etcdRegistry, logger)

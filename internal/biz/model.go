@@ -74,13 +74,6 @@ func (ci *ClassInfo) AddWeek(week int64) {
 func (ci *ClassInfo) SearchWeek(week int64) bool {
 	return (ci.Weeks & (1<<week - 1)) == 1
 }
-func (ci *ClassInfo) GetStartAndEndFromClassWhen() (int64, int64) {
-	var start, end int64
-	if _, err := fmt.Sscanf(ci.ClassWhen, "%d-%d", &start, &end); err == nil {
-		return start, end
-	}
-	return -1, -1
-}
 func (ci *ClassInfo) UpdateID() {
 	ci.ID = fmt.Sprintf("Class:%s:%s:%s:%d:%s:%s:%s:%d", ci.Classname, ci.Year, ci.Semester, ci.Day, ci.ClassWhen, ci.Teacher, ci.Where, ci.Weeks)
 }
