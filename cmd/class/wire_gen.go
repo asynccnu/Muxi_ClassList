@@ -28,18 +28,18 @@ import (
 
 // wireApp init kratos application.
 func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Registry, logger log.Logger) (*kratos.App, func(), error) {
-	logerPrinter := logPrinter.NewLogger(logger)
-	classInfoDBRepo := data.NewClassInfoDBRepo(logerPrinter)
-	redisClient := data.NewRedisDB(confData)
-	classInfoCacheRepo := data.NewClassInfoCacheRepo(redisClient, logerPrinter)
-	classInfoRepo := biz.NewClassInfoRepo(classInfoDBRepo, classInfoCacheRepo)
 	db := data.NewDB(confData)
 	dataData, cleanup, err := data.NewData(confData, db, logger)
 	if err != nil {
 		return nil, nil, err
 	}
+	logerPrinter := logPrinter.NewLogger(logger)
+	classInfoDBRepo := data.NewClassInfoDBRepo(dataData, logerPrinter)
+	redisClient := data.NewRedisDB(confData)
+	classInfoCacheRepo := data.NewClassInfoCacheRepo(redisClient, logerPrinter)
+	classInfoRepo := biz.NewClassInfoRepo(classInfoDBRepo, classInfoCacheRepo)
 	transaction := data.NewTransaction(dataData)
-	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(logerPrinter)
+	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(dataData, logerPrinter)
 	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, logerPrinter)
 	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
 	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logerPrinter)
