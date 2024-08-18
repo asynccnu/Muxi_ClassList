@@ -3,6 +3,7 @@ package server
 import (
 	v1 "class/api/classer/v1"
 	"class/internal/conf"
+	"class/internal/metrics"
 	"class/internal/service"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -15,6 +16,8 @@ func NewGRPCServer(c *conf.Server, greeter *service.ClasserService, logger log.L
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
 			recovery.Recovery(),
+			metrics.QPSMiddleware(),
+			metrics.DelayMiddleware(),
 		),
 	}
 	if c.Grpc.Network != "" {

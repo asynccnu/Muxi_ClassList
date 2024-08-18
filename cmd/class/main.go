@@ -1,8 +1,10 @@
 package main
 
 import (
+	"class/internal/metrics"
 	"flag"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
+	"github.com/prometheus/client_golang/prometheus"
 	"os"
 
 	"class/internal/conf"
@@ -31,6 +33,7 @@ var (
 )
 
 func init() {
+	prometheus.MustRegister(metrics.Counter, metrics.Summary)
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 

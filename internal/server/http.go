@@ -3,8 +3,10 @@ package server
 import (
 	v1 "class/api/classer/v1"
 	"class/internal/conf"
+	"class/internal/metrics"
 	"class/internal/pkg/encoder"
 	"class/internal/service"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
@@ -16,6 +18,8 @@ func NewHTTPServer(c *conf.Server, greeter *service.ClasserService, logger log.L
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
+			metrics.QPSMiddleware(),
+			metrics.DelayMiddleware(),
 		),
 		http.ResponseEncoder(encoder.RespEncoder), // Notice: 将响应格式化
 	}
@@ -29,6 +33,7 @@ func NewHTTPServer(c *conf.Server, greeter *service.ClasserService, logger log.L
 		opts = append(opts, http.Timeout(c.Http.Timeout.AsDuration()))
 	}
 	srv := http.NewServer(opts...)
+	srv.Handle("/metrics", promhttp.Handler())
 	v1.RegisterClasserHTTPServer(srv, greeter)
 	return srv
 }
