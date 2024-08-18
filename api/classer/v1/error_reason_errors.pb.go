@@ -94,3 +94,15 @@ func IsCrawlerError(err error) bool {
 func ErrorCrawlerError(format string, args ...interface{}) *errors.Error {
 	return errors.New(304, ErrorReason_Crawler_Error.String(), fmt.Sprintf(format, args...))
 }
+
+func IsCCNULoginError(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_CCNULogin_Error.String() && e.Code == 305
+}
+
+func ErrorCCNULoginError(format string, args ...interface{}) *errors.Error {
+	return errors.New(305, ErrorReason_CCNULogin_Error.String(), fmt.Sprintf(format, args...))
+}

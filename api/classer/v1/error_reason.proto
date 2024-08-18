@@ -19,4 +19,5 @@ enum ErrorReason {
   DB_SAVEERROR = 4 [(errors.code) = 302];
   DB_DELETEERROR = 5 [(errors.code) = 303];
   Crawler_Error = 6 [(errors.code) = 304];
+  CCNULogin_Error = 7 [(errors.code) = 305];
 }
