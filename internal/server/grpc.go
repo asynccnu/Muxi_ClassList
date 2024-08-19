@@ -5,6 +5,7 @@ import (
 	"class/internal/conf"
 	"class/internal/metrics"
 	"class/internal/service"
+	"github.com/go-kratos/kratos/v2/middleware/validate"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
@@ -18,6 +19,7 @@ func NewGRPCServer(c *conf.Server, greeter *service.ClasserService, logger log.L
 			recovery.Recovery(),
 			metrics.QPSMiddleware(),
 			metrics.DelayMiddleware(),
+			validate.Validator(),
 		),
 	}
 	if c.Grpc.Network != "" {

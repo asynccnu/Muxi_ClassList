@@ -34,9 +34,9 @@ type ClasserHTTPServer interface {
 
 func RegisterClasserHTTPServer(s *http.Server, srv ClasserHTTPServer) {
 	r := s.Route("/")
-	r.GET("/class/get/{week:,stu_id,semester,year}", _Classer_GetClass0_HTTP_Handler(srv))
+	r.GET("/class/get/{stu_id}/{year}/{semester}/{week}", _Classer_GetClass0_HTTP_Handler(srv))
 	r.POST("/class/add", _Classer_AddClass0_HTTP_Handler(srv))
-	r.DELETE("/class/delete/{id}", _Classer_DeleteClass0_HTTP_Handler(srv))
+	r.DELETE("/class/delete/{stuId}/{year}/{semester}/{id}", _Classer_DeleteClass0_HTTP_Handler(srv))
 	r.PUT("/class/update", _Classer_UpdateClass0_HTTP_Handler(srv))
 }
 
@@ -158,7 +158,7 @@ func (c *ClasserHTTPClientImpl) AddClass(ctx context.Context, in *AddClassReques
 
 func (c *ClasserHTTPClientImpl) DeleteClass(ctx context.Context, in *DeleteClassRequest, opts ...http.CallOption) (*DeleteClassResponse, error) {
 	var out DeleteClassResponse
-	pattern := "/class/delete/{id}"
+	pattern := "/class/delete/{stuId}/{year}/{semester}/{id}"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationClasserDeleteClass))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -171,7 +171,7 @@ func (c *ClasserHTTPClientImpl) DeleteClass(ctx context.Context, in *DeleteClass
 
 func (c *ClasserHTTPClientImpl) GetClass(ctx context.Context, in *GetClassRequest, opts ...http.CallOption) (*GetClassResponse, error) {
 	var out GetClassResponse
-	pattern := "/class/get/{week:,stu_id,semester,year}"
+	pattern := "/class/get/{stu_id}/{year}/{semester}/{week}"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationClasserGetClass))
 	opts = append(opts, http.PathTemplate(pattern))

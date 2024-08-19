@@ -6,6 +6,7 @@ import (
 	"class/internal/metrics"
 	"class/internal/pkg/encoder"
 	"class/internal/service"
+	"github.com/go-kratos/kratos/v2/middleware/validate"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -20,6 +21,7 @@ func NewHTTPServer(c *conf.Server, greeter *service.ClasserService, logger log.L
 			recovery.Recovery(),
 			metrics.QPSMiddleware(),
 			metrics.DelayMiddleware(),
+			validate.Validator(),
 		),
 		http.ResponseEncoder(encoder.RespEncoder), // Notice: 将响应格式化
 	}

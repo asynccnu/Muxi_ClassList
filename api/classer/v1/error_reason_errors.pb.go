@@ -106,3 +106,15 @@ func IsCCNULoginError(err error) bool {
 func ErrorCCNULoginError(format string, args ...interface{}) *errors.Error {
 	return errors.New(305, ErrorReason_CCNULogin_Error.String(), fmt.Sprintf(format, args...))
 }
+
+func IsScidnotexistErroe(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_SCIDNOTEXIST_Erroe.String() && e.Code == 306
+}
+
+func ErrorScidnotexistErroe(format string, args ...interface{}) *errors.Error {
+	return errors.New(306, ErrorReason_SCIDNOTEXIST_Erroe.String(), fmt.Sprintf(format, args...))
+}
