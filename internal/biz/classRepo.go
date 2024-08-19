@@ -178,12 +178,7 @@ func (cla ClassRepo) AddClass(ctx context.Context, classInfo *ClassInfo, sc *Stu
 }
 func (cla ClassRepo) DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error {
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
-		err := cla.ClaRepo.DB.DeleteClassInfoInDB(ctx, classId)
-		if err != nil {
-			cla.log.FuncError(cla.ClaRepo.DB.DeleteClassInfoInDB, err)
-			return errcode.ErrClassDelete
-		}
-		err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, GenerateSCID(stuId, classId, xnm, xqm))
+		err := cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, GenerateSCID(stuId, classId, xnm, xqm))
 		if err != nil {
 			cla.log.FuncError(cla.Sac.DB.DeleteStudentAndCourseInDB, err)
 			return errcode.ErrClassDelete
@@ -194,14 +189,14 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, classId string, stuId stri
 		return errTx
 	}
 
-	//删除缓存
-	err := cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, classId)
-	if err != nil {
-		cla.log.FuncError(cla.ClaRepo.Cache.DeleteClassInfoFromCache, err)
-		return errcode.ErrClassDelete
-	}
+	////删除缓存
+	//err := cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, classId)
+	//if err != nil {
+	//	cla.log.FuncError(cla.ClaRepo.Cache.DeleteClassInfoFromCache, err)
+	//	return errcode.ErrClassDelete
+	//}
 	key := GenerateSetName(stuId, xnm, xqm)
-	err = cla.Sac.Cache.DeleteStudentAndCourseFromCache(ctx, key, classId)
+	err := cla.Sac.Cache.DeleteStudentAndCourseFromCache(ctx, key, classId)
 	if err != nil {
 		cla.log.FuncError(cla.Sac.Cache.DeleteStudentAndCourseFromCache, err)
 		return errcode.ErrClassDelete
@@ -250,8 +245,16 @@ func (cla ClassRepo) UpdateClass(ctx context.Context, newClassInfo *ClassInfo, n
 		}
 	}()
 	return nil
-
 }
+func (cla ClassRepo) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool {
+	key := GenerateSetName(stuId, xnm, xqm)
+	exist, err := cla.Sac.Cache.CheckExists(ctx, key, classId)
+	if err == nil {
+		return exist
+	}
+	return cla.Sac.DB.CheckExists(ctx, xnm, xqm, stuId, classId)
+}
+
 func GenerateSetName(stuId, xnm, xqm string) string {
 	return fmt.Sprintf("StuAndCla:%s:%s:%s", stuId, xnm, xqm)
 }

@@ -151,3 +151,30 @@ func TestParseWeeks(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckIfThisWeek(t *testing.T) {
+	type args struct {
+		xnm string
+		xqm string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{"test1", args{"2023", "3"}, false},
+		{"test2", args{"2023", "1"}, true},
+		{"test3", args{"2024", "1"}, false},
+		{"test4", args{"2024", "2"}, false},
+		{"test5", args{"2026", "1"}, false},
+		{"test6", args{"2026", "2"}, false},
+		{"test7", args{"2026", "3"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CheckIfThisWeek(tt.args.xnm, tt.args.xqm); got != tt.want {
+				t.Errorf("CheckIfThisWeek() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

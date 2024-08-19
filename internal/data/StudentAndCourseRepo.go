@@ -5,7 +5,9 @@ import (
 	"class/internal/errcode"
 	log "class/internal/logPrinter"
 	"context"
+	"errors"
 	"github.com/go-redis/redis"
+	"gorm.io/gorm"
 )
 
 type StudentAndCourseDBRepo struct {
@@ -92,7 +94,14 @@ func (s StudentAndCourseCacheRepo) DeleteStudentAndCourseFromCache(ctx context.C
 	}
 	return nil
 }
-
+func (s StudentAndCourseCacheRepo) CheckExists(ctx context.Context, key string, classId string) (bool, error) {
+	exists, err := s.rdb.SIsMember(key, classId).Result()
+	if err != nil {
+		s.log.FuncError(s.rdb.SIsMember, err)
+		return false, err
+	}
+	return exists, nil
+}
 func (s StudentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context, scs []*biz.StudentCourse) error {
 	db := s.data.DB(ctx).Table(biz.StudentCourseTableName).WithContext(ctx)
 
@@ -133,4 +142,13 @@ func (s StudentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Context, 
 		return errcode.ErrClassDelete
 	}
 	return nil
+}
+func (s StudentAndCourseDBRepo) CheckExists(ctx context.Context, xnm, xqm, stuId, classId string) bool {
+	db := s.data.Mysql.Table(biz.StudentCourseTableName).WithContext(ctx)
+	err := db.Where("stu_id = ? AND cla_id = ? AND year = ? AND semester", stuId, classId, xnm, xqm).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false
+	} else {
+		return true
+	}
 }

@@ -52,7 +52,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 		return nil, nil, err
 	}
 	ccnuService := client.NewCCNUService(ccnuServiceClient)
-	classerService := service.NewClasserService(classUsercase, ccnuService)
+	classerService := service.NewClasserService(classUsercase, ccnuService, logerPrinter)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
 	httpServer := server.NewHTTPServer(confServer, classerService, logger)
 	app := newApp(logger, grpcServer, httpServer, etcdRegistry)

@@ -8,6 +8,7 @@ type StudentAndCourseDBRepo interface {
 	SaveStudentAndCourseToDB(ctx context.Context, sc *StudentCourse) error
 	GetClassIDsFromSCInDB(ctx context.Context, stuId, xnm, xqm string) ([]string, error)
 	DeleteStudentAndCourseInDB(ctx context.Context, ID string) error
+	CheckExists(ctx context.Context, xnm, xqm, stuId, classId string) bool
 }
 
 type StudentAndCourseCacheRepo interface {
@@ -15,6 +16,7 @@ type StudentAndCourseCacheRepo interface {
 	AddStudentAndCourseToCache(ctx context.Context, key string, ClassId string) error
 	GetClassIdsFromCache(ctx context.Context, key string) ([]string, error)
 	DeleteStudentAndCourseFromCache(ctx context.Context, key string, ClassId string) error
+	CheckExists(ctx context.Context, key string, classId string) (bool, error)
 }
 
 type StudentAndCourseRepo struct {

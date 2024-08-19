@@ -35,6 +35,20 @@ func (m *MockStudentAndCourseDBRepo) EXPECT() *MockStudentAndCourseDBRepoMockRec
 	return m.recorder
 }
 
+// CheckExists mocks base method.
+func (m *MockStudentAndCourseDBRepo) CheckExists(ctx context.Context, xnm, xqm, stuId, classId string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckExists", ctx, xnm, xqm, stuId, classId)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CheckExists indicates an expected call of CheckExists.
+func (mr *MockStudentAndCourseDBRepoMockRecorder) CheckExists(ctx, xnm, xqm, stuId, classId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckExists", reflect.TypeOf((*MockStudentAndCourseDBRepo)(nil).CheckExists), ctx, xnm, xqm, stuId, classId)
+}
+
 // DeleteStudentAndCourseInDB mocks base method.
 func (m *MockStudentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Context, ID string) error {
 	m.ctrl.T.Helper()
@@ -127,6 +141,21 @@ func (m *MockStudentAndCourseCacheRepo) AddStudentAndCourseToCache(ctx context.C
 func (mr *MockStudentAndCourseCacheRepoMockRecorder) AddStudentAndCourseToCache(ctx, key, ClassId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStudentAndCourseToCache", reflect.TypeOf((*MockStudentAndCourseCacheRepo)(nil).AddStudentAndCourseToCache), ctx, key, ClassId)
+}
+
+// CheckExists mocks base method.
+func (m *MockStudentAndCourseCacheRepo) CheckExists(ctx context.Context, key, classId string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckExists", ctx, key, classId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckExists indicates an expected call of CheckExists.
+func (mr *MockStudentAndCourseCacheRepoMockRecorder) CheckExists(ctx, key, classId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckExists", reflect.TypeOf((*MockStudentAndCourseCacheRepo)(nil).CheckExists), ctx, key, classId)
 }
 
 // DeleteStudentAndCourseFromCache mocks base method.

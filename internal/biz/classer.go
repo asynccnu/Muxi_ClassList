@@ -3,6 +3,7 @@ package biz
 import (
 	"class/internal/errcode"
 	log2 "class/internal/logPrinter"
+	"class/internal/pkg/tool"
 	"context"
 	"errors"
 )
@@ -20,6 +21,7 @@ type ClassRepoProxy interface {
 	AddClass(ctx context.Context, classInfo *ClassInfo, sc *StudentCourse, xnm, xqm string) error
 	DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error
 	UpdateClass(ctx context.Context, newClassInfo *ClassInfo, newSc *StudentCourse, stuId, oldClassId, xnm, xqm string) error
+	CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool
 }
 type ClassUsercase struct {
 	ClassRepo ClassRepoProxy
@@ -63,6 +65,8 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 					cluc.log.FuncError(cluc.ClassRepo.SaveClasses, err)
 				}
 			}()
+		} else {
+			return nil, err
 		}
 	}
 
@@ -70,7 +74,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 		thisWeek := classInfo.SearchWeek(week)
 		class := &Class{
 			Info:     classInfo,
-			ThisWeek: thisWeek,
+			ThisWeek: thisWeek && tool.CheckIfThisWeek(classInfo.Year, classInfo.Semester),
 		}
 		classes = append(classes, class)
 	}
@@ -127,4 +131,7 @@ func (cluc *ClassUsercase) UpdateClass(ctx context.Context, newClassInfo *ClassI
 		return err
 	}
 	return nil
+}
+func (cluc *ClassUsercase) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool {
+	return cluc.ClassRepo.CheckSCIdsExist(ctx, stuId, classId, xnm, xqm)
 }

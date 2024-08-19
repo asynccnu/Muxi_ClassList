@@ -94,3 +94,25 @@ func FormatWeeks(weeks []int) string {
 
 	return result.String()
 }
+func CheckIfThisWeek(xnm, xqm string) bool {
+	y, _ := strconv.Atoi(xnm)
+	s, _ := strconv.Atoi(xqm)
+	currentYear := time.Now().Year()
+	currentMonth := time.Now().Month()
+	//currentYear := 2023
+	//currentMonth := 10
+	if currentMonth >= 9 {
+		return (y == currentYear) && (s == 1)
+	}
+	if currentMonth <= 1 {
+		return (y == currentYear-1) && (s == 1)
+	}
+	if currentMonth >= 2 && currentMonth <= 6 {
+		return (y == currentYear-1) && (s == 2)
+	}
+	if currentMonth >= 7 && currentMonth <= 8 {
+		return (y == currentYear-1) && (s == 3)
+	}
+	return false
+
+}

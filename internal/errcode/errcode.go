@@ -14,4 +14,5 @@ var (
 	ErrClassDelete   = errors.New(303, v1.ErrorReason_DB_DELETEERROR.String(), "课程删除失败")
 	ErrCrawler       = errors.New(304, v1.ErrorReason_Crawler_Error.String(), "爬取课表失败")
 	ErrCCNULogin     = errors.New(305, v1.ErrorReason_CCNULogin_Error.String(), "请求ccnu一站式登录服务错误")
+	ErrSCIDNOTEXIST  = errors.New(306, v1.ErrorReason_SCIDNOTEXIST_Erroe.String(), "学号与课程ID的对应关系未找到")
 )

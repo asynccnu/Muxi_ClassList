@@ -49,6 +49,20 @@ func (mr *MockClassCtrlMockRecorder) AddClass(ctx, stuId, info interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddClass", reflect.TypeOf((*MockClassCtrl)(nil).AddClass), ctx, stuId, info)
 }
 
+// CheckSCIdsExist mocks base method.
+func (m *MockClassCtrl) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckSCIdsExist", ctx, stuId, classId, xnm, xqm)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CheckSCIdsExist indicates an expected call of CheckSCIdsExist.
+func (mr *MockClassCtrlMockRecorder) CheckSCIdsExist(ctx, stuId, classId, xnm, xqm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSCIdsExist", reflect.TypeOf((*MockClassCtrl)(nil).CheckSCIdsExist), ctx, stuId, classId, xnm, xqm)
+}
+
 // DeleteClass mocks base method.
 func (m *MockClassCtrl) DeleteClass(ctx context.Context, classId, stuId, xnm, xqm string) error {
 	m.ctrl.T.Helper()
