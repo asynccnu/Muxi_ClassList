@@ -1,11 +1,11 @@
 package biz
 
 import (
-	"class/internal/errcode"
-	log2 "class/internal/logPrinter"
-	"class/internal/pkg/tool"
 	"context"
 	"errors"
+	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
+	log2 "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
+	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 )
 
 // ClassCrawler 课程爬虫接口

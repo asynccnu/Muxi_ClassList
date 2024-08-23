@@ -7,15 +7,15 @@
 package main
 
 import (
-	"class/internal/biz"
-	"class/internal/client"
-	"class/internal/conf"
-	"class/internal/data"
-	"class/internal/logPrinter"
-	"class/internal/pkg/crawler"
-	"class/internal/registry"
-	"class/internal/server"
-	"class/internal/service"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/client"
+	"github.com/asynccnu/Muxi_ClassList/internal/conf"
+	"github.com/asynccnu/Muxi_ClassList/internal/data"
+	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
+	"github.com/asynccnu/Muxi_ClassList/internal/pkg/crawler"
+	"github.com/asynccnu/Muxi_ClassList/internal/registry"
+	"github.com/asynccnu/Muxi_ClassList/internal/server"
+	"github.com/asynccnu/Muxi_ClassList/internal/service"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 )

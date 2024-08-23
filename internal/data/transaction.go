@@ -1,8 +1,8 @@
 package data
 
 import (
-	"class/internal/biz"
 	"context"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz"
 	"gorm.io/gorm"
 )
 

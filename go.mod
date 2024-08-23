@@ -6,7 +6,6 @@ toolchain go1.22.0
 
 require (
 	github.com/asynccnu/ccnu-service v0.0.0-20240816114719-8cdd1143ceae
-	github.com/envoyproxy/protoc-gen-validate v1.0.2
 	github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20240725023016-d6fca5e3e984
 	github.com/go-kratos/kratos/v2 v2.8.0
 	github.com/go-redis/redis v6.15.9+incompatible

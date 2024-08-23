@@ -1,13 +1,13 @@
 package main
 
 import (
-	"class/internal/metrics"
 	"flag"
+	"github.com/asynccnu/Muxi_ClassList/internal/metrics"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"os"
 
-	"class/internal/conf"
+	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"

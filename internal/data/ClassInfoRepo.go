@@ -1,12 +1,12 @@
 package data
 
 import (
-	"class/internal/biz"
-	"class/internal/errcode"
-	log "class/internal/logPrinter"
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
+	log "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"

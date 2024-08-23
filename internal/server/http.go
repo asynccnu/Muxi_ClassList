@@ -1,11 +1,11 @@
 package server
 
 import (
-	v1 "class/api/classer/v1"
-	"class/internal/conf"
-	"class/internal/metrics"
-	"class/internal/pkg/encoder"
-	"class/internal/service"
+	v1 "github.com/asynccnu/Muxi_ClassList/api/classer/v1"
+	"github.com/asynccnu/Muxi_ClassList/internal/conf"
+	"github.com/asynccnu/Muxi_ClassList/internal/metrics"
+	"github.com/asynccnu/Muxi_ClassList/internal/pkg/encoder"
+	"github.com/asynccnu/Muxi_ClassList/internal/service"
 	"github.com/go-kratos/kratos/v2/middleware/validate"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 

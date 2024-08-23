@@ -24,30 +24,27 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/classer.v1.AddClassResponse'
-    /class/delete/{stuId}/{year}/{semester}/{id}:
+    /class/delete/{id}:
         delete:
             tags:
                 - Classer
             operationId: Classer_DeleteClass
             parameters:
-                - name: stuId
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-                - name: year
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-                - name: semester
-                  in: path
-                  required: true
-                  schema:
-                    type: string
                 - name: id
                   in: path
                   required: true
+                  schema:
+                    type: string
+                - name: stuId
+                  in: query
+                  schema:
+                    type: string
+                - name: year
+                  in: query
+                  schema:
+                    type: string
+                - name: semester
+                  in: query
                   schema:
                     type: string
             responses:
@@ -57,31 +54,32 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/classer.v1.DeleteClassResponse'
-    /class/get/{stuId}/{year}/{semester}/{week}:
+    /class/get/{week,stu_id,semester,year}:
         get:
             tags:
                 - Classer
             description: Sends a greeting
             operationId: Classer_GetClass
             parameters:
-                - name: stuId
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-                - name: year
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-                - name: semester
+                - name: week,stu_id,semester,year
                   in: path
                   required: true
                   schema:
                     type: string
                 - name: week
-                  in: path
-                  required: true
+                  in: query
+                  schema:
+                    type: string
+                - name: stuId
+                  in: query
+                  schema:
+                    type: string
+                - name: semester
+                  in: query
+                  schema:
+                    type: string
+                - name: year
+                  in: query
                   schema:
                     type: string
             responses:

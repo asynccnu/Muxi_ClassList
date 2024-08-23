@@ -1,8 +1,8 @@
 package data
 
 import (
-	"class/internal/biz"
-	"class/internal/conf"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis"
 	"github.com/google/wire"

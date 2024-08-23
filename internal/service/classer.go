@@ -1,12 +1,12 @@
 package service
 
 import (
-	pb "class/api/classer/v1"
-	"class/internal/biz"
-	"class/internal/errcode"
-	"class/internal/logPrinter"
-	"class/internal/pkg/tool"
 	"context"
+	pb "github.com/asynccnu/Muxi_ClassList/api/classer/v1"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
+	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
+	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 )
 
 //go:generate mockgen -source=./classer.go -destination=./mock/mock_classer.go -package=mock_service

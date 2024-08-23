@@ -1,13 +1,13 @@
 package crawler
 
 import (
-	"class/internal/biz"
-	"class/internal/errcode"
-	"class/internal/logPrinter"
-	"class/internal/pkg/tool"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
+	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
+	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	"net/http"
 	"strconv"
 	"strings"

@@ -1,10 +1,10 @@
 package biz
 
 import (
-	"class/internal/errcode"
-	log "class/internal/logPrinter"
 	"context"
 	"fmt"
+	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
+	log "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"regexp"
 	"strconv"
 )

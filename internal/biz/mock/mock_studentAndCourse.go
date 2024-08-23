@@ -5,7 +5,7 @@
 package mock_biz
 
 import (
-	biz "class/internal/biz"
+	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
 	context "context"
 	reflect "reflect"
 

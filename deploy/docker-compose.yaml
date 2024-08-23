@@ -25,7 +25,7 @@ services:
     volumes:
       - "./redis/data:/data"
   Muxi_ClassList:
-    image: "muxi_classlist:v1"
+    image: "Muxi_ClassList:v1"
     restart: "always"
     ports:
       - "8000:8000"
@@ -33,11 +33,3 @@ services:
     depends_on:
       - ClassMysql
       - ClassRedis
-#  Etcd:
-#    image: 'bitnami/etcd:latest'
-#    environment:
-#      - ALLOW_NONE_AUTHENTICATION=yes
-#      - ETCD_ADVERTISE_CLIENT_URLS=http://localhost:2379
-#    ports:
-#      - "2379:2379"
-#      - "2380:2380"

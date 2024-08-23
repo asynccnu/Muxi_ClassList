@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	"class/internal/pkg/crawler"
+	"github.com/asynccnu/Muxi_ClassList/internal/pkg/crawler"
 	"github.com/google/wire"
 )
 

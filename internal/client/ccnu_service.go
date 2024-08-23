@@ -1,8 +1,8 @@
 package client
 
 import (
-	"class/internal/errcode"
 	"context"
+	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	v1 "github.com/asynccnu/ccnu-service/api/ccnu_service/v1"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2/log"
