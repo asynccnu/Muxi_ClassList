@@ -5,10 +5,10 @@
 package mock_biz
 
 import (
-	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
 	context "context"
 	reflect "reflect"
 
+	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -61,6 +61,21 @@ func (m *MockStudentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Cont
 func (mr *MockStudentAndCourseDBRepoMockRecorder) DeleteStudentAndCourseInDB(ctx, ID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteStudentAndCourseInDB", reflect.TypeOf((*MockStudentAndCourseDBRepo)(nil).DeleteStudentAndCourseInDB), ctx, ID)
+}
+
+// GetAllSchoolClassIds mocks base method.
+func (m *MockStudentAndCourseDBRepo) GetAllSchoolClassIds(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllSchoolClassIds", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllSchoolClassIds indicates an expected call of GetAllSchoolClassIds.
+func (mr *MockStudentAndCourseDBRepoMockRecorder) GetAllSchoolClassIds(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassIds", reflect.TypeOf((*MockStudentAndCourseDBRepo)(nil).GetAllSchoolClassIds), ctx)
 }
 
 // GetClassIDsFromSCInDB mocks base method.

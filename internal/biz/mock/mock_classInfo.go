@@ -5,10 +5,10 @@
 package mock_biz
 
 import (
-	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
 	context "context"
 	reflect "reflect"
 
+	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
 	gomock "github.com/golang/mock/gomock"
 )
 

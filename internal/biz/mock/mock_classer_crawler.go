@@ -5,10 +5,10 @@
 package mock_biz
 
 import (
-	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
 	context "context"
 	reflect "reflect"
 
+	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -88,6 +88,20 @@ func (mr *MockClassRepoProxyMockRecorder) AddClass(ctx, classInfo, sc, xnm, xqm 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddClass", reflect.TypeOf((*MockClassRepoProxy)(nil).AddClass), ctx, classInfo, sc, xnm, xqm)
 }
 
+// CheckSCIdsExist mocks base method.
+func (m *MockClassRepoProxy) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckSCIdsExist", ctx, stuId, classId, xnm, xqm)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CheckSCIdsExist indicates an expected call of CheckSCIdsExist.
+func (mr *MockClassRepoProxyMockRecorder) CheckSCIdsExist(ctx, stuId, classId, xnm, xqm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSCIdsExist", reflect.TypeOf((*MockClassRepoProxy)(nil).CheckSCIdsExist), ctx, stuId, classId, xnm, xqm)
+}
+
 // DeleteClass mocks base method.
 func (m *MockClassRepoProxy) DeleteClass(ctx context.Context, classId, stuId, xnm, xqm string) error {
 	m.ctrl.T.Helper()
@@ -115,6 +129,20 @@ func (m *MockClassRepoProxy) GetAllClasses(ctx context.Context, stuId, xnm, xqm 
 func (mr *MockClassRepoProxyMockRecorder) GetAllClasses(ctx, stuId, xnm, xqm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllClasses", reflect.TypeOf((*MockClassRepoProxy)(nil).GetAllClasses), ctx, stuId, xnm, xqm)
+}
+
+// GetAllSchoolClassInfos mocks base method.
+func (m *MockClassRepoProxy) GetAllSchoolClassInfos(ctx context.Context) []*biz.ClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllSchoolClassInfos", ctx)
+	ret0, _ := ret[0].([]*biz.ClassInfo)
+	return ret0
+}
+
+// GetAllSchoolClassInfos indicates an expected call of GetAllSchoolClassInfos.
+func (mr *MockClassRepoProxyMockRecorder) GetAllSchoolClassInfos(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassInfos", reflect.TypeOf((*MockClassRepoProxy)(nil).GetAllSchoolClassInfos), ctx)
 }
 
 // GetSpecificClassInfo mocks base method.

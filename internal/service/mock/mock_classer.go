@@ -5,10 +5,10 @@
 package mock_service
 
 import (
-	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
 	context "context"
 	reflect "reflect"
 
+	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -75,6 +75,20 @@ func (m *MockClassCtrl) DeleteClass(ctx context.Context, classId, stuId, xnm, xq
 func (mr *MockClassCtrlMockRecorder) DeleteClass(ctx, classId, stuId, xnm, xqm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClass", reflect.TypeOf((*MockClassCtrl)(nil).DeleteClass), ctx, classId, stuId, xnm, xqm)
+}
+
+// GetAllSchoolClassInfosToOtherService mocks base method.
+func (m *MockClassCtrl) GetAllSchoolClassInfosToOtherService(ctx context.Context) []*biz.ClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllSchoolClassInfosToOtherService", ctx)
+	ret0, _ := ret[0].([]*biz.ClassInfo)
+	return ret0
+}
+
+// GetAllSchoolClassInfosToOtherService indicates an expected call of GetAllSchoolClassInfosToOtherService.
+func (mr *MockClassCtrlMockRecorder) GetAllSchoolClassInfosToOtherService(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassInfosToOtherService", reflect.TypeOf((*MockClassCtrl)(nil).GetAllSchoolClassInfosToOtherService), ctx)
 }
 
 // GetClasses mocks base method.
