@@ -128,7 +128,7 @@ func (s StudentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc
 func (s StudentAndCourseDBRepo) GetClassIDsFromSCInDB(ctx context.Context, stuId, xnm, xqm string) ([]string, error) {
 	var classIds []string
 	db := s.data.Mysql.Table(biz.StudentCourseTableName).WithContext(ctx)
-	err := db.Where("stu_id = ? AND year = ? AND semester", stuId, xnm, xqm).
+	err := db.Where("stu_id = ? AND year = ? AND semester = ?", stuId, xnm, xqm).
 		Select("cla_id").
 		Pluck("cla_id", &classIds).Error
 	return classIds, err
@@ -145,10 +145,18 @@ func (s StudentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Context, 
 }
 func (s StudentAndCourseDBRepo) CheckExists(ctx context.Context, xnm, xqm, stuId, classId string) bool {
 	db := s.data.Mysql.Table(biz.StudentCourseTableName).WithContext(ctx)
-	err := db.Where("stu_id = ? AND cla_id = ? AND year = ? AND semester", stuId, classId, xnm, xqm).Error
+	err := db.Where("stu_id = ? AND cla_id = ? AND year = ? AND semester = ?", stuId, classId, xnm, xqm).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false
 	} else {
 		return true
 	}
+}
+func (s StudentAndCourseDBRepo) GetAllSchoolClassIds(ctx context.Context) ([]string, error) {
+	var classIds []string
+	db := s.data.Mysql.Table(biz.StudentCourseTableName).WithContext(ctx)
+	err := db.Where("is_manually_added = ?", false).
+		Select("cla_id").
+		Pluck("cla_id", &classIds).Error
+	return classIds, err
 }

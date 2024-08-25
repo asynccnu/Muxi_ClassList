@@ -17,6 +17,7 @@ type ClassCtrl interface {
 	DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error
 	SearchClass(ctx context.Context, classId string) (*biz.ClassInfo, error)
 	UpdateClass(ctx context.Context, newClassInfo *biz.ClassInfo, newSc *biz.StudentCourse, stuId, oldClassId, xnm, xqm string) error
+	GetAllSchoolClassInfosToOtherService(ctx context.Context) []*biz.ClassInfo
 }
 type CCNUServiceProxy interface {
 	GetCookie(ctx context.Context, stu string) (string, error)
@@ -155,6 +156,16 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 	return &pb.UpdateClassResponse{
 		ClassId: oldclassInfo.ID,
 		Msg:     "成功修改",
+	}, nil
+}
+func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClassInfoRequest) (*pb.GetAllClassInfoResponse, error) {
+	classInfos := s.Clu.GetAllSchoolClassInfosToOtherService(ctx)
+	pbClassInfos := make([]*pb.ClassInfo, 0)
+	for _, classInfo := range classInfos {
+		pbClassInfos = append(pbClassInfos, HandleClass(classInfo))
+	}
+	return &pb.GetAllClassInfoResponse{
+		ClassInfos: pbClassInfos,
 	}, nil
 }
 func HandleClass(info *biz.ClassInfo) *pb.ClassInfo {

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	log "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
-	"regexp"
-	"strconv"
 )
 
 type ClassRepo struct {
@@ -254,38 +252,45 @@ func (cla ClassRepo) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, x
 	}
 	return cla.Sac.DB.CheckExists(ctx, xnm, xqm, stuId, classId)
 }
-
+func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context) []*ClassInfo {
+	clasInfos := make([]*ClassInfo, 0)
+	classids, err := cla.Sac.DB.GetAllSchoolClassIds(ctx)
+	if err != nil {
+		cla.log.FuncError(cla.Sac.DB.GetAllSchoolClassIds, err)
+		return nil
+	}
+	newclassIds := removeDuplicates(classids)
+	for _, classId := range newclassIds {
+		clasInfo, err := cla.ClaRepo.DB.GetClassInfoFromDB(ctx, classId)
+		if err != nil {
+			cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
+			continue
+		}
+		clasInfos = append(clasInfos, clasInfo)
+	}
+	return clasInfos
+}
 func GenerateSetName(stuId, xnm, xqm string) string {
 	return fmt.Sprintf("StuAndCla:%s:%s:%s", stuId, xnm, xqm)
 }
-func Check(id string, day int64, dur string) bool {
-	day1, dur1, err := ExtractDayAndClassWhen(id)
-	if err != nil {
-		return false
-	}
-	if day != day1 || dur != dur1 {
-		return false
-	}
-	return true
-}
 
-// ExtractDayAndClassWhen 提取格式化字符串中的 day 和 classwhen
-func ExtractDayAndClassWhen(id string) (int64, string, error) {
-	// 定义正则表达式来匹配 day 和 classwhen
-	re := regexp.MustCompile(`^Class:\w+:\w+:\w+:(\d+):(\w+):`)
+// 去重
+func removeDuplicates(strSlice []string) []string {
+	// 创建一个空的 map 来跟踪已经存在的字符串
+	uniqueMap := make(map[string]bool)
+	// 创建一个空的切片来存储去重后的结果
+	result := []string{}
 
-	// 找到匹配的子字符串
-	matches := re.FindStringSubmatch(id)
-	if len(matches) < 3 {
-		return 0, "", fmt.Errorf("could not extract day and classwhen from ID: %s", id)
+	// 遍历输入的字符串切片
+	for _, str := range strSlice {
+		// 如果字符串不在 map 中，说明是唯一的
+		if _, exists := uniqueMap[str]; !exists {
+			// 将字符串加入结果切片
+			result = append(result, str)
+			// 并在 map 中标记该字符串已经存在
+			uniqueMap[str] = true
+		}
 	}
 
-	// 将 day 转换为 int
-	day, err := strconv.Atoi(matches[1])
-	if err != nil {
-		return 0, "", fmt.Errorf("error converting day to int: %v", err)
-	}
-
-	classwhen := matches[2]
-	return int64(day), classwhen, nil
+	return result
 }

@@ -1194,6 +1194,244 @@ var _ interface {
 	ErrorName() string
 } = UpdateClassResponseValidationError{}
 
+// Validate checks the field values on GetAllClassInfoRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetAllClassInfoRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetAllClassInfoRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetAllClassInfoRequestMultiError, or nil if none found.
+func (m *GetAllClassInfoRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetAllClassInfoRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return GetAllClassInfoRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetAllClassInfoRequestMultiError is an error wrapping multiple validation
+// errors returned by GetAllClassInfoRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GetAllClassInfoRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetAllClassInfoRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetAllClassInfoRequestMultiError) AllErrors() []error { return m }
+
+// GetAllClassInfoRequestValidationError is the validation error returned by
+// GetAllClassInfoRequest.Validate if the designated constraints aren't met.
+type GetAllClassInfoRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetAllClassInfoRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetAllClassInfoRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetAllClassInfoRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetAllClassInfoRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetAllClassInfoRequestValidationError) ErrorName() string {
+	return "GetAllClassInfoRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetAllClassInfoRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetAllClassInfoRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetAllClassInfoRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetAllClassInfoRequestValidationError{}
+
+// Validate checks the field values on GetAllClassInfoResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetAllClassInfoResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetAllClassInfoResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetAllClassInfoResponseMultiError, or nil if none found.
+func (m *GetAllClassInfoResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetAllClassInfoResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetClassInfos() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetAllClassInfoResponseValidationError{
+						field:  fmt.Sprintf("ClassInfos[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetAllClassInfoResponseValidationError{
+						field:  fmt.Sprintf("ClassInfos[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetAllClassInfoResponseValidationError{
+					field:  fmt.Sprintf("ClassInfos[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return GetAllClassInfoResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetAllClassInfoResponseMultiError is an error wrapping multiple validation
+// errors returned by GetAllClassInfoResponse.ValidateAll() if the designated
+// constraints aren't met.
+type GetAllClassInfoResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetAllClassInfoResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetAllClassInfoResponseMultiError) AllErrors() []error { return m }
+
+// GetAllClassInfoResponseValidationError is the validation error returned by
+// GetAllClassInfoResponse.Validate if the designated constraints aren't met.
+type GetAllClassInfoResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetAllClassInfoResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetAllClassInfoResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetAllClassInfoResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetAllClassInfoResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetAllClassInfoResponseValidationError) ErrorName() string {
+	return "GetAllClassInfoResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetAllClassInfoResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetAllClassInfoResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetAllClassInfoResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetAllClassInfoResponseValidationError{}
+
 // Validate checks the field values on ClassInfo with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.

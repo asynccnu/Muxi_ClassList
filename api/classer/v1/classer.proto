@@ -32,6 +32,7 @@ service Classer {
             body: "*"
         };
     }
+    rpc GetAllClassInfo(GetAllClassInfoRequest) returns (GetAllClassInfoResponse) {};
 
 }
 
@@ -89,7 +90,12 @@ message UpdateClassResponse {
     string msg=1;
     string classId=2; //课程的ID（唯一标识）
 }
+message GetAllClassInfoRequest {
 
+}
+message GetAllClassInfoResponse {
+    repeated ClassInfo class_infos = 1;
+}
 message  ClassInfo {
     int64 day=1; //星期几
     string teacher=2;   //任课教师
