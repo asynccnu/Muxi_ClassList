@@ -13,7 +13,6 @@ const (
 
 type Class struct {
 	Info     *ClassInfo //课程信息
-	StuID    string     //学号
 	ThisWeek bool       //是否是本周
 }
 type ClassInfo struct {
