@@ -21,7 +21,7 @@ func (d *Data) InTx(ctx context.Context, fn func(ctx context.Context) error) err
 	})
 }
 
-// 在事务执行ORM操作的话 得需要使用这个方法获取tx！
+// DB 在事务执行ORM操作的话 得需要使用这个方法获取tx！
 func (d *Data) DB(ctx context.Context) *gorm.DB {
 	// 从ctx中获取tx
 	txKey := ctx.Value(contextTxKey{})

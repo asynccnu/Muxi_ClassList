@@ -24,13 +24,13 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/classer.v1.AddClassResponse'
-    /class/delete/{stuId}/{year}/{semester}/{id}:
+    /class/delete/{stu_id}/{year}/{semester}/{id}:
         delete:
             tags:
                 - Classer
             operationId: Classer_DeleteClass
             parameters:
-                - name: stuId
+                - name: stu_id
                   in: path
                   required: true
                   schema:
@@ -57,14 +57,14 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/classer.v1.DeleteClassResponse'
-    /class/get/{stuId}/{year}/{semester}/{week}:
+    /class/get/{stu_id}/{year}/{semester}/{weeks}:
         get:
             tags:
                 - Classer
             description: Sends a greeting
             operationId: Classer_GetClass
             parameters:
-                - name: stuId
+                - name: stu_id
                   in: path
                   required: true
                   schema:
@@ -79,7 +79,7 @@ paths:
                   required: true
                   schema:
                     type: string
-                - name: week
+                - name: weeks
                   in: path
                   required: true
                   schema:
@@ -114,11 +114,11 @@ components:
         classer.v1.AddClassRequest:
             type: object
             properties:
-                stuId:
+                stu_id:
                     type: string
                 name:
                     type: string
-                durClass:
+                dur_class:
                     type: string
                 where:
                     type: string
@@ -145,9 +145,9 @@ components:
         classer.v1.Class:
             type: object
             properties:
-                info:
+                class_info:
                     $ref: '#/components/schemas/classer.v1.ClassInfo'
-                thisweek:
+                this_week:
                     type: boolean
         classer.v1.ClassInfo:
             type: object
@@ -158,9 +158,9 @@ components:
                     type: string
                 where:
                     type: string
-                classWhen:
+                class_when:
                     type: string
-                weekDuration:
+                week_duration:
                     type: string
                 classname:
                     type: string
@@ -191,11 +191,11 @@ components:
         classer.v1.UpdateClassRequest:
             type: object
             properties:
-                stuId:
+                stu_id:
                     type: string
                 name:
                     type: string
-                durClass:
+                dur_class:
                     type: string
                 where:
                     type: string
@@ -209,14 +209,14 @@ components:
                     type: string
                 day:
                     type: string
-                classId:
+                id:
                     type: string
         classer.v1.UpdateClassResponse:
             type: object
             properties:
                 msg:
                     type: string
-                classId:
+                id:
                     type: string
 tags:
     - name: Classer

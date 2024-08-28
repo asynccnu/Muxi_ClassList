@@ -7,7 +7,6 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/biz"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	log "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
-
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 )

@@ -37,82 +37,82 @@ service Classer {
 }
 
 message GetClassRequest {
-    int64 week=1 [(validate.rules).int64 = {gt: 0}];   //周几的课表
-    string stu_id=2 [(validate.rules).string = {min_len: 10, max_len: 10}];    //学号
-    string semester=3 [(validate.rules).string = {min_len: 1,max_len: 1}]; // 学期
-    string year=4 [(validate.rules).string = {min_len: 1}]; //学年
+    int64 week=1 [json_name = "weeks",(validate.rules).int64 = {gt: 0}];   //周几的课表
+    string stu_id=2 [json_name = "stu_id",(validate.rules).string = {min_len: 10, max_len: 10}];    //学号
+    string semester=3 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1}]; // 学期
+    string year=4 [json_name = "year",(validate.rules).string = {min_len: 1}]; //学年
 }
 message GetClassResponse {
-    repeated Class classes=1; //课表
+    repeated Class classes=1[json_name = "classes"]; //课表
 }
 
 
 message AddClassRequest {
-    string stu_id=1 [(validate.rules).string = {min_len: 10, max_len: 10}];//学号
-    string name=2 [(validate.rules).string = {min_len: 1}];//课程名称
-    string dur_class=3 [(validate.rules).string = {min_len: 1}];//第几节 '形如 "1-3","1-1"'
-    string where=4 [(validate.rules).string = {min_len: 1}];//地点
-    string teacher=5 [(validate.rules).string = {min_len: 1}];//教师
-    int64  weeks=6 [(validate.rules).int64 = {gt: 0}]; //哪些周
-    string semester=7 [(validate.rules).string = {min_len: 1,max_len: 1}]; // 学期
-    string year=8 [(validate.rules).string = {min_len: 1}]; //学年
-    int64 day=9 [(validate.rules).int64 = {gte: 1, lte: 7}];//星期几
-    double credit=10; //学分
+    string stu_id=1 [json_name = "stu_id",(validate.rules).string = {min_len: 10, max_len: 10}];//学号
+    string name=2 [json_name = "name",(validate.rules).string = {min_len: 1}];//课程名称
+    string dur_class=3 [json_name = "dur_class",(validate.rules).string = {min_len: 1}];//第几节 '形如 "1-3","1-1"'
+    string where=4 [json_name = "where",(validate.rules).string = {min_len: 1}];//地点
+    string teacher=5 [json_name = "teacher",(validate.rules).string = {min_len: 1}];//教师
+    int64  weeks=6 [json_name = "weeks",(validate.rules).int64 = {gt: 0}]; //哪些周
+    string semester=7 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1}]; // 学期
+    string year=8 [json_name = "year",(validate.rules).string = {min_len: 1}]; //学年
+    int64 day=9 [json_name = "day",(validate.rules).int64 = {gte: 1, lte: 7}];//星期几
+    double credit=10[json_name = "credit"]; //学分
 }
 
 message AddClassResponse {
-    string id=1; //添加的课程ID
-    string msg=2;
+    string id=1 [json_name = "id"]; //添加的课程ID
+    string msg=2 [json_name = "msg"];
 }
 
 message DeleteClassRequest {
-    string id=1 [(validate.rules).string = {min_len: 1}]; //课程标识
-    string stuId=2 [(validate.rules).string = {min_len: 10, max_len: 10}]; //学号
-    string year=3 [(validate.rules).string = {min_len: 1}];//学年  "2024" 代表"2024-2025学年"
-    string semester=4 [(validate.rules).string = {min_len: 1,max_len: 1}];//学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
+    string id=1 [json_name = "id",(validate.rules).string = {min_len: 1}]; //课程标识
+    string stuId=2 [json_name = "stu_id",(validate.rules).string = {min_len: 10, max_len: 10}]; //学号
+    string year=3 [json_name = "year",(validate.rules).string = {min_len: 1}];//学年  "2024" 代表"2024-2025学年"
+    string semester=4 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1}];//学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
 }
 message DeleteClassResponse {
-    string msg=1;
+    string msg=1[json_name = "msg"];
 }
 message UpdateClassRequest {
-    string stu_id=1 [(validate.rules).string = {min_len: 10, max_len: 10}];//学号
-    string name=2 [(validate.rules).string = {min_len: 1}];//课程名称
-    string dur_class=3 [(validate.rules).string = {min_len: 1}];//第几节 '形如 "1-3","1-1"'
-    string where=4 [(validate.rules).string = {min_len: 1}];//地点
-    string teacher=5 [(validate.rules).string = {min_len: 1}];//教师
-    int64  weeks=6 [(validate.rules).int64 = {gt: 0}]; //哪些周
-    string semester=7 [(validate.rules).string = {min_len: 1,max_len: 1}]; // 学期
-    string year=8 [(validate.rules).string = {min_len: 1}]; //学年
-    int64 day=9 [(validate.rules).int64 = {gte: 1, lte: 7}];//星期几
-    string classId=11 [(validate.rules).string = {min_len: 1}];// 课程的ID（唯一标识） 更新后这个可能会换，所以响应的时候会把新的ID返回
+    string stu_id=1 [json_name = "stu_id",(validate.rules).string = {min_len: 10, max_len: 10}];//学号
+    string name=2 [json_name = "name",(validate.rules).string = {min_len: 1}];//课程名称
+    string dur_class=3 [json_name = "dur_class",(validate.rules).string = {min_len: 1}];//第几节 '形如 "1-3","1-1"'
+    string where=4 [json_name = "where",(validate.rules).string = {min_len: 1}];//地点
+    string teacher=5 [json_name = "teacher",(validate.rules).string = {min_len: 1}];//教师
+    int64  weeks=6 [json_name = "weeks",(validate.rules).int64 = {gt: 0}]; //哪些周
+    string semester=7 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1}]; // 学期
+    string year=8 [json_name = "year",(validate.rules).string = {min_len: 1}]; //学年
+    int64 day=9 [json_name = "day",(validate.rules).int64 = {gte: 1, lte: 7}];//星期几
+    string classId=11 [json_name = "id",(validate.rules).string = {min_len: 1}];// 课程的ID（唯一标识） 更新后这个可能会换，所以响应的时候会把新的ID返回
 }
 message UpdateClassResponse {
-    string msg=1;
-    string classId=2; //课程的ID（唯一标识）
+    string msg=1[json_name = "msg"];
+    string classId=2 [json_name = "id"]; //课程的ID（唯一标识）
 }
 message GetAllClassInfoRequest {
 
 }
 message GetAllClassInfoResponse {
-    repeated ClassInfo class_infos = 1;
+    repeated ClassInfo class_infos = 1[json_name = "class_infos"];
 }
 message  ClassInfo {
-    int64 day=1; //星期几
-    string teacher=2;   //任课教师
-    string where=3; //上课地点
-    string class_when=4;//上课是第几节（如1-2,3,4）
-    string week_duration=5; //上课的周数
-    string classname=6;//课程名称
-    double credit=7; //学分
+    int64 day=1 [json_name = "day"]; //星期几
+    string teacher=2 [json_name = "teacher"];   //任课教师
+    string where=3 [json_name = "where"]; //上课地点
+    string class_when=4 [json_name = "class_when"];//上课是第几节（如1-2,3,4）
+    string week_duration=5 [json_name = "week_duration"]; //上课的周数
+    string classname=6 [json_name = "classname"];//课程名称
+    double credit=7 [json_name = "credit"]; //学分
     // bool add=8;//是否为手动添加
-    int64 weeks=9; //哪些周
-    string semester=10; //学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
-    string year=11; //学年  "2024" 代表"2024-2025学年"
-    string id=12;//课程唯一标识
+    int64 weeks=9 [json_name = "weeks"]; //哪些周
+    string semester=10 [json_name = "semester"]; //学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
+    string year=11 [json_name = "year"]; //学年  "2024" 代表"2024-2025学年"
+    string id=12 [json_name = "id"];//课程唯一标识
 }
 
 message Class {
-    ClassInfo info =1;
-    bool thisweek=2; //是否是本周
+    ClassInfo info =1 [json_name = "class_info"];
+    bool thisweek=2 [json_name = "this_week"]; //是否是本周
 }
 
