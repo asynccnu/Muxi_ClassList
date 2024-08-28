@@ -9,6 +9,7 @@ type ClassInfoDBRepo interface {
 	AddClassInfoToDB(ctx context.Context, classInfo *ClassInfo) error
 	GetClassInfoFromDB(ctx context.Context, ID string) (*ClassInfo, error)
 	DeleteClassInfoInDB(ctx context.Context, ID string) error
+	GetAllClassInfos(ctx context.Context, xnm, xqm string) ([]*ClassInfo, error)
 	//UpdateClassInfoInDB(ctx context.Context, tx *gorm.DB, classInfo *ClassInfo) error
 }
 

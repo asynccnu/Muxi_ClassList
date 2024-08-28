@@ -169,3 +169,13 @@ func (c ClassInfoDBRepo) UpdateClassInfoInDB(ctx context.Context, classInfo *biz
 	}
 	return nil
 }
+func (c ClassInfoDBRepo) GetAllClassInfos(ctx context.Context, xnm, xqm string) ([]*biz.ClassInfo, error) {
+	db := c.data.Mysql.Table(biz.ClassInfoTableName).WithContext(ctx)
+	cla := make([]*biz.ClassInfo, 0)
+	err := db.Where("year = ? AND semester = ?", xnm, xqm).Find(&cla).Error
+	if err != nil {
+		c.log.FuncError(db.Where, err)
+		return nil, err
+	}
+	return cla, nil
+}

@@ -252,23 +252,13 @@ func (cla ClassRepo) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, x
 	}
 	return cla.Sac.DB.CheckExists(ctx, xnm, xqm, stuId, classId)
 }
-func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context) []*ClassInfo {
-	clasInfos := make([]*ClassInfo, 0)
-	classids, err := cla.Sac.DB.GetAllSchoolClassIds(ctx)
+func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context, xnm, xqm string) []*ClassInfo {
+	classInfos, err := cla.ClaRepo.DB.GetAllClassInfos(ctx, xnm, xqm)
 	if err != nil {
-		cla.log.FuncError(cla.Sac.DB.GetAllSchoolClassIds, err)
+		cla.log.FuncError(cla.ClaRepo.DB.GetAllClassInfos, err)
 		return nil
 	}
-	newclassIds := removeDuplicates(classids)
-	for _, classId := range newclassIds {
-		clasInfo, err := cla.ClaRepo.DB.GetClassInfoFromDB(ctx, classId)
-		if err != nil {
-			cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
-			continue
-		}
-		clasInfos = append(clasInfos, clasInfo)
-	}
-	return clasInfos
+	return classInfos
 }
 func GenerateSetName(stuId, xnm, xqm string) string {
 	return fmt.Sprintf("StuAndCla:%s:%s:%s", stuId, xnm, xqm)

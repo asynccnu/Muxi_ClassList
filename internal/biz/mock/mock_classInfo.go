@@ -63,6 +63,21 @@ func (mr *MockClassInfoDBRepoMockRecorder) DeleteClassInfoInDB(ctx, ID interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClassInfoInDB", reflect.TypeOf((*MockClassInfoDBRepo)(nil).DeleteClassInfoInDB), ctx, ID)
 }
 
+// GetAllClassInfos mocks base method.
+func (m *MockClassInfoDBRepo) GetAllClassInfos(ctx context.Context, xnm, xqm string) ([]*biz.ClassInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllClassInfos", ctx, xnm, xqm)
+	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllClassInfos indicates an expected call of GetAllClassInfos.
+func (mr *MockClassInfoDBRepoMockRecorder) GetAllClassInfos(ctx, xnm, xqm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllClassInfos", reflect.TypeOf((*MockClassInfoDBRepo)(nil).GetAllClassInfos), ctx, xnm, xqm)
+}
+
 // GetClassInfoFromDB mocks base method.
 func (m *MockClassInfoDBRepo) GetClassInfoFromDB(ctx context.Context, ID string) (*biz.ClassInfo, error) {
 	m.ctrl.T.Helper()

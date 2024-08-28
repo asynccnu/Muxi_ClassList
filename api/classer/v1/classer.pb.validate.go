@@ -1216,6 +1216,29 @@ func (m *GetAllClassInfoRequest) validate(all bool) error {
 
 	var errors []error
 
+	if utf8.RuneCountInString(m.GetYear()) < 1 {
+		err := GetAllClassInfoRequestValidationError{
+			field:  "Year",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSemester()) != 1 {
+		err := GetAllClassInfoRequestValidationError{
+			field:  "Semester",
+			reason: "value length must be 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
 	if len(errors) > 0 {
 		return GetAllClassInfoRequestMultiError(errors)
 	}

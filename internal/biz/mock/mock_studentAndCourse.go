@@ -63,21 +63,6 @@ func (mr *MockStudentAndCourseDBRepoMockRecorder) DeleteStudentAndCourseInDB(ctx
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteStudentAndCourseInDB", reflect.TypeOf((*MockStudentAndCourseDBRepo)(nil).DeleteStudentAndCourseInDB), ctx, ID)
 }
 
-// GetAllSchoolClassIds mocks base method.
-func (m *MockStudentAndCourseDBRepo) GetAllSchoolClassIds(ctx context.Context) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllSchoolClassIds", ctx)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAllSchoolClassIds indicates an expected call of GetAllSchoolClassIds.
-func (mr *MockStudentAndCourseDBRepoMockRecorder) GetAllSchoolClassIds(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassIds", reflect.TypeOf((*MockStudentAndCourseDBRepo)(nil).GetAllSchoolClassIds), ctx)
-}
-
 // GetClassIDsFromSCInDB mocks base method.
 func (m *MockStudentAndCourseDBRepo) GetClassIDsFromSCInDB(ctx context.Context, stuId, xnm, xqm string) ([]string, error) {
 	m.ctrl.T.Helper()

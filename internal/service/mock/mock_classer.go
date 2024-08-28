@@ -78,17 +78,17 @@ func (mr *MockClassCtrlMockRecorder) DeleteClass(ctx, classId, stuId, xnm, xqm i
 }
 
 // GetAllSchoolClassInfosToOtherService mocks base method.
-func (m *MockClassCtrl) GetAllSchoolClassInfosToOtherService(ctx context.Context) []*biz.ClassInfo {
+func (m *MockClassCtrl) GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*biz.ClassInfo {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllSchoolClassInfosToOtherService", ctx)
+	ret := m.ctrl.Call(m, "GetAllSchoolClassInfosToOtherService", ctx, xnm, xqm)
 	ret0, _ := ret[0].([]*biz.ClassInfo)
 	return ret0
 }
 
 // GetAllSchoolClassInfosToOtherService indicates an expected call of GetAllSchoolClassInfosToOtherService.
-func (mr *MockClassCtrlMockRecorder) GetAllSchoolClassInfosToOtherService(ctx interface{}) *gomock.Call {
+func (mr *MockClassCtrlMockRecorder) GetAllSchoolClassInfosToOtherService(ctx, xnm, xqm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassInfosToOtherService", reflect.TypeOf((*MockClassCtrl)(nil).GetAllSchoolClassInfosToOtherService), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassInfosToOtherService", reflect.TypeOf((*MockClassCtrl)(nil).GetAllSchoolClassInfosToOtherService), ctx, xnm, xqm)
 }
 
 // GetClasses mocks base method.

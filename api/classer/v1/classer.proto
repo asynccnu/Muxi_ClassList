@@ -91,7 +91,8 @@ message UpdateClassResponse {
     string classId=2 [json_name = "id"]; //课程的ID（唯一标识）
 }
 message GetAllClassInfoRequest {
-
+    string year=3 [json_name = "year",(validate.rules).string = {min_len: 1}];//学年  "2024" 代表"2024-2025学年"
+    string semester=4 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1}];//学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
 }
 message GetAllClassInfoResponse {
     repeated ClassInfo class_infos = 1[json_name = "class_infos"];

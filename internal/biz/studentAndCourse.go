@@ -9,7 +9,7 @@ type StudentAndCourseDBRepo interface {
 	GetClassIDsFromSCInDB(ctx context.Context, stuId, xnm, xqm string) ([]string, error)
 	DeleteStudentAndCourseInDB(ctx context.Context, ID string) error
 	CheckExists(ctx context.Context, xnm, xqm, stuId, classId string) bool
-	GetAllSchoolClassIds(ctx context.Context) ([]string, error)
+	//GetAllSchoolClassIds(ctx context.Context) ([]string, error)
 }
 
 type StudentAndCourseCacheRepo interface {

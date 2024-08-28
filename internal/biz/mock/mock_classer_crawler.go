@@ -132,17 +132,17 @@ func (mr *MockClassRepoProxyMockRecorder) GetAllClasses(ctx, stuId, xnm, xqm int
 }
 
 // GetAllSchoolClassInfos mocks base method.
-func (m *MockClassRepoProxy) GetAllSchoolClassInfos(ctx context.Context) []*biz.ClassInfo {
+func (m *MockClassRepoProxy) GetAllSchoolClassInfos(ctx context.Context, xnm, xqm string) []*biz.ClassInfo {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllSchoolClassInfos", ctx)
+	ret := m.ctrl.Call(m, "GetAllSchoolClassInfos", ctx, xnm, xqm)
 	ret0, _ := ret[0].([]*biz.ClassInfo)
 	return ret0
 }
 
 // GetAllSchoolClassInfos indicates an expected call of GetAllSchoolClassInfos.
-func (mr *MockClassRepoProxyMockRecorder) GetAllSchoolClassInfos(ctx interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) GetAllSchoolClassInfos(ctx, xnm, xqm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassInfos", reflect.TypeOf((*MockClassRepoProxy)(nil).GetAllSchoolClassInfos), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassInfos", reflect.TypeOf((*MockClassRepoProxy)(nil).GetAllSchoolClassInfos), ctx, xnm, xqm)
 }
 
 // GetSpecificClassInfo mocks base method.

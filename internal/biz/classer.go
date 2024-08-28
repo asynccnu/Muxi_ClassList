@@ -22,7 +22,7 @@ type ClassRepoProxy interface {
 	DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error
 	UpdateClass(ctx context.Context, newClassInfo *ClassInfo, newSc *StudentCourse, stuId, oldClassId, xnm, xqm string) error
 	CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool
-	GetAllSchoolClassInfos(ctx context.Context) []*ClassInfo
+	GetAllSchoolClassInfos(ctx context.Context, xnm, xqm string) []*ClassInfo
 }
 type ClassUsercase struct {
 	ClassRepo ClassRepoProxy
@@ -136,6 +136,6 @@ func (cluc *ClassUsercase) UpdateClass(ctx context.Context, newClassInfo *ClassI
 func (cluc *ClassUsercase) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool {
 	return cluc.ClassRepo.CheckSCIdsExist(ctx, stuId, classId, xnm, xqm)
 }
-func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context) []*ClassInfo {
-	return cluc.ClassRepo.GetAllSchoolClassInfos(ctx)
+func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*ClassInfo {
+	return cluc.ClassRepo.GetAllSchoolClassInfos(ctx, xnm, xqm)
 }
