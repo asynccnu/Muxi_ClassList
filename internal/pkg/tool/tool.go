@@ -94,7 +94,7 @@ func FormatWeeks(weeks []int) string {
 
 	return result.String()
 }
-func CheckIfThisWeek(xnm, xqm string) bool {
+func CheckIfThisYear(xnm, xqm string) bool {
 	y, _ := strconv.Atoi(xnm)
 	s, _ := strconv.Atoi(xqm)
 	currentYear := time.Now().Year()

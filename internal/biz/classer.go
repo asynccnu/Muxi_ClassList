@@ -78,7 +78,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 		thisWeek := classInfo.SearchWeek(week)
 		class := &Class{
 			Info:     classInfo,
-			ThisWeek: thisWeek && tool.CheckIfThisWeek(classInfo.Year, classInfo.Semester),
+			ThisWeek: thisWeek && tool.CheckIfThisYear(classInfo.Year, classInfo.Semester),
 		}
 		classes = append(classes, class)
 	}

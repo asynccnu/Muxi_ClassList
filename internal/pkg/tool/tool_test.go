@@ -172,8 +172,8 @@ func TestCheckIfThisWeek(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := CheckIfThisWeek(tt.args.xnm, tt.args.xqm); got != tt.want {
-				t.Errorf("CheckIfThisWeek() = %v, want %v", got, tt.want)
+			if got := CheckIfThisYear(tt.args.xnm, tt.args.xqm); got != tt.want {
+				t.Errorf("CheckIfThisYear() = %v, want %v", got, tt.want)
 			}
 		})
 	}
