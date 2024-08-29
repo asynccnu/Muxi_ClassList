@@ -24,9 +24,20 @@ services:
     # 文件夹以及文件映射
     volumes:
       - "./redis/data:/data"
+#  Etcd:
+#    image: 'bitnami/etcd:latest'
+#    environment:
+#      - ALLOW_NONE_AUTHENTICATION=yes
+#      - ETCD_ADVERTISE_CLIENT_URLS=http://localhost:2379
+#    ports:
+#      - "2379:2379"
+#      - "2380:2380"
   Muxi_ClassList:
-    image: "Muxi_ClassList:v1"
+    image: "muxi_classlist:v1"
     restart: "always"
+    ## 注意要挂载配置文件，不然会运行错误
+    volumes:
+      - "../configs:/data/conf"
     ports:
       - "8000:8000"
       - "9000:9000"

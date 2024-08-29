@@ -1,4 +1,4 @@
-FROM golang:1.19 AS builder
+FROM golang:1.22 AS builder
 
 COPY . /src
 WORKDIR /src
@@ -21,4 +21,5 @@ EXPOSE 8000
 EXPOSE 9000
 VOLUME /data/conf
 
-CMD ["./server", "-conf", "/data/conf"]
+## 注意，这里的“class”是main.go所在的目录名（猜的）
+CMD ["./class", "-conf", "/data/conf"]

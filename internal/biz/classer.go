@@ -6,6 +6,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	log2 "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
+	"sync"
 )
 
 // ClassCrawler 课程爬虫接口
@@ -43,7 +44,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 	var Scs = make([]*StudentCourse, 0)
 	var classes = make([]*Class, 0)
 	var err error
-
+	var wg sync.WaitGroup
 	classInfos, err := cluc.ClassRepo.GetAllClasses(ctx, StuId, xnm, xqm)
 	if err != nil {
 
@@ -60,7 +61,9 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 				cluc.log.FuncError(cluc.ClassRepo.SaveClasses, err)
 				return nil, err
 			}
+			wg.Add(1)
 			go func() {
+				defer wg.Done()
 				err := cluc.ClassRepo.SaveClasses(ctx, StuId, xnm, xqm, classInfos, Scs)
 				if err != nil {
 					cluc.log.FuncError(cluc.ClassRepo.SaveClasses, err)
@@ -79,7 +82,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 		}
 		classes = append(classes, class)
 	}
-
+	wg.Wait()
 	return classes, nil
 }
 

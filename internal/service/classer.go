@@ -50,7 +50,7 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 	}
 	//fmt.Println("getcookie past: ", time.Now().Sub(time1))
 	//调试专用
-	//cookie := "JSESSIONID=CD72459B2D9FB21CECA63C5AA89BABBB"
+	//cookie := "JSESSIONID=92EFB739D2895F26E2D35A2527C27C0F"
 	//time2 := time.Now()
 
 	pclasses := make([]*pb.Class, 0)
