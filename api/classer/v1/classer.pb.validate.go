@@ -1455,6 +1455,279 @@ var _ interface {
 	ErrorName() string
 } = GetAllClassInfoResponseValidationError{}
 
+// Validate checks the field values on GetRecycleBinClassRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetRecycleBinClassRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetRecycleBinClassRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetRecycleBinClassRequestMultiError, or nil if none found.
+func (m *GetRecycleBinClassRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetRecycleBinClassRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetStuId()) != 10 {
+		err := GetRecycleBinClassRequestValidationError{
+			field:  "StuId",
+			reason: "value length must be 10 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if utf8.RuneCountInString(m.GetYear()) < 1 {
+		err := GetRecycleBinClassRequestValidationError{
+			field:  "Year",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSemester()) != 1 {
+		err := GetRecycleBinClassRequestValidationError{
+			field:  "Semester",
+			reason: "value length must be 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if len(errors) > 0 {
+		return GetRecycleBinClassRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetRecycleBinClassRequestMultiError is an error wrapping multiple validation
+// errors returned by GetRecycleBinClassRequest.ValidateAll() if the
+// designated constraints aren't met.
+type GetRecycleBinClassRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetRecycleBinClassRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetRecycleBinClassRequestMultiError) AllErrors() []error { return m }
+
+// GetRecycleBinClassRequestValidationError is the validation error returned by
+// GetRecycleBinClassRequest.Validate if the designated constraints aren't met.
+type GetRecycleBinClassRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetRecycleBinClassRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetRecycleBinClassRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetRecycleBinClassRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetRecycleBinClassRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetRecycleBinClassRequestValidationError) ErrorName() string {
+	return "GetRecycleBinClassRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetRecycleBinClassRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetRecycleBinClassRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetRecycleBinClassRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetRecycleBinClassRequestValidationError{}
+
+// Validate checks the field values on GetRecycleBinClassResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GetRecycleBinClassResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GetRecycleBinClassResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GetRecycleBinClassResponseMultiError, or nil if none found.
+func (m *GetRecycleBinClassResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GetRecycleBinClassResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetClassInfos() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, GetRecycleBinClassResponseValidationError{
+						field:  fmt.Sprintf("ClassInfos[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, GetRecycleBinClassResponseValidationError{
+						field:  fmt.Sprintf("ClassInfos[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetRecycleBinClassResponseValidationError{
+					field:  fmt.Sprintf("ClassInfos[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return GetRecycleBinClassResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GetRecycleBinClassResponseMultiError is an error wrapping multiple
+// validation errors returned by GetRecycleBinClassResponse.ValidateAll() if
+// the designated constraints aren't met.
+type GetRecycleBinClassResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GetRecycleBinClassResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GetRecycleBinClassResponseMultiError) AllErrors() []error { return m }
+
+// GetRecycleBinClassResponseValidationError is the validation error returned
+// by GetRecycleBinClassResponse.Validate if the designated constraints aren't met.
+type GetRecycleBinClassResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetRecycleBinClassResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetRecycleBinClassResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetRecycleBinClassResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetRecycleBinClassResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetRecycleBinClassResponseValidationError) ErrorName() string {
+	return "GetRecycleBinClassResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GetRecycleBinClassResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetRecycleBinClassResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetRecycleBinClassResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetRecycleBinClassResponseValidationError{}
+
 // Validate checks the field values on ClassInfo with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.

@@ -13,7 +13,8 @@ import (
 //
 //go:generate mockgen -source=./classer.go -destination=./mock/mock_classer_crawler.go -package=mock_biz
 type ClassCrawler interface {
-	GetClassInfos(ctx context.Context, cookie string, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
+	GetClassInfosForUndergraduate(ctx context.Context, cookie string, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
+	GetClassInfoForGraduateStudent(ctx context.Context, cookie string, xnm, xqm string) ([]*ClassInfo, []*StudentCourse, error)
 }
 type ClassRepoProxy interface {
 	SaveClasses(ctx context.Context, stuId, xnm, xqm string, claInfos []*ClassInfo, scs []*StudentCourse) error
@@ -21,6 +22,7 @@ type ClassRepoProxy interface {
 	GetSpecificClassInfo(ctx context.Context, classId string) (*ClassInfo, error)
 	AddClass(ctx context.Context, classInfo *ClassInfo, sc *StudentCourse, xnm, xqm string) error
 	DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error
+	GetRecycledIds(ctx context.Context, stuId, xnm, xqm string) ([]string, error)
 	UpdateClass(ctx context.Context, newClassInfo *ClassInfo, newSc *StudentCourse, stuId, oldClassId, xnm, xqm string) error
 	CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool
 	GetAllSchoolClassInfos(ctx context.Context, xnm, xqm string) []*ClassInfo
@@ -47,15 +49,23 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 	var wg sync.WaitGroup
 	classInfos, err := cluc.ClassRepo.GetAllClasses(ctx, StuId, xnm, xqm)
 	if err != nil {
-
 		if errors.Is(err, errcode.ErrClassNotFound) {
+			if tool.CheckIsUndergraduate(StuId) { //针对是否是本科生，进行分类
+				classInfos, Scs, err = cluc.Crawler.GetClassInfosForUndergraduate(ctx, cookie, xnm, xqm)
 
-			classInfos, Scs, err = cluc.Crawler.GetClassInfos(ctx, cookie, xnm, xqm)
+				if err != nil {
+					cluc.log.FuncError(cluc.Crawler.GetClassInfosForUndergraduate, err)
+					return nil, err
+				}
+			} else {
+				classInfos, Scs, err = cluc.Crawler.GetClassInfoForGraduateStudent(ctx, cookie, xnm, xqm)
 
-			if err != nil {
-				cluc.log.FuncError(cluc.Crawler.GetClassInfos, err)
-				return nil, err
+				if err != nil {
+					cluc.log.FuncError(cluc.Crawler.GetClassInfoForGraduateStudent, err)
+					return nil, err
+				}
 			}
+
 			err = cluc.ClassRepo.SaveClasses(ctx, StuId, xnm, xqm, classInfos, Scs)
 			if err != nil {
 				cluc.log.FuncError(cluc.ClassRepo.SaveClasses, err)
@@ -119,6 +129,23 @@ func (cluc *ClassUsercase) DeleteClass(ctx context.Context, classId string, stuI
 		return err
 	}
 	return nil
+}
+func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*ClassInfo, error) {
+	RecycledClassIds, err := cluc.ClassRepo.GetRecycledIds(ctx, stuId, xnm, xqm)
+	if err != nil {
+		cluc.log.FuncError(cluc.ClassRepo.GetRecycledIds, err)
+		return nil, err
+	}
+	classInfos := make([]*ClassInfo, 0)
+	for _, classId := range RecycledClassIds {
+		classInfo, err := cluc.ClassRepo.GetSpecificClassInfo(ctx, classId)
+		if err != nil {
+			cluc.log.FuncError(cluc.ClassRepo.GetSpecificClassInfo, err)
+			continue
+		}
+		classInfos = append(classInfos, classInfo)
+	}
+	return classInfos, nil
 }
 func (cluc *ClassUsercase) SearchClass(ctx context.Context, classId string) (*ClassInfo, error) {
 	classInfo, err := cluc.ClassRepo.GetSpecificClassInfo(ctx, classId)

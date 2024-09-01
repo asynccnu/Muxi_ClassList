@@ -19,6 +19,7 @@ type ClassCtrl interface {
 	SearchClass(ctx context.Context, classId string) (*biz.ClassInfo, error)
 	UpdateClass(ctx context.Context, newClassInfo *biz.ClassInfo, newSc *biz.StudentCourse, stuId, oldClassId, xnm, xqm string) error
 	GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*biz.ClassInfo
+	GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*biz.ClassInfo, error)
 }
 type CCNUServiceProxy interface {
 	GetCookie(ctx context.Context, stu string) (string, error)
@@ -166,6 +167,20 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 	return &pb.UpdateClassResponse{
 		ClassId: oldclassInfo.ID,
 		Msg:     "成功修改",
+	}, nil
+}
+func (s *ClasserService) GetRecycleBinClassInfos(ctx context.Context, req *pb.GetRecycleBinClassRequest) (*pb.GetRecycleBinClassResponse, error) {
+	classInfos, err := s.Clu.GetRecycledClassInfos(ctx, req.GetStuId(), req.GetYear(), req.GetSemester())
+	if err != nil {
+		s.log.FuncError(s.Clu.GetRecycledClassInfos, err)
+		return &pb.GetRecycleBinClassResponse{}, err
+	}
+	pbClassInfos := make([]*pb.ClassInfo, 0)
+	for _, classInfo := range classInfos {
+		pbClassInfos = append(pbClassInfos, HandleClass(classInfo))
+	}
+	return &pb.GetRecycleBinClassResponse{
+		ClassInfos: pbClassInfos,
 	}, nil
 }
 func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClassInfoRequest) (*pb.GetAllClassInfoResponse, error) {

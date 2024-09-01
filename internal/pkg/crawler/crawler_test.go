@@ -36,7 +36,7 @@ func TestCrawler_GetClassInfos(t *testing.T) {
 				//log: tt.fields.log,
 				client: &http.Client{},
 			}
-			got, got1, err := c.GetClassInfos(tt.args.ctx, tt.args.cookie, tt.args.xnm, tt.args.xqm)
+			got, got1, err := c.GetClassInfosForUndergraduate(tt.args.ctx, tt.args.cookie, tt.args.xnm, tt.args.xqm)
 
 			fmt.Println("-----------------------------------------------------------------------------")
 			fmt.Println(tt.name + ":")

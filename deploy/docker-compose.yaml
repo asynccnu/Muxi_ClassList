@@ -21,9 +21,10 @@ services:
       - "16379:6379"
     # 失败后总是重启
     restart: "always"
-    # 文件夹以及文件映射
+    # 文件夹以及文件映射,以及快照（RDB）的配置映射
     volumes:
       - "./redis/data:/data"
+      - "./redis.conf:/usr/local/etc/redis/redis.conf"
 #  Etcd:
 #    image: 'bitnami/etcd:latest'
 #    environment:

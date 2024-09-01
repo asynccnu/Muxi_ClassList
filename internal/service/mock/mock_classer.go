@@ -106,6 +106,21 @@ func (mr *MockClassCtrlMockRecorder) GetClasses(ctx, StuId, week, xnm, xqm, cook
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClasses", reflect.TypeOf((*MockClassCtrl)(nil).GetClasses), ctx, StuId, week, xnm, xqm, cookie)
 }
 
+// GetRecycledClassInfos mocks base method.
+func (m *MockClassCtrl) GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*biz.ClassInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRecycledClassInfos", ctx, stuId, xnm, xqm)
+	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRecycledClassInfos indicates an expected call of GetRecycledClassInfos.
+func (mr *MockClassCtrlMockRecorder) GetRecycledClassInfos(ctx, stuId, xnm, xqm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecycledClassInfos", reflect.TypeOf((*MockClassCtrl)(nil).GetRecycledClassInfos), ctx, stuId, xnm, xqm)
+}
+
 // SearchClass mocks base method.
 func (m *MockClassCtrl) SearchClass(ctx context.Context, classId string) (*biz.ClassInfo, error) {
 	m.ctrl.T.Helper()

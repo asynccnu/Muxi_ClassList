@@ -44,7 +44,7 @@ func (cla ClassRepo) SaveClasses(ctx context.Context, stuId, xnm, xqm string, cl
 	go func() {
 		//缓存
 		var classIds = make([]string, 0)
-		key := GenerateSetName(stuId, xnm, xqm)
+		key := GenerateScSetName(stuId, xnm, xqm)
 		for _, v := range claInfos {
 			classIds = append(classIds, v.ID)
 		}
@@ -63,7 +63,7 @@ func (cla ClassRepo) SaveClasses(ctx context.Context, stuId, xnm, xqm string, cl
 func (cla ClassRepo) GetAllClasses(ctx context.Context, stuId, xnm, xqm string) ([]*ClassInfo, error) {
 	var classInfos = make([]*ClassInfo, 0)
 	cacheGet := true
-	key1 := GenerateSetName(stuId, xnm, xqm)
+	key1 := GenerateScSetName(stuId, xnm, xqm)
 	claIds, err := cla.Sac.Cache.GetClassIdsFromCache(ctx, key1)
 	if err != nil || len(claIds) == 0 {
 		cla.log.FuncError(cla.Sac.Cache.GetClassIdsFromCache, err)
@@ -126,7 +126,7 @@ func (cla ClassRepo) GetSpecificClassInfo(ctx context.Context, classId string) (
 	if err != nil {
 		cla.log.FuncError(cla.ClaRepo.Cache.GetClassInfoFromCache, err)
 		classInfo, err = cla.ClaRepo.DB.GetClassInfoFromDB(ctx, classId)
-		if err != nil {
+		if err != nil || classInfo == nil {
 			cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
 			return nil, errcode.ErrClassNotFound
 		}
@@ -161,7 +161,7 @@ func (cla ClassRepo) AddClass(ctx context.Context, classInfo *ClassInfo, sc *Stu
 	go func() {
 		// 课程信息缓存
 		key1 := classInfo.ID
-		key2 := GenerateSetName(sc.StuID, xnm, xqm)
+		key2 := GenerateScSetName(sc.StuID, xnm, xqm)
 		err := cla.ClaRepo.Cache.AddClassInfoToCache(ctx, key1, classInfo)
 		if err != nil {
 			cla.log.FuncError(cla.ClaRepo.Cache.AddClassInfoToCache, err)
@@ -187,19 +187,24 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, classId string, stuId stri
 		return errTx
 	}
 
-	////删除缓存
-	//err := cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, classId)
-	//if err != nil {
-	//	cla.log.FuncError(cla.ClaRepo.Cache.DeleteClassInfoFromCache, err)
-	//	return errcode.ErrClassDelete
-	//}
-	key := GenerateSetName(stuId, xnm, xqm)
-	err := cla.Sac.Cache.DeleteStudentAndCourseFromCache(ctx, key, classId)
+	key1 := GenerateScSetName(stuId, xnm, xqm)
+	key2 := GenerateRecycleSetName(stuId, xnm, xqm)
+	//删除并添加进回收站
+	err := cla.Sac.Cache.DeleteAndRecycleClassId(ctx, key1, key2, classId)
 	if err != nil {
-		cla.log.FuncError(cla.Sac.Cache.DeleteStudentAndCourseFromCache, err)
-		return errcode.ErrClassDelete
+		cla.log.FuncError(cla.Sac.Cache.DeleteAndRecycleClassId, err)
+		return err
 	}
 	return nil
+}
+func (cla ClassRepo) GetRecycledIds(ctx context.Context, stuId, xnm, xqm string) ([]string, error) {
+	recycleKey := GenerateRecycleSetName(stuId, xnm, xqm)
+	classIds, err := cla.Sac.Cache.GetRecycledClassIds(ctx, recycleKey)
+	if err != nil {
+		cla.log.FuncError(cla.Sac.Cache.GetRecycledClassIds, err)
+		return nil, err
+	}
+	return classIds, nil
 }
 func (cla ClassRepo) UpdateClass(ctx context.Context, newClassInfo *ClassInfo, newSc *StudentCourse, stuId, oldClassId, xnm, xqm string) error {
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
@@ -233,11 +238,11 @@ func (cla ClassRepo) UpdateClass(ctx context.Context, newClassInfo *ClassInfo, n
 		if err != nil {
 			cla.log.FuncError(cla.ClaRepo.Cache.AddClassInfoToCache, err)
 		}
-		err = cla.Sac.Cache.DeleteStudentAndCourseFromCache(ctx, GenerateSetName(stuId, xnm, xqm), oldClassId)
+		err = cla.Sac.Cache.DeleteStudentAndCourseFromCache(ctx, GenerateScSetName(stuId, xnm, xqm), oldClassId)
 		if err != nil {
 			cla.log.FuncError(cla.Sac.Cache.DeleteStudentAndCourseFromCache, err)
 		}
-		err = cla.Sac.Cache.AddStudentAndCourseToCache(ctx, GenerateSetName(stuId, xnm, xqm), newSc.ClaID)
+		err = cla.Sac.Cache.AddStudentAndCourseToCache(ctx, GenerateScSetName(stuId, xnm, xqm), newSc.ClaID)
 		if err != nil {
 			cla.log.FuncError(cla.Sac.Cache.AddStudentAndCourseToCache, err)
 		}
@@ -245,7 +250,7 @@ func (cla ClassRepo) UpdateClass(ctx context.Context, newClassInfo *ClassInfo, n
 	return nil
 }
 func (cla ClassRepo) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool {
-	key := GenerateSetName(stuId, xnm, xqm)
+	key := GenerateScSetName(stuId, xnm, xqm)
 	exist, err := cla.Sac.Cache.CheckExists(ctx, key, classId)
 	if err == nil {
 		return exist
@@ -260,27 +265,9 @@ func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context, xnm, xqm string
 	}
 	return classInfos
 }
-func GenerateSetName(stuId, xnm, xqm string) string {
+func GenerateScSetName(stuId, xnm, xqm string) string {
 	return fmt.Sprintf("StuAndCla:%s:%s:%s", stuId, xnm, xqm)
 }
-
-// 去重
-func removeDuplicates(strSlice []string) []string {
-	// 创建一个空的 map 来跟踪已经存在的字符串
-	uniqueMap := make(map[string]bool)
-	// 创建一个空的切片来存储去重后的结果
-	result := []string{}
-
-	// 遍历输入的字符串切片
-	for _, str := range strSlice {
-		// 如果字符串不在 map 中，说明是唯一的
-		if _, exists := uniqueMap[str]; !exists {
-			// 将字符串加入结果切片
-			result = append(result, str)
-			// 并在 map 中标记该字符串已经存在
-			uniqueMap[str] = true
-		}
-	}
-
-	return result
+func GenerateRecycleSetName(stuId, xnm, xqm string) string {
+	return fmt.Sprintf("Recycle:%s:%s:%s", stuId, xnm, xqm)
 }

@@ -35,20 +35,36 @@ func (m *MockClassCrawler) EXPECT() *MockClassCrawlerMockRecorder {
 	return m.recorder
 }
 
-// GetClassInfos mocks base method.
-func (m *MockClassCrawler) GetClassInfos(ctx context.Context, cookie, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
+// GetClassInfoForGraduateStudent mocks base method.
+func (m *MockClassCrawler) GetClassInfoForGraduateStudent(ctx context.Context, cookie, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClassInfos", ctx, cookie, xnm, xqm)
+	ret := m.ctrl.Call(m, "GetClassInfoForGraduateStudent", ctx, cookie, xnm, xqm)
 	ret0, _ := ret[0].([]*biz.ClassInfo)
 	ret1, _ := ret[1].([]*biz.StudentCourse)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-// GetClassInfos indicates an expected call of GetClassInfos.
-func (mr *MockClassCrawlerMockRecorder) GetClassInfos(ctx, cookie, xnm, xqm interface{}) *gomock.Call {
+// GetClassInfoForGraduateStudent indicates an expected call of GetClassInfoForGraduateStudent.
+func (mr *MockClassCrawlerMockRecorder) GetClassInfoForGraduateStudent(ctx, cookie, xnm, xqm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassInfos", reflect.TypeOf((*MockClassCrawler)(nil).GetClassInfos), ctx, cookie, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassInfoForGraduateStudent", reflect.TypeOf((*MockClassCrawler)(nil).GetClassInfoForGraduateStudent), ctx, cookie, xnm, xqm)
+}
+
+// GetClassInfosForUndergraduate mocks base method.
+func (m *MockClassCrawler) GetClassInfosForUndergraduate(ctx context.Context, cookie, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClassInfosForUndergraduate", ctx, cookie, xnm, xqm)
+	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret1, _ := ret[1].([]*biz.StudentCourse)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetClassInfosForUndergraduate indicates an expected call of GetClassInfosForUndergraduate.
+func (mr *MockClassCrawlerMockRecorder) GetClassInfosForUndergraduate(ctx, cookie, xnm, xqm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassInfosForUndergraduate", reflect.TypeOf((*MockClassCrawler)(nil).GetClassInfosForUndergraduate), ctx, cookie, xnm, xqm)
 }
 
 // MockClassRepoProxy is a mock of ClassRepoProxy interface.
@@ -143,6 +159,21 @@ func (m *MockClassRepoProxy) GetAllSchoolClassInfos(ctx context.Context, xnm, xq
 func (mr *MockClassRepoProxyMockRecorder) GetAllSchoolClassInfos(ctx, xnm, xqm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassInfos", reflect.TypeOf((*MockClassRepoProxy)(nil).GetAllSchoolClassInfos), ctx, xnm, xqm)
+}
+
+// GetRecycledIds mocks base method.
+func (m *MockClassRepoProxy) GetRecycledIds(ctx context.Context, stuId, xnm, xqm string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRecycledIds", ctx, stuId, xnm, xqm)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRecycledIds indicates an expected call of GetRecycledIds.
+func (mr *MockClassRepoProxyMockRecorder) GetRecycledIds(ctx, stuId, xnm, xqm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecycledIds", reflect.TypeOf((*MockClassRepoProxy)(nil).GetRecycledIds), ctx, stuId, xnm, xqm)
 }
 
 // GetSpecificClassInfo mocks base method.

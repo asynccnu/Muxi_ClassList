@@ -158,6 +158,20 @@ func (mr *MockStudentAndCourseCacheRepoMockRecorder) CheckExists(ctx, key, class
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckExists", reflect.TypeOf((*MockStudentAndCourseCacheRepo)(nil).CheckExists), ctx, key, classId)
 }
 
+// DeleteAndRecycleClassId mocks base method.
+func (m *MockStudentAndCourseCacheRepo) DeleteAndRecycleClassId(ctx context.Context, deleteKey, recycleBinKey, classId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAndRecycleClassId", ctx, deleteKey, recycleBinKey, classId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAndRecycleClassId indicates an expected call of DeleteAndRecycleClassId.
+func (mr *MockStudentAndCourseCacheRepoMockRecorder) DeleteAndRecycleClassId(ctx, deleteKey, recycleBinKey, classId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAndRecycleClassId", reflect.TypeOf((*MockStudentAndCourseCacheRepo)(nil).DeleteAndRecycleClassId), ctx, deleteKey, recycleBinKey, classId)
+}
+
 // DeleteStudentAndCourseFromCache mocks base method.
 func (m *MockStudentAndCourseCacheRepo) DeleteStudentAndCourseFromCache(ctx context.Context, key, ClassId string) error {
 	m.ctrl.T.Helper()
@@ -185,6 +199,21 @@ func (m *MockStudentAndCourseCacheRepo) GetClassIdsFromCache(ctx context.Context
 func (mr *MockStudentAndCourseCacheRepoMockRecorder) GetClassIdsFromCache(ctx, key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassIdsFromCache", reflect.TypeOf((*MockStudentAndCourseCacheRepo)(nil).GetClassIdsFromCache), ctx, key)
+}
+
+// GetRecycledClassIds mocks base method.
+func (m *MockStudentAndCourseCacheRepo) GetRecycledClassIds(ctx context.Context, key string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRecycledClassIds", ctx, key)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRecycledClassIds indicates an expected call of GetRecycledClassIds.
+func (mr *MockStudentAndCourseCacheRepoMockRecorder) GetRecycledClassIds(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecycledClassIds", reflect.TypeOf((*MockStudentAndCourseCacheRepo)(nil).GetRecycledClassIds), ctx, key)
 }
 
 // SaveManyStudentAndCourseToCache mocks base method.

@@ -61,7 +61,6 @@ paths:
         get:
             tags:
                 - Classer
-            description: Sends a greeting
             operationId: Classer_GetClass
             parameters:
                 - name: stu_id
@@ -91,6 +90,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/classer.v1.GetClassResponse'
+    /class/recycle:
+        get:
+            tags:
+                - Classer
+            operationId: Classer_GetRecycleBinClassInfos
+            parameters:
+                - name: stu_id
+                  in: query
+                  schema:
+                    type: string
+                - name: year
+                  in: query
+                  schema:
+                    type: string
+                - name: semester
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/classer.v1.GetRecycleBinClassResponse'
     /class/update:
         put:
             tags:
@@ -188,6 +212,13 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/classer.v1.Class'
+        classer.v1.GetRecycleBinClassResponse:
+            type: object
+            properties:
+                class_infos:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/classer.v1.ClassInfo'
         classer.v1.UpdateClassRequest:
             type: object
             properties:

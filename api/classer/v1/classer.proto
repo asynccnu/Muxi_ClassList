@@ -9,7 +9,6 @@ import "validate/validate.proto";
 option go_package = "class/api/classer/v1;v1";
 
 service Classer {
-    // Sends a greeting
     rpc GetClass (GetClassRequest) returns (GetClassResponse) {
         option (google.api.http) = {
             get: "/class/get/{stu_id}/{year}/{semester}/{week}"
@@ -30,6 +29,11 @@ service Classer {
         option (google.api.http) = {
             put: "/class/update"
             body: "*"
+        };
+    }
+    rpc GetRecycleBinClassInfos(GetRecycleBinClassRequest) returns (GetRecycleBinClassResponse) {
+        option (google.api.http) = {
+            get: "/class/recycle"
         };
     }
     rpc GetAllClassInfo(GetAllClassInfoRequest) returns (GetAllClassInfoResponse) {};
@@ -96,6 +100,14 @@ message GetAllClassInfoRequest {
 }
 message GetAllClassInfoResponse {
     repeated ClassInfo class_infos = 1[json_name = "class_infos"];
+}
+message GetRecycleBinClassRequest{
+    string stuId=1 [json_name = "stu_id",(validate.rules).string = {min_len: 10, max_len: 10}]; //学号
+    string year=2 [json_name = "year",(validate.rules).string = {min_len: 1}];//学年  "2024" 代表"2024-2025学年"
+    string semester=3 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1}];//学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
+}
+message GetRecycleBinClassResponse {
+    repeated ClassInfo class_infos = 1[json_name = "class_infos"]; //回收站的课程
 }
 message  ClassInfo {
     int64 day=1 [json_name = "day"]; //星期几

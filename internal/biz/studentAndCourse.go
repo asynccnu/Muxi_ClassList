@@ -16,7 +16,9 @@ type StudentAndCourseCacheRepo interface {
 	SaveManyStudentAndCourseToCache(ctx context.Context, key string, classIds []string) error
 	AddStudentAndCourseToCache(ctx context.Context, key string, ClassId string) error
 	GetClassIdsFromCache(ctx context.Context, key string) ([]string, error)
+	GetRecycledClassIds(ctx context.Context, key string) ([]string, error)
 	DeleteStudentAndCourseFromCache(ctx context.Context, key string, ClassId string) error
+	DeleteAndRecycleClassId(ctx context.Context, deleteKey string, recycleBinKey string, classId string) error
 	CheckExists(ctx context.Context, key string, classId string) (bool, error)
 }
 

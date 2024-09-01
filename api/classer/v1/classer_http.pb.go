@@ -22,13 +22,14 @@ const _ = http.SupportPackageIsVersion1
 const OperationClasserAddClass = "/classer.v1.Classer/AddClass"
 const OperationClasserDeleteClass = "/classer.v1.Classer/DeleteClass"
 const OperationClasserGetClass = "/classer.v1.Classer/GetClass"
+const OperationClasserGetRecycleBinClassInfos = "/classer.v1.Classer/GetRecycleBinClassInfos"
 const OperationClasserUpdateClass = "/classer.v1.Classer/UpdateClass"
 
 type ClasserHTTPServer interface {
 	AddClass(context.Context, *AddClassRequest) (*AddClassResponse, error)
 	DeleteClass(context.Context, *DeleteClassRequest) (*DeleteClassResponse, error)
-	// GetClass Sends a greeting
 	GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error)
+	GetRecycleBinClassInfos(context.Context, *GetRecycleBinClassRequest) (*GetRecycleBinClassResponse, error)
 	UpdateClass(context.Context, *UpdateClassRequest) (*UpdateClassResponse, error)
 }
 
@@ -38,6 +39,7 @@ func RegisterClasserHTTPServer(s *http.Server, srv ClasserHTTPServer) {
 	r.POST("/class/add", _Classer_AddClass0_HTTP_Handler(srv))
 	r.DELETE("/class/delete/{stuId}/{year}/{semester}/{id}", _Classer_DeleteClass0_HTTP_Handler(srv))
 	r.PUT("/class/update", _Classer_UpdateClass0_HTTP_Handler(srv))
+	r.GET("/class/recycle", _Classer_GetRecycleBinClassInfos0_HTTP_Handler(srv))
 }
 
 func _Classer_GetClass0_HTTP_Handler(srv ClasserHTTPServer) func(ctx http.Context) error {
@@ -128,10 +130,30 @@ func _Classer_UpdateClass0_HTTP_Handler(srv ClasserHTTPServer) func(ctx http.Con
 	}
 }
 
+func _Classer_GetRecycleBinClassInfos0_HTTP_Handler(srv ClasserHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in GetRecycleBinClassRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationClasserGetRecycleBinClassInfos)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetRecycleBinClassInfos(ctx, req.(*GetRecycleBinClassRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*GetRecycleBinClassResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
 type ClasserHTTPClient interface {
 	AddClass(ctx context.Context, req *AddClassRequest, opts ...http.CallOption) (rsp *AddClassResponse, err error)
 	DeleteClass(ctx context.Context, req *DeleteClassRequest, opts ...http.CallOption) (rsp *DeleteClassResponse, err error)
 	GetClass(ctx context.Context, req *GetClassRequest, opts ...http.CallOption) (rsp *GetClassResponse, err error)
+	GetRecycleBinClassInfos(ctx context.Context, req *GetRecycleBinClassRequest, opts ...http.CallOption) (rsp *GetRecycleBinClassResponse, err error)
 	UpdateClass(ctx context.Context, req *UpdateClassRequest, opts ...http.CallOption) (rsp *UpdateClassResponse, err error)
 }
 
@@ -174,6 +196,19 @@ func (c *ClasserHTTPClientImpl) GetClass(ctx context.Context, in *GetClassReques
 	pattern := "/class/get/{stu_id}/{year}/{semester}/{week}"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationClasserGetClass))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *ClasserHTTPClientImpl) GetRecycleBinClassInfos(ctx context.Context, in *GetRecycleBinClassRequest, opts ...http.CallOption) (*GetRecycleBinClassResponse, error) {
+	var out GetRecycleBinClassResponse
+	pattern := "/class/recycle"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationClasserGetRecycleBinClassInfos))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

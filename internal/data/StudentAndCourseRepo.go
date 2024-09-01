@@ -86,10 +86,49 @@ func (s StudentAndCourseCacheRepo) GetClassIdsFromCache(ctx context.Context, key
 	return res, nil
 }
 
+func (s StudentAndCourseCacheRepo) GetRecycledClassIds(ctx context.Context, key string) ([]string, error) {
+	res, err := s.rdb.SMembers(key).Result()
+	if err != nil {
+		s.log.FuncError(s.rdb.SMembers, err)
+		return nil, err
+	}
+	return res, nil
+}
+
 func (s StudentAndCourseCacheRepo) DeleteStudentAndCourseFromCache(ctx context.Context, key string, ClassId string) error {
 	_, err := s.rdb.SRem(key, ClassId).Result()
 	if err != nil {
 		s.log.FuncError(s.rdb.SRem, err)
+		return err
+	}
+	return nil
+}
+
+func (s StudentAndCourseCacheRepo) DeleteAndRecycleClassId(ctx context.Context, deleteKey string, recycleBinKey string, classId string) error {
+	// 开启事务
+	_, err := s.rdb.TxPipelined(func(pipe redis.Pipeliner) error {
+		// 删除 ClassId
+		if err := pipe.SRem(deleteKey, classId).Err(); err != nil {
+			s.log.FuncError(pipe.SRem, err)
+			return err
+		}
+
+		// 将 ClassId 放入回收站
+		if err := pipe.SAdd(recycleBinKey, classId).Err(); err != nil {
+			s.log.FuncError(pipe.SAdd, err)
+			return err
+		}
+
+		// 设置回收站的过期时间
+		if err := pipe.Expire(recycleBinKey, RecycleExpiration).Err(); err != nil {
+			s.log.FuncError(pipe.Expire, err)
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return err
 	}
 	return nil
