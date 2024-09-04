@@ -118,3 +118,27 @@ func IsScidnotexistErroe(err error) bool {
 func ErrorScidnotexistErroe(format string, args ...interface{}) *errors.Error {
 	return errors.New(306, ErrorReason_SCIDNOTEXIST_Erroe.String(), fmt.Sprintf(format, args...))
 }
+
+func IsRecyclebindonothavetheclass(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_RECYCLEBINDONOTHAVETHECLASS.String() && e.Code == 307
+}
+
+func ErrorRecyclebindonothavetheclass(format string, args ...interface{}) *errors.Error {
+	return errors.New(307, ErrorReason_RECYCLEBINDONOTHAVETHECLASS.String(), fmt.Sprintf(format, args...))
+}
+
+func IsRecoverfailed(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_RECOVERFAILED.String() && e.Code == 308
+}
+
+func ErrorRecoverfailed(format string, args ...interface{}) *errors.Error {
+	return errors.New(308, ErrorReason_RECOVERFAILED.String(), fmt.Sprintf(format, args...))
+}

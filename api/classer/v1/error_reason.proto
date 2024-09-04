@@ -21,4 +21,6 @@ enum ErrorReason {
   Crawler_Error = 6 [(errors.code) = 304];
   CCNULogin_Error = 7 [(errors.code) = 305];
   SCIDNOTEXIST_Erroe = 8 [(errors.code) = 306];
+  RECYCLEBINDONOTHAVETHECLASS = 9 [(errors.code) =307];
+  RECOVERFAILED = 10 [(errors.code) =308];
 }

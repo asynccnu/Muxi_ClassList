@@ -15,10 +15,13 @@ type ClassInfoDBRepo interface {
 
 type ClassInfoCacheRepo interface {
 	SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*ClassInfo) error
-	AddClassInfoToCache(ctx context.Context, key string, classInfo *ClassInfo) error
+	OnlyAddClassInfoToCache(ctx context.Context, key string, classInfo *ClassInfo) error
+	OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*ClassInfo) error
+	AddClassInfoToCache(ctx context.Context, classInfoKey, classInfosKey string, classInfo *ClassInfo) error
 	GetClassInfoFromCache(ctx context.Context, key string) (*ClassInfo, error)
-	DeleteClassInfoFromCache(ctx context.Context, key string) error
-	UpdateClassInfoInCache(ctx context.Context, key string, classInfo *ClassInfo) error
+	GetClassInfosFromCache(ctx context.Context, key string) ([]*ClassInfo, error)
+	DeleteClassInfoFromCache(ctx context.Context, deletedId, classInfosKey string) error
+	FixClassInfoInCache(ctx context.Context, oldID, classInfoKey, classInfosKey string, classInfo *ClassInfo) error
 }
 type ClassInfoRepo struct {
 	DB    ClassInfoDBRepo

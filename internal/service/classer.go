@@ -20,6 +20,7 @@ type ClassCtrl interface {
 	UpdateClass(ctx context.Context, newClassInfo *biz.ClassInfo, newSc *biz.StudentCourse, stuId, oldClassId, xnm, xqm string) error
 	GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*biz.ClassInfo
 	GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*biz.ClassInfo, error)
+	RecoverClassInfo(ctx context.Context, stuId, xnm, xqm, classId string) error
 }
 type CCNUServiceProxy interface {
 	GetCookie(ctx context.Context, stu string) (string, error)
@@ -40,6 +41,9 @@ func NewClasserService(clu ClassCtrl, cs CCNUServiceProxy, log logPrinter.LogerP
 }
 
 func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) (*pb.GetClassResponse, error) {
+	if !tool.CheckSY(req.Semester, req.Year) || req.GetWeek() <= 0 {
+		return &pb.GetClassResponse{}, errcode.ErrParam
+	}
 	//time1 := time.Now()
 	// 设置超时时间
 	timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
@@ -55,11 +59,6 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 	//time2 := time.Now()
 
 	pclasses := make([]*pb.Class, 0)
-
-	if !tool.CheckSY(req.Semester, req.Year) || req.GetWeek() <= 0 {
-		return &pb.GetClassResponse{}, errcode.ErrParam
-	}
-
 	classes, err := s.Clu.GetClasses(ctx, req.GetStuId(), req.GetWeek(), req.GetYear(), req.GetSemester(), cookie)
 	if err != nil {
 		s.log.FuncError(s.Clu.GetClasses, err)
@@ -181,6 +180,23 @@ func (s *ClasserService) GetRecycleBinClassInfos(ctx context.Context, req *pb.Ge
 	}
 	return &pb.GetRecycleBinClassResponse{
 		ClassInfos: pbClassInfos,
+	}, nil
+}
+func (s *ClasserService) RecoverClass(ctx context.Context, req *pb.RecoverClassRequest) (*pb.RecoverClassResponse, error) {
+	if !tool.CheckSY(req.Semester, req.Year) {
+		return &pb.RecoverClassResponse{
+			Msg: "恢复课程失败",
+		}, errcode.ErrParam
+	}
+	err := s.Clu.RecoverClassInfo(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
+	if err != nil {
+		s.log.FuncError(s.Clu.RecoverClassInfo, err)
+		return &pb.RecoverClassResponse{
+			Msg: "恢复课程失败",
+		}, err
+	}
+	return &pb.RecoverClassResponse{
+		Msg: "恢复课程成功",
 	}, nil
 }
 func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClassInfoRequest) (*pb.GetAllClassInfoResponse, error) {

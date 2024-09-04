@@ -90,22 +90,43 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/classer.v1.GetClassResponse'
-    /class/recycle:
+    /class/recover:
+        put:
+            tags:
+                - Classer
+            operationId: Classer_RecoverClass
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/classer.v1.RecoverClassRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/classer.v1.RecoverClassResponse'
+    /class/recycle/{stu_id}/{year}/{semester}:
         get:
             tags:
                 - Classer
             operationId: Classer_GetRecycleBinClassInfos
             parameters:
                 - name: stu_id
-                  in: query
+                  in: path
+                  required: true
                   schema:
                     type: string
                 - name: year
-                  in: query
+                  in: path
+                  required: true
                   schema:
                     type: string
                 - name: semester
-                  in: query
+                  in: path
+                  required: true
                   schema:
                     type: string
             responses:
@@ -219,6 +240,22 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/classer.v1.ClassInfo'
+        classer.v1.RecoverClassRequest:
+            type: object
+            properties:
+                stu_id:
+                    type: string
+                year:
+                    type: string
+                semester:
+                    type: string
+                id:
+                    type: string
+        classer.v1.RecoverClassResponse:
+            type: object
+            properties:
+                msg:
+                    type: string
         classer.v1.UpdateClassRequest:
             type: object
             properties:

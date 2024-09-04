@@ -94,7 +94,22 @@ func (s StudentAndCourseCacheRepo) GetRecycledClassIds(ctx context.Context, key 
 	}
 	return res, nil
 }
-
+func (s StudentAndCourseCacheRepo) CheckRecycleIdIsExist(ctx context.Context, RecycledBinKey, classId string) bool {
+	exists, err := s.rdb.SIsMember(RecycledBinKey, classId).Result()
+	if err != nil {
+		s.log.FuncError(s.rdb.SIsMember, err)
+		return false
+	}
+	return exists
+}
+func (s StudentAndCourseCacheRepo) RemoveClassFromRecycledBin(ctx context.Context, RecycledBinKey, classId string) error {
+	_, err := s.rdb.SRem(RecycledBinKey, classId).Result()
+	if err != nil {
+		s.log.FuncError(s.rdb.SRem, err)
+		return err
+	}
+	return nil
+}
 func (s StudentAndCourseCacheRepo) DeleteStudentAndCourseFromCache(ctx context.Context, key string, ClassId string) error {
 	_, err := s.rdb.SRem(key, ClassId).Result()
 	if err != nil {

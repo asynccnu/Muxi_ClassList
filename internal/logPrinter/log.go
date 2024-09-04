@@ -7,6 +7,7 @@ import (
 	"runtime"
 )
 
+//go:generate mockgen -source=./log.go -destination=./mock/mock_loger.go -package=mock_log
 var ProviderSet = wire.NewSet(NewLogger)
 
 // LogerPrinter  打印函数错误

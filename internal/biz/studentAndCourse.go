@@ -20,6 +20,8 @@ type StudentAndCourseCacheRepo interface {
 	DeleteStudentAndCourseFromCache(ctx context.Context, key string, ClassId string) error
 	DeleteAndRecycleClassId(ctx context.Context, deleteKey string, recycleBinKey string, classId string) error
 	CheckExists(ctx context.Context, key string, classId string) (bool, error)
+	CheckRecycleIdIsExist(ctx context.Context, RecycledBinKey, classId string) bool
+	RemoveClassFromRecycledBin(ctx context.Context, RecycledBinKey, classId string) error
 }
 
 type StudentAndCourseRepo struct {

@@ -33,7 +33,13 @@ service Classer {
     }
     rpc GetRecycleBinClassInfos(GetRecycleBinClassRequest) returns (GetRecycleBinClassResponse) {
         option (google.api.http) = {
-            get: "/class/recycle"
+            get: "/class/recycle/{stuId}/{year}/{semester}"
+        };
+    }
+    rpc RecoverClass(RecoverClassRequest) returns (RecoverClassResponse) {
+        option (google.api.http) = {
+            put: "/class/recover"
+            body: "*"
         };
     }
     rpc GetAllClassInfo(GetAllClassInfoRequest) returns (GetAllClassInfoResponse) {};
@@ -108,6 +114,15 @@ message GetRecycleBinClassRequest{
 }
 message GetRecycleBinClassResponse {
     repeated ClassInfo class_infos = 1[json_name = "class_infos"]; //回收站的课程
+}
+message RecoverClassRequest {
+    string stuId=1 [json_name = "stu_id",(validate.rules).string = {min_len: 10, max_len: 10}]; //学号
+    string year=2 [json_name = "year",(validate.rules).string = {min_len: 1}];//学年  "2024" 代表"2024-2025学年"
+    string semester=3 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1}];//学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
+    string classId=11 [json_name = "id",(validate.rules).string = {min_len: 1}];// 课程的ID（唯一标识） 更新后这个可能会换，所以响应的时候会把新的ID返回
+}
+message RecoverClassResponse {
+    string msg=1[json_name = "msg"];
 }
 message  ClassInfo {
     int64 day=1 [json_name = "day"]; //星期几

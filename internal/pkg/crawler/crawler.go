@@ -31,6 +31,8 @@ func NewClassCrawler(logPrinter logPrinter.LogerPrinter) *Crawler {
 		client:     &http.Client{},
 	}
 }
+
+// GetClassInfoForGraduateStudent 获取研究生课程信息
 func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, cookie string, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
 	var reply CrawReply2
 	yn := tool.CheckSY(xqm, xnm)
@@ -149,17 +151,10 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*biz.ClassInfo, []*biz.S
 		info.WeekDuration = v.Zcd                     //上课的周数
 		info.Classname = v.Kcmc                       //课程名称
 		info.Credit, _ = strconv.ParseFloat(v.Xf, 64) //学分
-		info.Weeks = 0
-		info.Semester = xqm //学期
-		info.Year = xnm     //学年
+		info.Semester = xqm                           //学期
+		info.Year = xnm                               //学年
 		//添加周数
-		weeks, err := ParseWeeks(v.Zcd)
-		if err != nil {
-			return nil, nil, err
-		}
-		for _, week := range weeks {
-			info.AddWeek(week)
-		}
+		info.Weeks, _ = strconv.ParseInt(v.Oldzc, 10, 64)
 		info.UpdateID() //课程ID
 		//-----------------------------------------------------
 		//学生与课程的映射关系
@@ -194,17 +189,10 @@ func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*biz.ClassInfo, []*biz.S
 		info.WeekDuration = v.Zcd                     //上课的周数
 		info.Classname = v.Kcmc                       //课程名称
 		info.Credit, _ = strconv.ParseFloat(v.Xf, 64) //学分
-		info.Weeks = 0
-		info.Semester = xqm //学期
-		info.Year = xnm     //学年
+		info.Semester = xqm                           //学期
+		info.Year = xnm                               //学年
 		//添加周数
-		weeks, err := ParseWeeks(v.Zcd)
-		if err != nil {
-			return nil, nil, err
-		}
-		for _, week := range weeks {
-			info.AddWeek(week)
-		}
+		info.Weeks, _ = strconv.ParseInt(v.Oldzc, 10, 64)
 		info.UpdateID() //课程ID
 		//-----------------------------------------------------
 		//学生与课程的映射关系

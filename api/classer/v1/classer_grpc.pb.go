@@ -24,6 +24,7 @@ const (
 	Classer_DeleteClass_FullMethodName             = "/classer.v1.Classer/DeleteClass"
 	Classer_UpdateClass_FullMethodName             = "/classer.v1.Classer/UpdateClass"
 	Classer_GetRecycleBinClassInfos_FullMethodName = "/classer.v1.Classer/GetRecycleBinClassInfos"
+	Classer_RecoverClass_FullMethodName            = "/classer.v1.Classer/RecoverClass"
 	Classer_GetAllClassInfo_FullMethodName         = "/classer.v1.Classer/GetAllClassInfo"
 )
 
@@ -36,6 +37,7 @@ type ClasserClient interface {
 	DeleteClass(ctx context.Context, in *DeleteClassRequest, opts ...grpc.CallOption) (*DeleteClassResponse, error)
 	UpdateClass(ctx context.Context, in *UpdateClassRequest, opts ...grpc.CallOption) (*UpdateClassResponse, error)
 	GetRecycleBinClassInfos(ctx context.Context, in *GetRecycleBinClassRequest, opts ...grpc.CallOption) (*GetRecycleBinClassResponse, error)
+	RecoverClass(ctx context.Context, in *RecoverClassRequest, opts ...grpc.CallOption) (*RecoverClassResponse, error)
 	GetAllClassInfo(ctx context.Context, in *GetAllClassInfoRequest, opts ...grpc.CallOption) (*GetAllClassInfoResponse, error)
 }
 
@@ -97,6 +99,16 @@ func (c *classerClient) GetRecycleBinClassInfos(ctx context.Context, in *GetRecy
 	return out, nil
 }
 
+func (c *classerClient) RecoverClass(ctx context.Context, in *RecoverClassRequest, opts ...grpc.CallOption) (*RecoverClassResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RecoverClassResponse)
+	err := c.cc.Invoke(ctx, Classer_RecoverClass_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *classerClient) GetAllClassInfo(ctx context.Context, in *GetAllClassInfoRequest, opts ...grpc.CallOption) (*GetAllClassInfoResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetAllClassInfoResponse)
@@ -116,6 +128,7 @@ type ClasserServer interface {
 	DeleteClass(context.Context, *DeleteClassRequest) (*DeleteClassResponse, error)
 	UpdateClass(context.Context, *UpdateClassRequest) (*UpdateClassResponse, error)
 	GetRecycleBinClassInfos(context.Context, *GetRecycleBinClassRequest) (*GetRecycleBinClassResponse, error)
+	RecoverClass(context.Context, *RecoverClassRequest) (*RecoverClassResponse, error)
 	GetAllClassInfo(context.Context, *GetAllClassInfoRequest) (*GetAllClassInfoResponse, error)
 	mustEmbedUnimplementedClasserServer()
 }
@@ -141,6 +154,9 @@ func (UnimplementedClasserServer) UpdateClass(context.Context, *UpdateClassReque
 }
 func (UnimplementedClasserServer) GetRecycleBinClassInfos(context.Context, *GetRecycleBinClassRequest) (*GetRecycleBinClassResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRecycleBinClassInfos not implemented")
+}
+func (UnimplementedClasserServer) RecoverClass(context.Context, *RecoverClassRequest) (*RecoverClassResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RecoverClass not implemented")
 }
 func (UnimplementedClasserServer) GetAllClassInfo(context.Context, *GetAllClassInfoRequest) (*GetAllClassInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllClassInfo not implemented")
@@ -256,6 +272,24 @@ func _Classer_GetRecycleBinClassInfos_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Classer_RecoverClass_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecoverClassRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClasserServer).RecoverClass(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Classer_RecoverClass_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClasserServer).RecoverClass(ctx, req.(*RecoverClassRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Classer_GetAllClassInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAllClassInfoRequest)
 	if err := dec(in); err != nil {
@@ -300,6 +334,10 @@ var Classer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRecycleBinClassInfos",
 			Handler:    _Classer_GetRecycleBinClassInfos_Handler,
+		},
+		{
+			MethodName: "RecoverClass",
+			Handler:    _Classer_RecoverClass_Handler,
 		},
 		{
 			MethodName: "GetAllClassInfo",

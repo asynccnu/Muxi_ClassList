@@ -131,31 +131,45 @@ func (m *MockClassInfoCacheRepo) EXPECT() *MockClassInfoCacheRepoMockRecorder {
 }
 
 // AddClassInfoToCache mocks base method.
-func (m *MockClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, key string, classInfo *biz.ClassInfo) error {
+func (m *MockClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, classInfoKey, classInfosKey string, classInfo *biz.ClassInfo) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddClassInfoToCache", ctx, key, classInfo)
+	ret := m.ctrl.Call(m, "AddClassInfoToCache", ctx, classInfoKey, classInfosKey, classInfo)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddClassInfoToCache indicates an expected call of AddClassInfoToCache.
-func (mr *MockClassInfoCacheRepoMockRecorder) AddClassInfoToCache(ctx, key, classInfo interface{}) *gomock.Call {
+func (mr *MockClassInfoCacheRepoMockRecorder) AddClassInfoToCache(ctx, classInfoKey, classInfosKey, classInfo interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddClassInfoToCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).AddClassInfoToCache), ctx, key, classInfo)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddClassInfoToCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).AddClassInfoToCache), ctx, classInfoKey, classInfosKey, classInfo)
 }
 
 // DeleteClassInfoFromCache mocks base method.
-func (m *MockClassInfoCacheRepo) DeleteClassInfoFromCache(ctx context.Context, key string) error {
+func (m *MockClassInfoCacheRepo) DeleteClassInfoFromCache(ctx context.Context, deletedId, classInfosKey string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteClassInfoFromCache", ctx, key)
+	ret := m.ctrl.Call(m, "DeleteClassInfoFromCache", ctx, deletedId, classInfosKey)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteClassInfoFromCache indicates an expected call of DeleteClassInfoFromCache.
-func (mr *MockClassInfoCacheRepoMockRecorder) DeleteClassInfoFromCache(ctx, key interface{}) *gomock.Call {
+func (mr *MockClassInfoCacheRepoMockRecorder) DeleteClassInfoFromCache(ctx, deletedId, classInfosKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClassInfoFromCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).DeleteClassInfoFromCache), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClassInfoFromCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).DeleteClassInfoFromCache), ctx, deletedId, classInfosKey)
+}
+
+// FixClassInfoInCache mocks base method.
+func (m *MockClassInfoCacheRepo) FixClassInfoInCache(ctx context.Context, oldID, classInfoKey, classInfosKey string, classInfo *biz.ClassInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FixClassInfoInCache", ctx, oldID, classInfoKey, classInfosKey, classInfo)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// FixClassInfoInCache indicates an expected call of FixClassInfoInCache.
+func (mr *MockClassInfoCacheRepoMockRecorder) FixClassInfoInCache(ctx, oldID, classInfoKey, classInfosKey, classInfo interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FixClassInfoInCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).FixClassInfoInCache), ctx, oldID, classInfoKey, classInfosKey, classInfo)
 }
 
 // GetClassInfoFromCache mocks base method.
@@ -173,6 +187,49 @@ func (mr *MockClassInfoCacheRepoMockRecorder) GetClassInfoFromCache(ctx, key int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassInfoFromCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).GetClassInfoFromCache), ctx, key)
 }
 
+// GetClassInfosFromCache mocks base method.
+func (m *MockClassInfoCacheRepo) GetClassInfosFromCache(ctx context.Context, key string) ([]*biz.ClassInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClassInfosFromCache", ctx, key)
+	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetClassInfosFromCache indicates an expected call of GetClassInfosFromCache.
+func (mr *MockClassInfoCacheRepoMockRecorder) GetClassInfosFromCache(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassInfosFromCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).GetClassInfosFromCache), ctx, key)
+}
+
+// OnlyAddClassInfoToCache mocks base method.
+func (m *MockClassInfoCacheRepo) OnlyAddClassInfoToCache(ctx context.Context, key string, classInfo *biz.ClassInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OnlyAddClassInfoToCache", ctx, key, classInfo)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OnlyAddClassInfoToCache indicates an expected call of OnlyAddClassInfoToCache.
+func (mr *MockClassInfoCacheRepoMockRecorder) OnlyAddClassInfoToCache(ctx, key, classInfo interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnlyAddClassInfoToCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).OnlyAddClassInfoToCache), ctx, key, classInfo)
+}
+
+// OnlyAddClassInfosToCache mocks base method.
+func (m *MockClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*biz.ClassInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OnlyAddClassInfosToCache", ctx, key, classInfos)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OnlyAddClassInfosToCache indicates an expected call of OnlyAddClassInfosToCache.
+func (mr *MockClassInfoCacheRepoMockRecorder) OnlyAddClassInfosToCache(ctx, key, classInfos interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnlyAddClassInfosToCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).OnlyAddClassInfosToCache), ctx, key, classInfos)
+}
+
 // SaveManyClassInfosToCache mocks base method.
 func (m *MockClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*biz.ClassInfo) error {
 	m.ctrl.T.Helper()
@@ -185,18 +242,4 @@ func (m *MockClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, 
 func (mr *MockClassInfoCacheRepoMockRecorder) SaveManyClassInfosToCache(ctx, keys, classInfos interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveManyClassInfosToCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).SaveManyClassInfosToCache), ctx, keys, classInfos)
-}
-
-// UpdateClassInfoInCache mocks base method.
-func (m *MockClassInfoCacheRepo) UpdateClassInfoInCache(ctx context.Context, key string, classInfo *biz.ClassInfo) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateClassInfoInCache", ctx, key, classInfo)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateClassInfoInCache indicates an expected call of UpdateClassInfoInCache.
-func (mr *MockClassInfoCacheRepoMockRecorder) UpdateClassInfoInCache(ctx, key, classInfo interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClassInfoInCache", reflect.TypeOf((*MockClassInfoCacheRepo)(nil).UpdateClassInfoInCache), ctx, key, classInfo)
 }

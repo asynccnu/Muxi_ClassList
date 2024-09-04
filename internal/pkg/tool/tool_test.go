@@ -15,8 +15,8 @@ func TestCheckSY(t *testing.T) {
 		args args
 		want bool
 	}{
-		{name: "test1", args: args{"1", "2023-2024"}, want: true},
-		{name: "test2", args: args{"2", "2023"}, want: false},
+		{name: "test1", args: args{"1", "2023-2024"}, want: false},
+		{name: "test2", args: args{"2", "2023"}, want: true},
 		{name: "test3", args: args{"3", "2023-2024"}, want: false},
 		{name: "test4", args: args{"1", "-2024"}, want: false},
 	}
@@ -141,6 +141,11 @@ func TestParseWeeks(t *testing.T) {
 			name: "test9",
 			args: args{weeks: 42}, // 101010
 			want: []int{2, 4, 6},
+		},
+		{
+			name: "test10",
+			args: args{weeks: 32767}, // 101011
+			want: []int{8, 11, 13, 15},
 		},
 	}
 	for _, tt := range tests {

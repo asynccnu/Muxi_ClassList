@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"net/http"
+	"reflect"
 	"testing"
 )
 
-var cookie = "JSESSIONID=E48CAEEB7D2EA3CF0ABE01546CCCDE13"
 var ctx = context.Background()
 
 func TestCrawler_GetClassInfos(t *testing.T) {
-
+	var cookie = "JSESSIONID=E48CAEEB7D2EA3CF0ABE01546CCCDE13"
 	type args struct {
 		ctx    context.Context
 		cookie string
@@ -48,6 +50,48 @@ func TestCrawler_GetClassInfos(t *testing.T) {
 			fmt.Println(string(jsonStr1))
 			jsonStr2, _ := json.MarshalIndent(got1, "", "  ")
 			fmt.Println(string(jsonStr2))
+		})
+	}
+}
+
+func TestCrawler_GetClassInfoForGraduateStudent(t *testing.T) {
+	type fields struct {
+		logPrinter logPrinter.LogerPrinter
+		client     *http.Client
+	}
+	type args struct {
+		ctx    context.Context
+		cookie string
+		xnm    string
+		xqm    string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []*biz.ClassInfo
+		want1   []*biz.StudentCourse
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Crawler{
+				logPrinter: tt.fields.logPrinter,
+				client:     tt.fields.client,
+			}
+			got, got1, err := c.GetClassInfoForGraduateStudent(tt.args.ctx, tt.args.cookie, tt.args.xnm, tt.args.xqm)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetClassInfoForGraduateStudent() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetClassInfoForGraduateStudent() got = %v, want %v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got1, tt.want1) {
+				t.Errorf("GetClassInfoForGraduateStudent() got1 = %v, want %v", got1, tt.want1)
+			}
 		})
 	}
 }

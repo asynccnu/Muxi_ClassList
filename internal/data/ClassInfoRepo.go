@@ -33,6 +33,7 @@ func NewClassInfoCacheRepo(rdb *redis.Client, log log.LogerPrinter) *ClassInfoCa
 	}
 }
 
+// SaveManyClassInfosToCache 一次性存多个单个课程信息
 func (c ClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*biz.ClassInfo) error {
 	err := c.rdb.Watch(func(tx *redis.Tx) error {
 		// 开始事务
@@ -57,10 +58,13 @@ func (c ClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, keys 
 		c.log.FuncError(c.rdb.Watch, err)
 		return err
 	}
+
 	return nil
 }
-func (c ClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, key string, classInfo *biz.ClassInfo) error {
-	val, err := json.Marshal(classInfo)
+
+// OnlyAddClassInfosToCache 将整个课表存到缓存中去
+func (c ClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*biz.ClassInfo) error {
+	val, err := json.Marshal(classInfos)
 	if err != nil {
 		c.log.FuncError(json.Marshal, err)
 		return err
@@ -73,6 +77,34 @@ func (c ClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, key string,
 	return nil
 }
 
+// OnlyAddClassInfoToCache 仅添加单个课程信息到缓存中
+func (c ClassInfoCacheRepo) OnlyAddClassInfoToCache(ctx context.Context, key string, classInfo *biz.ClassInfo) error {
+	val, err := json.Marshal(classInfo)
+	if err != nil {
+		c.log.FuncError(json.Marshal, err)
+		return err
+	}
+	err = c.rdb.Set(key, val, Expiration).Err()
+	if err != nil {
+		c.log.FuncError(c.rdb.Set, err)
+		return err
+	}
+	return nil
+}
+func (c ClassInfoCacheRepo) GetClassInfosFromCache(ctx context.Context, key string) ([]*biz.ClassInfo, error) {
+	var classInfos = make([]*biz.ClassInfo, 0)
+	val, err := c.rdb.Get(key).Result()
+	if err != nil {
+		c.log.FuncError(c.rdb.Get, err)
+		return nil, err
+	}
+	err = json.Unmarshal([]byte(val), &classInfos)
+	if err != nil {
+		c.log.FuncError(json.Unmarshal, err)
+		return nil, err
+	}
+	return classInfos, nil
+}
 func (c ClassInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key string) (*biz.ClassInfo, error) {
 	var classInfo = &biz.ClassInfo{}
 	val, err := c.rdb.Get(key).Result()
@@ -88,29 +120,77 @@ func (c ClassInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key strin
 	return classInfo, nil
 }
 
-func (c ClassInfoCacheRepo) DeleteClassInfoFromCache(ctx context.Context, key string) error {
-	err := c.rdb.Del(key).Err()
+// AddClassInfoToCache 添加课程的操作集合
+func (c ClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, classInfoKey, classInfosKey string, classInfo *biz.ClassInfo) error {
+	oldClassInfos, err := c.GetClassInfosFromCache(ctx, classInfosKey)
 	if err != nil {
-		c.log.FuncError(c.rdb.Del, err)
+		c.log.FuncError(c.GetClassInfosFromCache, err)
+		return err
+	}
+	//将原本的classInfos中要添加的课程添加
+	newClassInfos := append(oldClassInfos, classInfo)
+	err = c.OnlyAddClassInfosToCache(ctx, classInfosKey, newClassInfos)
+	if err != nil {
+		c.log.FuncError(c.OnlyAddClassInfosToCache, err)
+		return err
+	}
+	//添加单个课程信息到缓存中
+	err = c.OnlyAddClassInfoToCache(ctx, classInfoKey, classInfo)
+	if err != nil {
+		c.log.FuncError(c.OnlyAddClassInfoToCache, err)
 		return err
 	}
 	return nil
 }
 
-func (c ClassInfoCacheRepo) UpdateClassInfoInCache(ctx context.Context, key string, classInfo *biz.ClassInfo) error {
-	val, err := json.Marshal(classInfo)
+// FixClassInfoInCache 修改缓存中的课表信息
+func (c ClassInfoCacheRepo) FixClassInfoInCache(ctx context.Context, oldID, classInfoKey, classInfosKey string, classInfo *biz.ClassInfo) error {
+	oldClassInfos, err := c.GetClassInfosFromCache(ctx, classInfosKey)
 	if err != nil {
-		c.log.FuncError(json.Marshal, err)
+		c.log.FuncError(c.GetClassInfosFromCache, err)
 		return err
 	}
-	err = c.rdb.Set(key, val, Expiration).Err()
+	//将原本的classInfos中要更改的课程更改
+	for k, oldClassInfo := range oldClassInfos {
+		if oldClassInfo.ID == oldID {
+			oldClassInfos[k] = classInfo
+			break
+		}
+	}
+	err = c.OnlyAddClassInfosToCache(ctx, classInfosKey, oldClassInfos)
 	if err != nil {
-		c.log.FuncError(c.rdb.Set, err)
+		c.log.FuncError(c.OnlyAddClassInfosToCache, err)
+		return err
+	}
+	//添加单个课程信息到缓存中
+	err = c.OnlyAddClassInfoToCache(ctx, classInfoKey, classInfo)
+	if err != nil {
+		c.log.FuncError(c.OnlyAddClassInfoToCache, err)
 		return err
 	}
 	return nil
 }
-
+func (c ClassInfoCacheRepo) DeleteClassInfoFromCache(ctx context.Context, deletedId, classInfosKey string) error {
+	var Indx int
+	oldClassInfos, err := c.GetClassInfosFromCache(ctx, classInfosKey)
+	if err != nil {
+		c.log.FuncError(c.GetClassInfosFromCache, err)
+		return err
+	}
+	for k, oldClassInfo := range oldClassInfos {
+		if oldClassInfo.ID == deletedId {
+			Indx = k
+			break
+		}
+	}
+	newClassInfos := append(oldClassInfos[:Indx], oldClassInfos[Indx+1:]...)
+	err = c.OnlyAddClassInfosToCache(ctx, classInfosKey, newClassInfos)
+	if err != nil {
+		c.log.FuncError(c.OnlyAddClassInfosToCache, err)
+		return err
+	}
+	return nil
+}
 func (c ClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*biz.ClassInfo) error {
 	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
 	for _, cla := range classInfo {

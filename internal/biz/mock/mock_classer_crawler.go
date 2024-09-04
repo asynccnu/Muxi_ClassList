@@ -104,6 +104,20 @@ func (mr *MockClassRepoProxyMockRecorder) AddClass(ctx, classInfo, sc, xnm, xqm 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddClass", reflect.TypeOf((*MockClassRepoProxy)(nil).AddClass), ctx, classInfo, sc, xnm, xqm)
 }
 
+// CheckClassIdIsInRecycledBin mocks base method.
+func (m *MockClassRepoProxy) CheckClassIdIsInRecycledBin(ctx context.Context, stuId, xnm, xqm, classId string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckClassIdIsInRecycledBin", ctx, stuId, xnm, xqm, classId)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CheckClassIdIsInRecycledBin indicates an expected call of CheckClassIdIsInRecycledBin.
+func (mr *MockClassRepoProxyMockRecorder) CheckClassIdIsInRecycledBin(ctx, stuId, xnm, xqm, classId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckClassIdIsInRecycledBin", reflect.TypeOf((*MockClassRepoProxy)(nil).CheckClassIdIsInRecycledBin), ctx, stuId, xnm, xqm, classId)
+}
+
 // CheckSCIdsExist mocks base method.
 func (m *MockClassRepoProxy) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool {
 	m.ctrl.T.Helper()
@@ -189,6 +203,20 @@ func (m *MockClassRepoProxy) GetSpecificClassInfo(ctx context.Context, classId s
 func (mr *MockClassRepoProxyMockRecorder) GetSpecificClassInfo(ctx, classId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpecificClassInfo", reflect.TypeOf((*MockClassRepoProxy)(nil).GetSpecificClassInfo), ctx, classId)
+}
+
+// RemoveClassFromRecycledBin mocks base method.
+func (m *MockClassRepoProxy) RemoveClassFromRecycledBin(ctx context.Context, stuId, xnm, xqm, classId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveClassFromRecycledBin", ctx, stuId, xnm, xqm, classId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveClassFromRecycledBin indicates an expected call of RemoveClassFromRecycledBin.
+func (mr *MockClassRepoProxyMockRecorder) RemoveClassFromRecycledBin(ctx, stuId, xnm, xqm, classId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveClassFromRecycledBin", reflect.TypeOf((*MockClassRepoProxy)(nil).RemoveClassFromRecycledBin), ctx, stuId, xnm, xqm, classId)
 }
 
 // SaveClasses mocks base method.

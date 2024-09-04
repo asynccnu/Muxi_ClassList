@@ -1728,6 +1728,258 @@ var _ interface {
 	ErrorName() string
 } = GetRecycleBinClassResponseValidationError{}
 
+// Validate checks the field values on RecoverClassRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RecoverClassRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RecoverClassRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RecoverClassRequestMultiError, or nil if none found.
+func (m *RecoverClassRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RecoverClassRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetStuId()) != 10 {
+		err := RecoverClassRequestValidationError{
+			field:  "StuId",
+			reason: "value length must be 10 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if utf8.RuneCountInString(m.GetYear()) < 1 {
+		err := RecoverClassRequestValidationError{
+			field:  "Year",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSemester()) != 1 {
+		err := RecoverClassRequestValidationError{
+			field:  "Semester",
+			reason: "value length must be 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+
+	}
+
+	if utf8.RuneCountInString(m.GetClassId()) < 1 {
+		err := RecoverClassRequestValidationError{
+			field:  "ClassId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return RecoverClassRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// RecoverClassRequestMultiError is an error wrapping multiple validation
+// errors returned by RecoverClassRequest.ValidateAll() if the designated
+// constraints aren't met.
+type RecoverClassRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RecoverClassRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RecoverClassRequestMultiError) AllErrors() []error { return m }
+
+// RecoverClassRequestValidationError is the validation error returned by
+// RecoverClassRequest.Validate if the designated constraints aren't met.
+type RecoverClassRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RecoverClassRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RecoverClassRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RecoverClassRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RecoverClassRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RecoverClassRequestValidationError) ErrorName() string {
+	return "RecoverClassRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RecoverClassRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRecoverClassRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RecoverClassRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RecoverClassRequestValidationError{}
+
+// Validate checks the field values on RecoverClassResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RecoverClassResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RecoverClassResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RecoverClassResponseMultiError, or nil if none found.
+func (m *RecoverClassResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RecoverClassResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Msg
+
+	if len(errors) > 0 {
+		return RecoverClassResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// RecoverClassResponseMultiError is an error wrapping multiple validation
+// errors returned by RecoverClassResponse.ValidateAll() if the designated
+// constraints aren't met.
+type RecoverClassResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RecoverClassResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RecoverClassResponseMultiError) AllErrors() []error { return m }
+
+// RecoverClassResponseValidationError is the validation error returned by
+// RecoverClassResponse.Validate if the designated constraints aren't met.
+type RecoverClassResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RecoverClassResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RecoverClassResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RecoverClassResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RecoverClassResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RecoverClassResponseValidationError) ErrorName() string {
+	return "RecoverClassResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RecoverClassResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRecoverClassResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RecoverClassResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RecoverClassResponseValidationError{}
+
 // Validate checks the field values on ClassInfo with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
