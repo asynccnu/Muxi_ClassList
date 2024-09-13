@@ -4,7 +4,7 @@
 
 ### 1、配置信息
 
-将`configs/config-example.yaml`换成`configs/config.yaml`
+将`configs/config-example.yaml`换成`configs/config.yaml`,并填充配置文件
 ### 2、构建镜像
 在`DockerFile`所在目录下使用命令`docker build -t muxi_classlist:v1`构建镜像
 ### 3、运行

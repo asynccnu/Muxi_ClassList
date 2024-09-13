@@ -22,4 +22,4 @@ EXPOSE 9000
 VOLUME /data/conf
 
 ## 注意，这里的“class”是main.go所在的目录名（猜的）
-CMD ["./class", "-conf", "/data/conf"]
+CMD ["./class", "-conf", "/data/conf/config.yaml"]
