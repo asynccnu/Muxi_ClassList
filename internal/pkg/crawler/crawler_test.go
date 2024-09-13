@@ -4,10 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz"
-	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"net/http"
-	"reflect"
 	"testing"
 )
 
@@ -55,10 +52,7 @@ func TestCrawler_GetClassInfos(t *testing.T) {
 }
 
 func TestCrawler_GetClassInfoForGraduateStudent(t *testing.T) {
-	type fields struct {
-		logPrinter logPrinter.LogerPrinter
-		client     *http.Client
-	}
+	cookie := "JSESSIONID=7160BE00B3CB95BDE5C793A889D15189; route=97b58dd3002fa63e4590a6f4997064a6"
 	type args struct {
 		ctx    context.Context
 		cookie string
@@ -66,32 +60,29 @@ func TestCrawler_GetClassInfoForGraduateStudent(t *testing.T) {
 		xqm    string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    []*biz.ClassInfo
-		want1   []*biz.StudentCourse
-		wantErr bool
+		name string
+		args args
 	}{
 		// TODO: Add test cases.
+		{"test1", args{ctx, cookie, "2024", "1"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Crawler{
-				logPrinter: tt.fields.logPrinter,
-				client:     tt.fields.client,
+				//log: tt.fields.log,
+				client: &http.Client{},
 			}
 			got, got1, err := c.GetClassInfoForGraduateStudent(tt.args.ctx, tt.args.cookie, tt.args.xnm, tt.args.xqm)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetClassInfoForGraduateStudent() error = %v, wantErr %v", err, tt.wantErr)
+			fmt.Println("-----------------------------------------------------------------------------")
+			fmt.Println(tt.name + ":")
+			if err != nil {
+				t.Log(err)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetClassInfoForGraduateStudent() got = %v, want %v", got, tt.want)
-			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("GetClassInfoForGraduateStudent() got1 = %v, want %v", got1, tt.want1)
-			}
+			jsonStr1, _ := json.MarshalIndent(got, "", "  ")
+			fmt.Println(string(jsonStr1))
+			jsonStr2, _ := json.MarshalIndent(got1, "", "  ")
+			fmt.Println(string(jsonStr2))
 		})
 	}
 }
