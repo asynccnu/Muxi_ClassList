@@ -94,6 +94,9 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 		Semester:     req.GetSemester(),
 		Year:         req.GetYear(),
 	}
+	if req.Credit != nil {
+		classInfo.Credit = req.GetCredit()
+	}
 	classInfo.UpdateID()
 	err := s.Clu.AddClass(ctx, req.GetStuId(), classInfo)
 	if err != nil {
@@ -129,10 +132,10 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 			Msg: "该课程不存在",
 		}, errcode.ErrSCIDNOTEXIST
 	}
-	if !tool.CheckSY(req.Semester, req.GetYear()) || req.GetWeeks() <= 0 {
+	if !tool.CheckSY(req.Semester, req.GetYear()) {
 		return &pb.UpdateClassResponse{}, errcode.ErrParam
 	}
-	weekDur := tool.FormatWeeks(tool.ParseWeeks(req.GetWeeks()))
+
 	oldclassInfo, err := s.Clu.SearchClass(ctx, req.GetClassId())
 	if err != nil {
 		s.log.FuncError(s.Clu.SearchClass, err)
@@ -140,13 +143,31 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 			Msg: "修改失败",
 		}, err
 	}
-	oldclassInfo.Day = req.GetDay()
-	oldclassInfo.Teacher = req.GetTeacher()
-	oldclassInfo.Where = req.GetWhere()
-	oldclassInfo.ClassWhen = req.GetDurClass()
-	oldclassInfo.WeekDuration = weekDur
-	oldclassInfo.Classname = req.GetName()
-	oldclassInfo.Weeks = req.GetWeeks()
+	if req.Day != nil {
+		oldclassInfo.Day = req.GetDay()
+	}
+	if req.Teacher != nil {
+		oldclassInfo.Teacher = req.GetTeacher()
+	}
+	if req.Where != nil {
+		oldclassInfo.Where = req.GetWhere()
+	}
+	if req.DurClass != nil {
+		oldclassInfo.ClassWhen = req.GetDurClass()
+	}
+	//oldclassInfo.WeekDuration = weekDur
+	if req.Name != nil {
+		oldclassInfo.Classname = req.GetName()
+	}
+	if req.Weeks != nil {
+		oldclassInfo.Weeks = req.GetWeeks()
+		weekDur := tool.FormatWeeks(tool.ParseWeeks(req.GetWeeks()))
+		oldclassInfo.WeekDuration = weekDur
+	}
+	if req.Credit != nil {
+		oldclassInfo.Credit = req.GetCredit()
+	}
+
 	oldclassInfo.UpdateID()
 	newSc := &biz.StudentCourse{
 		StuID:           req.GetStuId(),

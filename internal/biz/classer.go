@@ -142,17 +142,17 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuId, xnm, xqm
 	RecycledClassInfo, err := cluc.SearchClass(ctx, classId)
 	if err != nil {
 		cluc.log.FuncError(cluc.SearchClass, err)
-		return err
+		return errcode.ErrRecover
 	}
 	err = cluc.AddClass(ctx, stuId, RecycledClassInfo)
 	if err != nil {
 		cluc.log.FuncError(cluc.AddClass, err)
-		return err
+		return errcode.ErrRecover
 	}
 	err = cluc.ClassRepo.RemoveClassFromRecycledBin(ctx, stuId, xnm, xqm, classId)
 	if err != nil {
 		cluc.log.FuncError(cluc.ClassRepo.RemoveClassFromRecycledBin, err)
-		return err
+		return errcode.ErrRecover
 	}
 	return nil
 }

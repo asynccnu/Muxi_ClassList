@@ -438,7 +438,9 @@ func (m *AddClassRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	// no validation rules for Credit
+	if m.Credit != nil {
+		// no validation rules for Credit
+	}
 
 	if len(errors) > 0 {
 		return AddClassRequestMultiError(errors)
@@ -908,61 +910,6 @@ func (m *UpdateClassRequest) validate(all bool) error {
 
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
-		err := UpdateClassRequestValidationError{
-			field:  "Name",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetDurClass()) < 1 {
-		err := UpdateClassRequestValidationError{
-			field:  "DurClass",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetWhere()) < 1 {
-		err := UpdateClassRequestValidationError{
-			field:  "Where",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if utf8.RuneCountInString(m.GetTeacher()) < 1 {
-		err := UpdateClassRequestValidationError{
-			field:  "Teacher",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetWeeks() <= 0 {
-		err := UpdateClassRequestValidationError{
-			field:  "Weeks",
-			reason: "value must be greater than 0",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if utf8.RuneCountInString(m.GetSemester()) != 1 {
 		err := UpdateClassRequestValidationError{
 			field:  "Semester",
@@ -986,17 +933,6 @@ func (m *UpdateClassRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if val := m.GetDay(); val < 1 || val > 7 {
-		err := UpdateClassRequestValidationError{
-			field:  "Day",
-			reason: "value must be inside range [1, 7]",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if utf8.RuneCountInString(m.GetClassId()) < 1 {
 		err := UpdateClassRequestValidationError{
 			field:  "ClassId",
@@ -1006,6 +942,100 @@ func (m *UpdateClassRequest) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if m.Name != nil {
+
+		if utf8.RuneCountInString(m.GetName()) < 1 {
+			err := UpdateClassRequestValidationError{
+				field:  "Name",
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.DurClass != nil {
+
+		if utf8.RuneCountInString(m.GetDurClass()) < 1 {
+			err := UpdateClassRequestValidationError{
+				field:  "DurClass",
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Where != nil {
+
+		if utf8.RuneCountInString(m.GetWhere()) < 1 {
+			err := UpdateClassRequestValidationError{
+				field:  "Where",
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Teacher != nil {
+
+		if utf8.RuneCountInString(m.GetTeacher()) < 1 {
+			err := UpdateClassRequestValidationError{
+				field:  "Teacher",
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Weeks != nil {
+
+		if m.GetWeeks() <= 0 {
+			err := UpdateClassRequestValidationError{
+				field:  "Weeks",
+				reason: "value must be greater than 0",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Day != nil {
+
+		if val := m.GetDay(); val < 1 || val > 7 {
+			err := UpdateClassRequestValidationError{
+				field:  "Day",
+				reason: "value must be inside range [1, 7]",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.Credit != nil {
+		// no validation rules for Credit
 	}
 
 	if len(errors) > 0 {

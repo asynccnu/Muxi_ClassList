@@ -16,11 +16,11 @@ func IsDbNotfound(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_DB_NOTFOUND.String() && e.Code == 200
+	return e.Reason == ErrorReason_DB_NOTFOUND.String() && e.Code == 500
 }
 
 func ErrorDbNotfound(format string, args ...interface{}) *errors.Error {
-	return errors.New(200, ErrorReason_DB_NOTFOUND.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_DB_NOTFOUND.String(), fmt.Sprintf(format, args...))
 }
 
 func IsDbFinderr(err error) bool {
@@ -28,11 +28,11 @@ func IsDbFinderr(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_DB_FINDERR.String() && e.Code == 450
+	return e.Reason == ErrorReason_DB_FINDERR.String() && e.Code == 500
 }
 
 func ErrorDbFinderr(format string, args ...interface{}) *errors.Error {
-	return errors.New(450, ErrorReason_DB_FINDERR.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_DB_FINDERR.String(), fmt.Sprintf(format, args...))
 }
 
 func IsDbUpdateerr(err error) bool {
@@ -40,11 +40,11 @@ func IsDbUpdateerr(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_DB_UPDATEERR.String() && e.Code == 300
+	return e.Reason == ErrorReason_DB_UPDATEERR.String() && e.Code == 500
 }
 
 func ErrorDbUpdateerr(format string, args ...interface{}) *errors.Error {
-	return errors.New(300, ErrorReason_DB_UPDATEERR.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_DB_UPDATEERR.String(), fmt.Sprintf(format, args...))
 }
 
 func IsParamErr(err error) bool {
@@ -52,11 +52,11 @@ func IsParamErr(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_Param_Err.String() && e.Code == 301
+	return e.Reason == ErrorReason_Param_Err.String() && e.Code == 500
 }
 
 func ErrorParamErr(format string, args ...interface{}) *errors.Error {
-	return errors.New(301, ErrorReason_Param_Err.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_Param_Err.String(), fmt.Sprintf(format, args...))
 }
 
 func IsDbSaveerror(err error) bool {
@@ -64,11 +64,11 @@ func IsDbSaveerror(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_DB_SAVEERROR.String() && e.Code == 302
+	return e.Reason == ErrorReason_DB_SAVEERROR.String() && e.Code == 500
 }
 
 func ErrorDbSaveerror(format string, args ...interface{}) *errors.Error {
-	return errors.New(302, ErrorReason_DB_SAVEERROR.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_DB_SAVEERROR.String(), fmt.Sprintf(format, args...))
 }
 
 func IsDbDeleteerror(err error) bool {
@@ -76,11 +76,11 @@ func IsDbDeleteerror(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_DB_DELETEERROR.String() && e.Code == 303
+	return e.Reason == ErrorReason_DB_DELETEERROR.String() && e.Code == 500
 }
 
 func ErrorDbDeleteerror(format string, args ...interface{}) *errors.Error {
-	return errors.New(303, ErrorReason_DB_DELETEERROR.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_DB_DELETEERROR.String(), fmt.Sprintf(format, args...))
 }
 
 func IsCrawlerError(err error) bool {
@@ -88,11 +88,11 @@ func IsCrawlerError(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_Crawler_Error.String() && e.Code == 304
+	return e.Reason == ErrorReason_Crawler_Error.String() && e.Code == 500
 }
 
 func ErrorCrawlerError(format string, args ...interface{}) *errors.Error {
-	return errors.New(304, ErrorReason_Crawler_Error.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_Crawler_Error.String(), fmt.Sprintf(format, args...))
 }
 
 func IsCCNULoginError(err error) bool {
@@ -100,11 +100,11 @@ func IsCCNULoginError(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_CCNULogin_Error.String() && e.Code == 305
+	return e.Reason == ErrorReason_CCNULogin_Error.String() && e.Code == 500
 }
 
 func ErrorCCNULoginError(format string, args ...interface{}) *errors.Error {
-	return errors.New(305, ErrorReason_CCNULogin_Error.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_CCNULogin_Error.String(), fmt.Sprintf(format, args...))
 }
 
 func IsScidnotexistErroe(err error) bool {
@@ -112,11 +112,11 @@ func IsScidnotexistErroe(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_SCIDNOTEXIST_Erroe.String() && e.Code == 306
+	return e.Reason == ErrorReason_SCIDNOTEXIST_Erroe.String() && e.Code == 500
 }
 
 func ErrorScidnotexistErroe(format string, args ...interface{}) *errors.Error {
-	return errors.New(306, ErrorReason_SCIDNOTEXIST_Erroe.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_SCIDNOTEXIST_Erroe.String(), fmt.Sprintf(format, args...))
 }
 
 func IsRecyclebindonothavetheclass(err error) bool {
@@ -124,11 +124,11 @@ func IsRecyclebindonothavetheclass(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_RECYCLEBINDONOTHAVETHECLASS.String() && e.Code == 307
+	return e.Reason == ErrorReason_RECYCLEBINDONOTHAVETHECLASS.String() && e.Code == 500
 }
 
 func ErrorRecyclebindonothavetheclass(format string, args ...interface{}) *errors.Error {
-	return errors.New(307, ErrorReason_RECYCLEBINDONOTHAVETHECLASS.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_RECYCLEBINDONOTHAVETHECLASS.String(), fmt.Sprintf(format, args...))
 }
 
 func IsRecoverfailed(err error) bool {
@@ -136,9 +136,9 @@ func IsRecoverfailed(err error) bool {
 		return false
 	}
 	e := errors.FromError(err)
-	return e.Reason == ErrorReason_RECOVERFAILED.String() && e.Code == 308
+	return e.Reason == ErrorReason_RECOVERFAILED.String() && e.Code == 500
 }
 
 func ErrorRecoverfailed(format string, args ...interface{}) *errors.Error {
-	return errors.New(308, ErrorReason_RECOVERFAILED.String(), fmt.Sprintf(format, args...))
+	return errors.New(500, ErrorReason_RECOVERFAILED.String(), fmt.Sprintf(format, args...))
 }

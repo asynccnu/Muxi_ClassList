@@ -27,11 +27,17 @@ const OperationClasserRecoverClass = "/classer.v1.Classer/RecoverClass"
 const OperationClasserUpdateClass = "/classer.v1.Classer/UpdateClass"
 
 type ClasserHTTPServer interface {
+	// AddClass添加课程
 	AddClass(context.Context, *AddClassRequest) (*AddClassResponse, error)
+	// DeleteClass删除课程
 	DeleteClass(context.Context, *DeleteClassRequest) (*DeleteClassResponse, error)
+	// GetClass获取课表
 	GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error)
+	// GetRecycleBinClassInfos获取回收站的课程(回收站的课程只能保存2个月)
 	GetRecycleBinClassInfos(context.Context, *GetRecycleBinClassRequest) (*GetRecycleBinClassResponse, error)
+	// RecoverClass恢复课程
 	RecoverClass(context.Context, *RecoverClassRequest) (*RecoverClassResponse, error)
+	// UpdateClass更新课程
 	UpdateClass(context.Context, *UpdateClassRequest) (*UpdateClassResponse, error)
 }
 

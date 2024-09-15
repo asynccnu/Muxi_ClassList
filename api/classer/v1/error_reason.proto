@@ -12,15 +12,15 @@ option objc_class_prefix = "APICLASSERV1";
 enum ErrorReason {
   // 设置缺省错误码
   option (errors.default_code) = 500;
-  DB_NOTFOUND = 0[(errors.code) = 200];
-  DB_FINDERR =1 [(errors.code) = 450];
-  DB_UPDATEERR=2  [(errors.code) = 300];
-  Param_Err = 3 [(errors.code) = 301];
-  DB_SAVEERROR = 4 [(errors.code) = 302];
-  DB_DELETEERROR = 5 [(errors.code) = 303];
-  Crawler_Error = 6 [(errors.code) = 304];
-  CCNULogin_Error = 7 [(errors.code) = 305];
-  SCIDNOTEXIST_Erroe = 8 [(errors.code) = 306];
-  RECYCLEBINDONOTHAVETHECLASS = 9 [(errors.code) =307];
-  RECOVERFAILED = 10 [(errors.code) =308];
+  DB_NOTFOUND = 0;
+  DB_FINDERR =1 ;
+  DB_UPDATEERR=2  ;
+  Param_Err = 3 ;
+  DB_SAVEERROR = 4;
+  DB_DELETEERROR = 5;
+  Crawler_Error = 6 ;
+  CCNULogin_Error = 7 ;
+  SCIDNOTEXIST_Erroe = 8 ;
+  RECYCLEBINDONOTHAVETHECLASS = 9 ;
+  RECOVERFAILED = 10 ;
 }
