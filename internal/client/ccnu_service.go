@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	v1 "github.com/asynccnu/ccnu-service/api/ccnu_service/v1"
+	v1 "github.com/asynccnu/be-api/gen/proto/ccnu/v1"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
@@ -23,8 +23,8 @@ func NewCCNUService(cs v1.CCNUServiceClient) *CCNUService {
 	return &CCNUService{Cs: cs}
 }
 func (c *CCNUService) GetCookie(ctx context.Context, stu string) (string, error) {
-	resp, err := c.Cs.GetCookie(ctx, &v1.GetCookieRequest{
-		Userid: stu,
+	resp, err := c.Cs.GetCCNUCookie(ctx, &v1.GetCCNUCookieRequest{
+		StudentId: stu,
 	})
 	if err != nil {
 		return "", errcode.ErrCCNULogin

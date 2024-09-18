@@ -73,6 +73,7 @@ func NewRedisDB(c *conf.Data) *redis.Client {
 		ReadTimeout:  c.Redis.ReadTimeout.AsDuration(),
 		WriteTimeout: c.Redis.WriteTimeout.AsDuration(),
 		DB:           0,
+		Password:     c.Redis.Password,
 	})
 	_, err := rdb.Ping().Result()
 	if err != nil {

@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	pb "github.com/asynccnu/Muxi_ClassList/api/classer/v1"
 	"github.com/asynccnu/Muxi_ClassList/internal/biz"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
+	pb "github.com/asynccnu/be-api/gen/proto/classlist/v1"
 	"time"
 )
 
@@ -55,7 +55,7 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 	}
 	//fmt.Println("getcookie past: ", time.Now().Sub(time1))
 	//调试专用
-	//cookie := "JSESSIONID=92EFB739D2895F26E2D35A2527C27C0F"
+	//ccnuCookie := "JSESSIONID=92EFB739D2895F26E2D35A2527C27C0F"
 	//time2 := time.Now()
 
 	pclasses := make([]*pb.Class, 0)

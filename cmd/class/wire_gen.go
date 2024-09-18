@@ -54,8 +54,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	ccnuService := client.NewCCNUService(ccnuServiceClient)
 	classerService := service.NewClasserService(classUsercase, ccnuService, logerPrinter)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
-	httpServer := server.NewHTTPServer(confServer, classerService, logger)
-	app := newApp(logger, grpcServer, httpServer, etcdRegistry)
+	app := newApp(logger, grpcServer, etcdRegistry)
 	return app, func() {
 		cleanup()
 	}, nil

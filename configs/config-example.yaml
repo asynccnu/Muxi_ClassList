@@ -3,18 +3,21 @@ server:
     addr: 0.0.0.0:8000
     timeout: 2s
   grpc:
-    addr: 0.0.0.0:9000
+    addr: 0.0.0.0:19087
     timeout: 2s
 data:
   database:
-    source: "root:12345678@tcp(ClassMysql:3306)/MuxiClass?charset=utf8mb4&parseTime=True&loc=Local"
-  #    source: "root:12345678@tcp(127.0.0.1:13306)/MuxiClass?charset=utf8mb4&parseTime=True&loc=Local"
+    source: "root:muxistudio304@tcp(localhost:13306)/ccnubox?charset=utf8mb4&parseTime=True&loc=Local"
+    #    source: "root:12345678@tcp(127.0.0.1:13306)/MuxiClass?charset=utf8mb4&parseTime=True&loc=Local"
   redis:
-    addr: "ClassRedis:6379"
+    addr: "localhost:6379"
+    password: "muxistudio304"
     #    addr: "127.0.0.1:16379"
     read_timeout: 0.2s
     write_timeout: 0.2s
 registry:
   etcd:
-    addr: "Etcd:2379"
-#    addr: "127.0.0.1:2379"
+#    addr: "Etcd:2379"
+    addr: "127.0.0.1:2379"
+    username: root
+    password: "muxistudio304"
