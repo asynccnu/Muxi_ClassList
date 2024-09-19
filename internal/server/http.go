@@ -1,6 +1,7 @@
 package server
 
 import (
+	v1 "github.com/asynccnu/Muxi_ClassList/api/classer/v1"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/metrics"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/encoder"
@@ -35,6 +36,6 @@ func NewHTTPServer(c *conf.Server, greeter *service.ClasserService, logger log.L
 	}
 	srv := http.NewServer(opts...)
 	srv.Handle("/metrics", promhttp.Handler())
-	//v1.RegisterClasserHTTPServer(srv, greeter)
+	v1.RegisterClasserHTTPServer(srv, greeter)
 	return srv
 }

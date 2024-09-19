@@ -1,10 +1,10 @@
 package server
 
 import (
+	v1 "github.com/asynccnu/Muxi_ClassList/api/classer/v1"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/metrics"
 	"github.com/asynccnu/Muxi_ClassList/internal/service"
-	v1 "github.com/asynccnu/be-api/gen/proto/classlist/v1"
 	"github.com/go-kratos/kratos/v2/middleware/validate"
 
 	"github.com/go-kratos/kratos/v2/log"
