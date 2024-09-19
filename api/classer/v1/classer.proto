@@ -56,7 +56,7 @@ service Classer {
 
 message GetClassRequest {
     //周几的课表
-    int64 week=1 [json_name = "weeks",(validate.rules).int64 = {gt: 0},(google.api.field_behavior) = REQUIRED];
+    int64 week=1 [json_name = "week",(validate.rules).int64 = {gt: 0},(google.api.field_behavior) = REQUIRED];
     //学号
     string stu_id=2 [json_name = "stu_id",(validate.rules).string = {min_len: 10, max_len: 10},(google.api.field_behavior) = REQUIRED];
     // 学期
