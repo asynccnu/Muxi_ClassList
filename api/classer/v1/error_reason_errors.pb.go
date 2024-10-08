@@ -142,3 +142,15 @@ func IsRecoverfailed(err error) bool {
 func ErrorRecoverfailed(format string, args ...interface{}) *errors.Error {
 	return errors.New(500, ErrorReason_RECOVERFAILED.String(), fmt.Sprintf(format, args...))
 }
+
+func IsGetstuidbyjxbid(err error) bool {
+	if err == nil {
+		return false
+	}
+	e := errors.FromError(err)
+	return e.Reason == ErrorReason_GETSTUIDBYJXBID.String() && e.Code == 500
+}
+
+func ErrorGetstuidbyjxbid(format string, args ...interface{}) *errors.Error {
+	return errors.New(500, ErrorReason_GETSTUIDBYJXBID.String(), fmt.Sprintf(format, args...))
+}

@@ -155,7 +155,8 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*biz.ClassInfo, []*biz.S
 		info.Year = xnm                               //学年
 		//添加周数
 		info.Weeks, _ = strconv.ParseInt(v.Oldzc, 10, 64)
-		info.UpdateID() //课程ID
+		info.JxbId = v.JxbID //教学班ID
+		info.UpdateID()      //课程ID
 		//-----------------------------------------------------
 		//学生与课程的映射关系
 		Sc := &biz.StudentCourse{

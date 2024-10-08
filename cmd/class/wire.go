@@ -40,5 +40,6 @@ func wireApp(*conf.Server, *conf.Data, *conf.Registry, log.Logger) (*kratos.App,
 		wire.Bind(new(service.ClassCtrl), new(*biz.ClassUsercase)),
 		wire.Bind(new(service.CCNUServiceProxy), new(*client.CCNUService)),
 		wire.Bind(new(biz.ClassRepoProxy), new(*biz.ClassRepo)),
+		wire.Bind(new(biz.JxbRepo), new(*data.JxbDBRepo)),
 	))
 }

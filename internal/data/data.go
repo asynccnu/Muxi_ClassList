@@ -29,6 +29,7 @@ var ProviderSet = wire.NewSet(
 	NewClassInfoDBRepo,
 	NewClassInfoCacheRepo,
 	NewTransaction,
+	NewJxbDBRepo,
 )
 
 // Data .

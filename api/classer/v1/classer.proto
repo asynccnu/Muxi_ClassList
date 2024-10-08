@@ -51,6 +51,8 @@ service Classer {
     }
     //获取所有课程信息(为其他服务设置的)
     rpc GetAllClassInfo(GetAllClassInfoRequest) returns (GetAllClassInfoResponse) {};
+    //获取教学班中的所有学生ID
+    rpc GetStuIdByJxbId(GetStuIdByJxbIdRequest) returns (GetStuIdByJxbIdResponse){};
 
 }
 
@@ -176,6 +178,14 @@ message RecoverClassRequest {
 message RecoverClassResponse {
     string msg=1[json_name = "msg"];
 }
+
+message GetStuIdByJxbIdRequest{
+    string jxb_id = 1;
+}
+message GetStuIdByJxbIdResponse{
+    repeated string stu_id = 1;
+}
+
 message  ClassInfo {
     //星期几
     int64 day=1 [json_name = "day"];

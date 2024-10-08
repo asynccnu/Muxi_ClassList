@@ -9,6 +9,7 @@ import (
 const (
 	ClassInfoTableName     string = "class_info"
 	StudentCourseTableName string = "student_course"
+	JxbTableName           string = "jxb"
 )
 
 type Class struct {
@@ -16,10 +17,11 @@ type Class struct {
 	ThisWeek bool       //是否是本周
 }
 type ClassInfo struct {
-	ID        string `gorm:"primaryKey;column:id" json:"id"` //集合了课程信息的字符串，便于标识（课程ID）
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        string    `gorm:"primaryKey;column:id" json:"id"` //集合了课程信息的字符串，便于标识（课程ID）
+	CreatedAt time.Time `json:"-"`
+	UpdatedAt time.Time `json:"-"`
 	//ClassId      string  `gorm:"column:class_id" json:"class_id"`           //课程编号
+	JxbId        string  `gorm:"column:jxb_id" json:"jxb_id"`                        //教学班ID
 	Day          int64   `gorm:"column:day;not null" json:"day"`                     //星期几
 	Teacher      string  `gorm:"column:teacher;not null" json:"teacher"`             //任课教师
 	Where        string  `gorm:"column:where;not null" json:"where"`                 //上课地点
@@ -32,14 +34,20 @@ type ClassInfo struct {
 	Year         string  `gorm:"column:year;not null;index" json:"year"`             //学年
 }
 type StudentCourse struct {
-	ID              string `gorm:"primaryKey;column:id" json:"id"`
-	StuID           string `gorm:"column:stu_id;not null" json:"stu_id"`                            //学号
-	ClaID           string `gorm:"column:cla_id;not null" json:"cla_id"`                            //课程ID
-	Year            string `gorm:"column:year;not null;index" json:"year"`                          //学年
-	Semester        string `gorm:"column:semester;not null;index" json:"semester"`                  //学期
-	IsManuallyAdded bool   `gorm:"column:is_manually_added;default:false" json:"is_manually_added"` //是否为手动添加
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID              string    `gorm:"primaryKey;column:id" json:"id"`
+	StuID           string    `gorm:"column:stu_id;not null" json:"stu_id"`                            //学号
+	ClaID           string    `gorm:"column:cla_id;not null" json:"cla_id"`                            //课程ID
+	Year            string    `gorm:"column:year;not null;index" json:"year"`                          //学年
+	Semester        string    `gorm:"column:semester;not null;index" json:"semester"`                  //学期
+	IsManuallyAdded bool      `gorm:"column:is_manually_added;default:false" json:"is_manually_added"` //是否为手动添加
+	CreatedAt       time.Time `json:"-"`
+	UpdatedAt       time.Time `json:"-"`
+}
+
+// Jxb 用来存取教学班
+type Jxb struct {
+	JxbId string `gorm:"column:jxb_id;index" json:"jxb_id"` //教学班ID
+	StuId string `gorm:"column:stu_id" json:"stu_id"`       //学号
 }
 
 func (ci *ClassInfo) TableName() string {
@@ -65,6 +73,9 @@ func (sc *StudentCourse) BeforeCreate(tx *gorm.DB) (err error) {
 func (sc *StudentCourse) BeforeUpdate(tx *gorm.DB) (err error) {
 	sc.UpdatedAt = time.Now()
 	return
+}
+func (j *Jxb) TableName() string {
+	return JxbTableName
 }
 
 func (ci *ClassInfo) AddWeek(week int64) {

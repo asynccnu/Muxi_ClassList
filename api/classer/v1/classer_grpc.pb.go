@@ -26,6 +26,7 @@ const (
 	Classer_GetRecycleBinClassInfos_FullMethodName = "/classer.v1.Classer/GetRecycleBinClassInfos"
 	Classer_RecoverClass_FullMethodName            = "/classer.v1.Classer/RecoverClass"
 	Classer_GetAllClassInfo_FullMethodName         = "/classer.v1.Classer/GetAllClassInfo"
+	Classer_GetStuIdByJxbId_FullMethodName         = "/classer.v1.Classer/GetStuIdByJxbId"
 )
 
 // ClasserClient is the client API for Classer service.
@@ -46,6 +47,8 @@ type ClasserClient interface {
 	RecoverClass(ctx context.Context, in *RecoverClassRequest, opts ...grpc.CallOption) (*RecoverClassResponse, error)
 	// 获取所有课程信息(为其他服务设置的)
 	GetAllClassInfo(ctx context.Context, in *GetAllClassInfoRequest, opts ...grpc.CallOption) (*GetAllClassInfoResponse, error)
+	// 获取教学班中的所有学生ID
+	GetStuIdByJxbId(ctx context.Context, in *GetStuIdByJxbIdRequest, opts ...grpc.CallOption) (*GetStuIdByJxbIdResponse, error)
 }
 
 type classerClient struct {
@@ -126,6 +129,16 @@ func (c *classerClient) GetAllClassInfo(ctx context.Context, in *GetAllClassInfo
 	return out, nil
 }
 
+func (c *classerClient) GetStuIdByJxbId(ctx context.Context, in *GetStuIdByJxbIdRequest, opts ...grpc.CallOption) (*GetStuIdByJxbIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetStuIdByJxbIdResponse)
+	err := c.cc.Invoke(ctx, Classer_GetStuIdByJxbId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ClasserServer is the server API for Classer service.
 // All implementations must embed UnimplementedClasserServer
 // for forward compatibility.
@@ -144,6 +157,8 @@ type ClasserServer interface {
 	RecoverClass(context.Context, *RecoverClassRequest) (*RecoverClassResponse, error)
 	// 获取所有课程信息(为其他服务设置的)
 	GetAllClassInfo(context.Context, *GetAllClassInfoRequest) (*GetAllClassInfoResponse, error)
+	// 获取教学班中的所有学生ID
+	GetStuIdByJxbId(context.Context, *GetStuIdByJxbIdRequest) (*GetStuIdByJxbIdResponse, error)
 	mustEmbedUnimplementedClasserServer()
 }
 
@@ -174,6 +189,9 @@ func (UnimplementedClasserServer) RecoverClass(context.Context, *RecoverClassReq
 }
 func (UnimplementedClasserServer) GetAllClassInfo(context.Context, *GetAllClassInfoRequest) (*GetAllClassInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllClassInfo not implemented")
+}
+func (UnimplementedClasserServer) GetStuIdByJxbId(context.Context, *GetStuIdByJxbIdRequest) (*GetStuIdByJxbIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStuIdByJxbId not implemented")
 }
 func (UnimplementedClasserServer) mustEmbedUnimplementedClasserServer() {}
 func (UnimplementedClasserServer) testEmbeddedByValue()                 {}
@@ -322,6 +340,24 @@ func _Classer_GetAllClassInfo_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Classer_GetStuIdByJxbId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStuIdByJxbIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClasserServer).GetStuIdByJxbId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Classer_GetStuIdByJxbId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClasserServer).GetStuIdByJxbId(ctx, req.(*GetStuIdByJxbIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Classer_ServiceDesc is the grpc.ServiceDesc for Classer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -356,6 +392,10 @@ var Classer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAllClassInfo",
 			Handler:    _Classer_GetAllClassInfo_Handler,
+		},
+		{
+			MethodName: "GetStuIdByJxbId",
+			Handler:    _Classer_GetStuIdByJxbId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

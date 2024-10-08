@@ -28,16 +28,22 @@ type ClassRepoProxy interface {
 	GetAllSchoolClassInfos(ctx context.Context, xnm, xqm string) []*ClassInfo
 	CheckClassIdIsInRecycledBin(ctx context.Context, stuId, xnm, xqm, classId string) bool
 }
+type JxbRepo interface {
+	SaveJxb(ctx context.Context, jxbId, stuId string) error
+	FindStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error)
+}
 type ClassUsercase struct {
 	ClassRepo ClassRepoProxy
 	Crawler   ClassCrawler
+	JxbRepo   JxbRepo
 	log       log2.LogerPrinter
 }
 
-func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, log log2.LogerPrinter) *ClassUsercase {
+func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo JxbRepo, log log2.LogerPrinter) *ClassUsercase {
 	return &ClassUsercase{
 		ClassRepo: classRepo,
 		Crawler:   crawler,
+		JxbRepo:   JxbRepo,
 		log:       log,
 	}
 }
@@ -45,6 +51,7 @@ func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, log log2.L
 func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, cookie string) ([]*Class, error) {
 	//var classInfos = make([]*ClassInfo, 0)
 	var Scs = make([]*StudentCourse, 0)
+	var Jxbmp = make(map[string]struct{}, 10)
 	var classes = make([]*Class, 0)
 	var err error
 	var wg sync.WaitGroup
@@ -65,7 +72,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 				return nil, err
 			}
 		}
-
+		//存课程
 		err = cluc.ClassRepo.SaveClasses(ctx, StuId, xnm, xqm, classInfos, Scs)
 		if err != nil {
 			cluc.log.FuncError(cluc.ClassRepo.SaveClasses, err)
@@ -87,9 +94,20 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 			Info:     classInfo,
 			ThisWeek: thisWeek && tool.CheckIfThisYear(classInfo.Year, classInfo.Semester),
 		}
+		Jxbmp[class.Info.JxbId] = struct{}{}
 		classes = append(classes, class)
 	}
 	wg.Wait()
+	//开个协程来存取jxb
+	go func() {
+		var err error
+		for k, _ := range Jxbmp {
+			err = cluc.JxbRepo.SaveJxb(ctx, k, StuId)
+			if err != nil {
+				cluc.log.FuncError(cluc.JxbRepo.SaveJxb, err)
+			}
+		}
+	}()
 	return classes, nil
 }
 
@@ -177,4 +195,7 @@ func (cluc *ClassUsercase) CheckSCIdsExist(ctx context.Context, stuId, classId, 
 }
 func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*ClassInfo {
 	return cluc.ClassRepo.GetAllSchoolClassInfos(ctx, xnm, xqm)
+}
+func (cluc *ClassUsercase) GetStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error) {
+	return cluc.JxbRepo.FindStuIdsByJxbId(ctx, jxbId)
 }

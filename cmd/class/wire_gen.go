@@ -44,14 +44,15 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
 	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logerPrinter)
 	crawlerCrawler := crawler.NewClassCrawler(logerPrinter)
-	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, logerPrinter)
+	jxbDBRepo := data.NewJxbDBRepo(dataData, logerPrinter)
+	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, jxbDBRepo, logerPrinter)
 	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
-	ccnuServiceClient, err := client.NewClient(etcdRegistry, logger)
+	userServiceClient, err := client.NewClient(etcdRegistry, logger)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	ccnuService := client.NewCCNUService(ccnuServiceClient)
+	ccnuService := client.NewCCNUService(userServiceClient)
 	classerService := service.NewClasserService(classUsercase, ccnuService, logerPrinter)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
 	app := newApp(logger, grpcServer, etcdRegistry)

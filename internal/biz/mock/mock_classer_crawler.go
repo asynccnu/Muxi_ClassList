@@ -246,3 +246,55 @@ func (mr *MockClassRepoProxyMockRecorder) UpdateClass(ctx, newClassInfo, newSc, 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClass", reflect.TypeOf((*MockClassRepoProxy)(nil).UpdateClass), ctx, newClassInfo, newSc, stuId, oldClassId, xnm, xqm)
 }
+
+// MockJxbRepo is a mock of JxbRepo interface.
+type MockJxbRepo struct {
+	ctrl     *gomock.Controller
+	recorder *MockJxbRepoMockRecorder
+}
+
+// MockJxbRepoMockRecorder is the mock recorder for MockJxbRepo.
+type MockJxbRepoMockRecorder struct {
+	mock *MockJxbRepo
+}
+
+// NewMockJxbRepo creates a new mock instance.
+func NewMockJxbRepo(ctrl *gomock.Controller) *MockJxbRepo {
+	mock := &MockJxbRepo{ctrl: ctrl}
+	mock.recorder = &MockJxbRepoMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockJxbRepo) EXPECT() *MockJxbRepoMockRecorder {
+	return m.recorder
+}
+
+// FindStuIdsByJxbId mocks base method.
+func (m *MockJxbRepo) FindStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindStuIdsByJxbId", ctx, jxbId)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindStuIdsByJxbId indicates an expected call of FindStuIdsByJxbId.
+func (mr *MockJxbRepoMockRecorder) FindStuIdsByJxbId(ctx, jxbId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindStuIdsByJxbId", reflect.TypeOf((*MockJxbRepo)(nil).FindStuIdsByJxbId), ctx, jxbId)
+}
+
+// SaveJxb mocks base method.
+func (m *MockJxbRepo) SaveJxb(ctx context.Context, jxbId, stuId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveJxb", ctx, jxbId, stuId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SaveJxb indicates an expected call of SaveJxb.
+func (mr *MockJxbRepoMockRecorder) SaveJxb(ctx, jxbId, stuId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveJxb", reflect.TypeOf((*MockJxbRepo)(nil).SaveJxb), ctx, jxbId, stuId)
+}

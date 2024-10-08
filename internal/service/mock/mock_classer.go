@@ -121,6 +121,21 @@ func (mr *MockClassCtrlMockRecorder) GetRecycledClassInfos(ctx, stuId, xnm, xqm 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecycledClassInfos", reflect.TypeOf((*MockClassCtrl)(nil).GetRecycledClassInfos), ctx, stuId, xnm, xqm)
 }
 
+// GetStuIdsByJxbId mocks base method.
+func (m *MockClassCtrl) GetStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStuIdsByJxbId", ctx, jxbId)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStuIdsByJxbId indicates an expected call of GetStuIdsByJxbId.
+func (mr *MockClassCtrlMockRecorder) GetStuIdsByJxbId(ctx, jxbId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStuIdsByJxbId", reflect.TypeOf((*MockClassCtrl)(nil).GetStuIdsByJxbId), ctx, jxbId)
+}
+
 // RecoverClassInfo mocks base method.
 func (m *MockClassCtrl) RecoverClassInfo(ctx context.Context, stuId, xnm, xqm, classId string) error {
 	m.ctrl.T.Helper()

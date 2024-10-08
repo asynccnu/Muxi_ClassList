@@ -17,4 +17,5 @@ var (
 	ErrSCIDNOTEXIST          = errors.New(458, v1.ErrorReason_SCIDNOTEXIST_Erroe.String(), "学号与课程ID的对应关系未找到")
 	ErrRecycleBinDoNotHaveIt = errors.New(459, v1.ErrorReason_RECYCLEBINDONOTHAVETHECLASS.String(), "回收站中不存在该课程")
 	ErrRecover               = errors.New(460, v1.ErrorReason_RECOVERFAILED.String(), "恢复课程失败")
+	ErrGetStuIdByJxbId       = errors.New(461, v1.ErrorReason_GETSTUIDBYJXBID.String(), "通过jxb_id获取stu_ids获取失败")
 )

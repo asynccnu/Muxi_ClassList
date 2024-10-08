@@ -21,6 +21,7 @@ type ClassCtrl interface {
 	GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*biz.ClassInfo
 	GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*biz.ClassInfo, error)
 	RecoverClassInfo(ctx context.Context, stuId, xnm, xqm, classId string) error
+	GetStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error)
 }
 type CCNUServiceProxy interface {
 	GetCookie(ctx context.Context, stu string) (string, error)
@@ -218,6 +219,16 @@ func (s *ClasserService) RecoverClass(ctx context.Context, req *pb.RecoverClassR
 	}
 	return &pb.RecoverClassResponse{
 		Msg: "恢复课程成功",
+	}, nil
+}
+func (s *ClasserService) GetStuIdByJxbId(ctx context.Context, req *pb.GetStuIdByJxbIdRequest) (*pb.GetStuIdByJxbIdResponse, error) {
+	stuIds, err := s.Clu.GetStuIdsByJxbId(ctx, req.GetJxbId())
+	if err != nil {
+		s.log.FuncError(s.Clu.GetStuIdsByJxbId, err)
+		return &pb.GetStuIdByJxbIdResponse{}, errcode.ErrGetStuIdByJxbId
+	}
+	return &pb.GetStuIdByJxbIdResponse{
+		StuId: stuIds,
 	}, nil
 }
 func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClassInfoRequest) (*pb.GetAllClassInfoResponse, error) {
