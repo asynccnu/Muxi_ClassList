@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	log "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/go-redis/redis"
@@ -34,7 +34,7 @@ func NewClassInfoCacheRepo(rdb *redis.Client, log log.LogerPrinter) *ClassInfoCa
 }
 
 // SaveManyClassInfosToCache 一次性存多个单个课程信息
-func (c ClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*biz.ClassInfo) error {
+func (c ClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*model.ClassInfo) error {
 	err := c.rdb.Watch(func(tx *redis.Tx) error {
 		// 开始事务
 		_, err := tx.TxPipelined(func(pipe redis.Pipeliner) error {
@@ -63,7 +63,7 @@ func (c ClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, keys 
 }
 
 // OnlyAddClassInfosToCache 将整个课表存到缓存中去
-func (c ClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*biz.ClassInfo) error {
+func (c ClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*model.ClassInfo) error {
 	val, err := json.Marshal(classInfos)
 	if err != nil {
 		c.log.FuncError(json.Marshal, err)
@@ -78,7 +78,7 @@ func (c ClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key st
 }
 
 // OnlyAddClassInfoToCache 仅添加单个课程信息到缓存中
-func (c ClassInfoCacheRepo) OnlyAddClassInfoToCache(ctx context.Context, key string, classInfo *biz.ClassInfo) error {
+func (c ClassInfoCacheRepo) OnlyAddClassInfoToCache(ctx context.Context, key string, classInfo *model.ClassInfo) error {
 	val, err := json.Marshal(classInfo)
 	if err != nil {
 		c.log.FuncError(json.Marshal, err)
@@ -91,8 +91,8 @@ func (c ClassInfoCacheRepo) OnlyAddClassInfoToCache(ctx context.Context, key str
 	}
 	return nil
 }
-func (c ClassInfoCacheRepo) GetClassInfosFromCache(ctx context.Context, key string) ([]*biz.ClassInfo, error) {
-	var classInfos = make([]*biz.ClassInfo, 0)
+func (c ClassInfoCacheRepo) GetClassInfosFromCache(ctx context.Context, key string) ([]*model.ClassInfo, error) {
+	var classInfos = make([]*model.ClassInfo, 0)
 	val, err := c.rdb.Get(key).Result()
 	if err != nil {
 		c.log.FuncError(c.rdb.Get, err)
@@ -105,8 +105,8 @@ func (c ClassInfoCacheRepo) GetClassInfosFromCache(ctx context.Context, key stri
 	}
 	return classInfos, nil
 }
-func (c ClassInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key string) (*biz.ClassInfo, error) {
-	var classInfo = &biz.ClassInfo{}
+func (c ClassInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key string) (*model.ClassInfo, error) {
+	var classInfo = &model.ClassInfo{}
 	val, err := c.rdb.Get(key).Result()
 	if err != nil {
 		c.log.FuncError(c.rdb.Get, err)
@@ -121,7 +121,7 @@ func (c ClassInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key strin
 }
 
 // AddClassInfoToCache 添加课程的操作集合
-func (c ClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, classInfoKey, classInfosKey string, classInfo *biz.ClassInfo) error {
+func (c ClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, classInfoKey, classInfosKey string, classInfo *model.ClassInfo) error {
 	oldClassInfos, err := c.GetClassInfosFromCache(ctx, classInfosKey)
 	if err != nil {
 		c.log.FuncError(c.GetClassInfosFromCache, err)
@@ -144,7 +144,7 @@ func (c ClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, classInfoKe
 }
 
 // FixClassInfoInCache 修改缓存中的课表信息
-func (c ClassInfoCacheRepo) FixClassInfoInCache(ctx context.Context, oldID, classInfoKey, classInfosKey string, classInfo *biz.ClassInfo) error {
+func (c ClassInfoCacheRepo) FixClassInfoInCache(ctx context.Context, oldID, classInfoKey, classInfosKey string, classInfo *model.ClassInfo) error {
 	oldClassInfos, err := c.GetClassInfosFromCache(ctx, classInfosKey)
 	if err != nil {
 		c.log.FuncError(c.GetClassInfosFromCache, err)
@@ -191,8 +191,8 @@ func (c ClassInfoCacheRepo) DeleteClassInfoFromCache(ctx context.Context, delete
 	}
 	return nil
 }
-func (c ClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*biz.ClassInfo) error {
-	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
+func (c ClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*model.ClassInfo) error {
+	db := c.data.DB(ctx).Table(model.ClassInfoTableName).WithContext(ctx)
 	for _, cla := range classInfo {
 		if err := db.FirstOrCreate(cla).Error; err != nil {
 			c.log.FuncError(db.Create, err)
@@ -203,8 +203,8 @@ func (c ClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*bi
 	return nil
 }
 
-func (c ClassInfoDBRepo) AddClassInfoToDB(ctx context.Context, classInfo *biz.ClassInfo) error {
-	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
+func (c ClassInfoDBRepo) AddClassInfoToDB(ctx context.Context, classInfo *model.ClassInfo) error {
+	db := c.data.DB(ctx).Table(model.ClassInfoTableName).WithContext(ctx)
 	err := db.FirstOrCreate(classInfo).Error
 	if err != nil {
 		c.log.FuncError(db.Create, err)
@@ -213,12 +213,24 @@ func (c ClassInfoDBRepo) AddClassInfoToDB(ctx context.Context, classInfo *biz.Cl
 	return nil
 }
 
-func (c ClassInfoDBRepo) GetClassInfoFromDB(ctx context.Context, ID string) (*biz.ClassInfo, error) {
-	db := c.data.Mysql.Table(biz.ClassInfoTableName).WithContext(ctx)
-	cla := &biz.ClassInfo{}
-	err := db.Where("id =?", ID).First(cla).Error
+func (c ClassInfoDBRepo) GetClassInfoFromDB(ctx context.Context, ID string) (*model.ClassInfo, error) {
+	db := c.data.Mysql.Table(model.ClassInfoTableName).WithContext(ctx)
+	cla := &model.ClassInfo{}
+	err := db.Select([]string{
+		"id",
+		"jxb_id",
+		"day",
+		"teacher",
+		"where",
+		"class_when",
+		"week_duration",
+		"class_name",
+		"credit",
+		"weeks",
+		"semester",
+		"year",
+	}).Where("id =?", ID).First(cla).Error
 	if err != nil {
-
 		c.log.FuncError(db.Where, err)
 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -231,8 +243,8 @@ func (c ClassInfoDBRepo) GetClassInfoFromDB(ctx context.Context, ID string) (*bi
 }
 
 func (c ClassInfoDBRepo) DeleteClassInfoInDB(ctx context.Context, ID string) error {
-	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
-	err := db.Where("id =?", ID).Delete(&biz.ClassInfo{}).Error
+	db := c.data.DB(ctx).Table(model.ClassInfoTableName).WithContext(ctx)
+	err := db.Where("id =?", ID).Delete(&model.ClassInfo{}).Error
 	if err != nil {
 		c.log.FuncError(db.Where, err)
 		return errcode.ErrClassDelete
@@ -240,8 +252,8 @@ func (c ClassInfoDBRepo) DeleteClassInfoInDB(ctx context.Context, ID string) err
 	return nil
 }
 
-func (c ClassInfoDBRepo) UpdateClassInfoInDB(ctx context.Context, classInfo *biz.ClassInfo) error {
-	db := c.data.DB(ctx).Table(biz.ClassInfoTableName).WithContext(ctx)
+func (c ClassInfoDBRepo) UpdateClassInfoInDB(ctx context.Context, classInfo *model.ClassInfo) error {
+	db := c.data.DB(ctx).Table(model.ClassInfoTableName).WithContext(ctx)
 	err := db.Save(classInfo).Error
 	if err != nil {
 		c.log.FuncError(db.Save, err)
@@ -249,9 +261,9 @@ func (c ClassInfoDBRepo) UpdateClassInfoInDB(ctx context.Context, classInfo *biz
 	}
 	return nil
 }
-func (c ClassInfoDBRepo) GetAllClassInfos(ctx context.Context, xnm, xqm string) ([]*biz.ClassInfo, error) {
-	db := c.data.Mysql.Table(biz.ClassInfoTableName).WithContext(ctx)
-	cla := make([]*biz.ClassInfo, 0)
+func (c ClassInfoDBRepo) GetAllClassInfos(ctx context.Context, xnm, xqm string) ([]*model.ClassInfo, error) {
+	db := c.data.Mysql.Table(model.ClassInfoTableName).WithContext(ctx)
+	cla := make([]*model.ClassInfo, 0)
 	err := db.Where("year = ? AND semester = ?", xnm, xqm).Find(&cla).Error
 	if err != nil {
 		c.log.FuncError(db.Where, err)

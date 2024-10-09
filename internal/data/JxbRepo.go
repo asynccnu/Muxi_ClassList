@@ -2,7 +2,7 @@ package data
 
 import (
 	"context"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	log "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 )
 
@@ -19,12 +19,12 @@ func NewJxbDBRepo(data *Data, log log.LogerPrinter) *JxbDBRepo {
 }
 
 func (j *JxbDBRepo) SaveJxb(ctx context.Context, jxbId, stuId string) error {
-	db := j.data.Mysql.Table(biz.JxbTableName).WithContext(ctx)
-	jxb := &biz.Jxb{
+	db := j.data.Mysql.Table(model.JxbTableName).WithContext(ctx)
+	jxb := &model.Jxb{
 		JxbId: jxbId,
 		StuId: stuId,
 	}
-	err := db.FirstOrCreate(jxb).Error
+	err := db.Where("jxb_id = ? AND stu_id = ?", jxb.JxbId, jxb.StuId).FirstOrCreate(jxb).Error
 	if err != nil {
 		j.log.FuncError(db.Create, err)
 		return err

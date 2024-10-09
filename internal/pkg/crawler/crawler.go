@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
@@ -33,23 +33,23 @@ func NewClassCrawler(logPrinter logPrinter.LogerPrinter) *Crawler {
 }
 
 // GetClassInfoForGraduateStudent 获取研究生课程信息
-func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, cookie string, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
+func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model.GetClassInfoForGraduateStudentReq) (*model.GetClassInfoForGraduateStudentResp, error) {
 	var reply CrawReply2
-	yn := tool.CheckSY(xqm, xnm)
+	yn := tool.CheckSY(r.Xqm, r.Xnm)
 	if !yn {
-		return nil, nil, errcode.ErrParam
+		return nil, errcode.ErrParam
 	}
 	client := &http.Client{}
-	tmp1 := GetXNM(xnm)
-	tmp2 := GetXQM(xqm)
+	tmp1 := GetXNM(r.Xnm)
+	tmp2 := GetXQM(r.Xqm)
 	param := fmt.Sprintf("xnm=%s&xqm=%s", tmp1, tmp2)
 	var data = strings.NewReader(param)
 	req, err := http.NewRequest("POST", "https://grd.ccnu.edu.cn/yjsxt/kbcx/xskbcx_cxXsKb.html?gnmkdm=N2151", data)
 	if err != nil {
 		c.logPrinter.FuncError(http.NewRequest, err)
-		return nil, nil, errcode.ErrCrawler
+		return nil, errcode.ErrCrawler
 	}
-	req.Header.Set("Cookie", cookie)
+	req.Header.Set("Cookie", r.Cookie)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
 	req.Header.Set("Connection", "keep-alive")
@@ -67,39 +67,42 @@ func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, cookie str
 	resp, err := client.Do(req)
 	if err != nil {
 		c.logPrinter.FuncError(client.Do, err)
-		return nil, nil, errcode.ErrCrawler
+		return nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
 		c.logPrinter.FuncError(json.NewDecoder(resp.Body).Decode, err)
-		return nil, nil, errcode.ErrCrawler
+		return nil, errcode.ErrCrawler
 	}
-	infos, Scs, err := ToClassInfo2(reply, xnm, xqm)
+	infos, Scs, err := ToClassInfo2(reply, r.Xnm, r.Xqm)
 	if err != nil {
 		c.logPrinter.FuncError(ToClassInfo1, err)
-		return nil, nil, errcode.ErrCrawler
+		return nil, errcode.ErrCrawler
 	}
-	return infos, Scs, nil
+	return &model.GetClassInfoForGraduateStudentResp{
+		ClassInfos:     infos,
+		StudentCourses: Scs,
+	}, nil
 }
 
 // GetClassInfosForUndergraduate  获取本科生课程信息
-func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, cookie string, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
+func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model.GetClassInfosForUndergraduateReq) (*model.GetClassInfosForUndergraduateResp, error) {
 	var reply CrawReply1
-	yn := tool.CheckSY(xqm, xnm)
+	yn := tool.CheckSY(r.Xqm, r.Xnm)
 	if !yn {
-		return nil, nil, errcode.ErrParam
+		return nil, errcode.ErrParam
 	}
-	tmp1 := GetXNM(xnm)
-	tmp2 := GetXQM(xqm)
+	tmp1 := GetXNM(r.Xnm)
+	tmp2 := GetXQM(r.Xqm)
 	formdata := fmt.Sprintf("xnm=%s&xqm=%s&kzlx=ck&xsdm=", tmp1, tmp2)
 	var data = strings.NewReader(formdata)
 	req, err := http.NewRequest("POST", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N2151", data)
 	if err != nil {
 		c.logPrinter.FuncError(http.NewRequest, err)
-		return nil, nil, errcode.ErrCrawler
+		return nil, errcode.ErrCrawler
 	}
-	req.Header.Set("Cookie", cookie) //设置cookie
+	req.Header.Set("Cookie", r.Cookie) //设置cookie
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
 	req.Header.Set("Connection", "keep-alive")
@@ -117,30 +120,33 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, cookie stri
 	resp, err := c.client.Do(req)
 	if err != nil {
 		c.logPrinter.FuncError(c.client.Do, err)
-		return nil, nil, errcode.ErrCrawler
+		return nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
 		c.logPrinter.FuncError(json.NewDecoder(resp.Body).Decode, err)
-		return nil, nil, errcode.ErrCrawler
+		return nil, errcode.ErrCrawler
 	}
-	infos, Scs, err := ToClassInfo1(reply, xnm, xqm)
+	infos, Scs, err := ToClassInfo1(reply, r.Xnm, r.Xqm)
 	if err != nil {
 		c.logPrinter.FuncError(ToClassInfo1, err)
-		return nil, nil, errcode.ErrCrawler
+		return nil, errcode.ErrCrawler
 	}
-	return infos, Scs, nil
+	return &model.GetClassInfosForUndergraduateResp{
+		ClassInfos:     infos,
+		StudentCourses: Scs,
+	}, nil
 }
 
 // ToClassInfo1 处理本科生
-func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
-	var infos = make([]*biz.ClassInfo, 0)
-	var Scs = make([]*biz.StudentCourse, 0)
+func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model.ClassInfo, []*model.StudentCourse, error) {
+	var infos = make([]*model.ClassInfo, 0)
+	var Scs = make([]*model.StudentCourse, 0)
 	for _, v := range reply.KbList {
 		//课程信息
-		var info = &biz.ClassInfo{}
+		var info = &model.ClassInfo{}
 		//var Sc = &biz.StudentCourse{}
 		//info.ClassId = v.Kch //课程编号
 		//info.StuID = reply.Xsxx.Xh                    //学号
@@ -159,7 +165,7 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*biz.ClassInfo, []*biz.S
 		info.UpdateID()      //课程ID
 		//-----------------------------------------------------
 		//学生与课程的映射关系
-		Sc := &biz.StudentCourse{
+		Sc := &model.StudentCourse{
 			StuID:           reply.Xsxx.Xh,
 			ClaID:           info.ID,
 			Year:            xnm,
@@ -174,12 +180,12 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*biz.ClassInfo, []*biz.S
 }
 
 // ToClassInfo2 处理研究生
-func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
-	var infos = make([]*biz.ClassInfo, 0)
-	var Scs = make([]*biz.StudentCourse, 0)
+func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*model.ClassInfo, []*model.StudentCourse, error) {
+	var infos = make([]*model.ClassInfo, 0)
+	var Scs = make([]*model.StudentCourse, 0)
 	for _, v := range reply.KbList {
 		//课程信息
-		var info = &biz.ClassInfo{}
+		var info = &model.ClassInfo{}
 		//var Sc = &biz.StudentCourse{}
 		//info.ClassId = v.Kch //课程编号
 		//info.StuID = reply.Xsxx.Xh                    //学号
@@ -197,7 +203,7 @@ func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*biz.ClassInfo, []*biz.S
 		info.UpdateID() //课程ID
 		//-----------------------------------------------------
 		//学生与课程的映射关系
-		Sc := &biz.StudentCourse{
+		Sc := &model.StudentCourse{
 			StuID:           reply.Xsxx.Xh,
 			ClaID:           info.ID,
 			Year:            xnm,

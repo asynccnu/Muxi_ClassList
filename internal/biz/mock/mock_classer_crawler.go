@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
+	model "github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,35 +36,33 @@ func (m *MockClassCrawler) EXPECT() *MockClassCrawlerMockRecorder {
 }
 
 // GetClassInfoForGraduateStudent mocks base method.
-func (m *MockClassCrawler) GetClassInfoForGraduateStudent(ctx context.Context, cookie, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
+func (m *MockClassCrawler) GetClassInfoForGraduateStudent(ctx context.Context, req model.GetClassInfoForGraduateStudentReq) (*model.GetClassInfoForGraduateStudentResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClassInfoForGraduateStudent", ctx, cookie, xnm, xqm)
-	ret0, _ := ret[0].([]*biz.ClassInfo)
-	ret1, _ := ret[1].([]*biz.StudentCourse)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret := m.ctrl.Call(m, "GetClassInfoForGraduateStudent", ctx, req)
+	ret0, _ := ret[0].(*model.GetClassInfoForGraduateStudentResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetClassInfoForGraduateStudent indicates an expected call of GetClassInfoForGraduateStudent.
-func (mr *MockClassCrawlerMockRecorder) GetClassInfoForGraduateStudent(ctx, cookie, xnm, xqm interface{}) *gomock.Call {
+func (mr *MockClassCrawlerMockRecorder) GetClassInfoForGraduateStudent(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassInfoForGraduateStudent", reflect.TypeOf((*MockClassCrawler)(nil).GetClassInfoForGraduateStudent), ctx, cookie, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassInfoForGraduateStudent", reflect.TypeOf((*MockClassCrawler)(nil).GetClassInfoForGraduateStudent), ctx, req)
 }
 
 // GetClassInfosForUndergraduate mocks base method.
-func (m *MockClassCrawler) GetClassInfosForUndergraduate(ctx context.Context, cookie, xnm, xqm string) ([]*biz.ClassInfo, []*biz.StudentCourse, error) {
+func (m *MockClassCrawler) GetClassInfosForUndergraduate(ctx context.Context, req model.GetClassInfosForUndergraduateReq) (*model.GetClassInfosForUndergraduateResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClassInfosForUndergraduate", ctx, cookie, xnm, xqm)
-	ret0, _ := ret[0].([]*biz.ClassInfo)
-	ret1, _ := ret[1].([]*biz.StudentCourse)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret := m.ctrl.Call(m, "GetClassInfosForUndergraduate", ctx, req)
+	ret0, _ := ret[0].(*model.GetClassInfosForUndergraduateResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetClassInfosForUndergraduate indicates an expected call of GetClassInfosForUndergraduate.
-func (mr *MockClassCrawlerMockRecorder) GetClassInfosForUndergraduate(ctx, cookie, xnm, xqm interface{}) *gomock.Call {
+func (mr *MockClassCrawlerMockRecorder) GetClassInfosForUndergraduate(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassInfosForUndergraduate", reflect.TypeOf((*MockClassCrawler)(nil).GetClassInfosForUndergraduate), ctx, cookie, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClassInfosForUndergraduate", reflect.TypeOf((*MockClassCrawler)(nil).GetClassInfosForUndergraduate), ctx, req)
 }
 
 // MockClassRepoProxy is a mock of ClassRepoProxy interface.
@@ -91,160 +89,160 @@ func (m *MockClassRepoProxy) EXPECT() *MockClassRepoProxyMockRecorder {
 }
 
 // AddClass mocks base method.
-func (m *MockClassRepoProxy) AddClass(ctx context.Context, classInfo *biz.ClassInfo, sc *biz.StudentCourse, xnm, xqm string) error {
+func (m *MockClassRepoProxy) AddClass(ctx context.Context, req model.AddClassReq) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddClass", ctx, classInfo, sc, xnm, xqm)
+	ret := m.ctrl.Call(m, "AddClass", ctx, req)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddClass indicates an expected call of AddClass.
-func (mr *MockClassRepoProxyMockRecorder) AddClass(ctx, classInfo, sc, xnm, xqm interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) AddClass(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddClass", reflect.TypeOf((*MockClassRepoProxy)(nil).AddClass), ctx, classInfo, sc, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddClass", reflect.TypeOf((*MockClassRepoProxy)(nil).AddClass), ctx, req)
 }
 
 // CheckClassIdIsInRecycledBin mocks base method.
-func (m *MockClassRepoProxy) CheckClassIdIsInRecycledBin(ctx context.Context, stuId, xnm, xqm, classId string) bool {
+func (m *MockClassRepoProxy) CheckClassIdIsInRecycledBin(ctx context.Context, req model.CheckClassIdIsInRecycledBinReq) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckClassIdIsInRecycledBin", ctx, stuId, xnm, xqm, classId)
+	ret := m.ctrl.Call(m, "CheckClassIdIsInRecycledBin", ctx, req)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // CheckClassIdIsInRecycledBin indicates an expected call of CheckClassIdIsInRecycledBin.
-func (mr *MockClassRepoProxyMockRecorder) CheckClassIdIsInRecycledBin(ctx, stuId, xnm, xqm, classId interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) CheckClassIdIsInRecycledBin(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckClassIdIsInRecycledBin", reflect.TypeOf((*MockClassRepoProxy)(nil).CheckClassIdIsInRecycledBin), ctx, stuId, xnm, xqm, classId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckClassIdIsInRecycledBin", reflect.TypeOf((*MockClassRepoProxy)(nil).CheckClassIdIsInRecycledBin), ctx, req)
 }
 
 // CheckSCIdsExist mocks base method.
-func (m *MockClassRepoProxy) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool {
+func (m *MockClassRepoProxy) CheckSCIdsExist(ctx context.Context, req model.CheckSCIdsExistReq) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckSCIdsExist", ctx, stuId, classId, xnm, xqm)
+	ret := m.ctrl.Call(m, "CheckSCIdsExist", ctx, req)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // CheckSCIdsExist indicates an expected call of CheckSCIdsExist.
-func (mr *MockClassRepoProxyMockRecorder) CheckSCIdsExist(ctx, stuId, classId, xnm, xqm interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) CheckSCIdsExist(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSCIdsExist", reflect.TypeOf((*MockClassRepoProxy)(nil).CheckSCIdsExist), ctx, stuId, classId, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSCIdsExist", reflect.TypeOf((*MockClassRepoProxy)(nil).CheckSCIdsExist), ctx, req)
 }
 
 // DeleteClass mocks base method.
-func (m *MockClassRepoProxy) DeleteClass(ctx context.Context, classId, stuId, xnm, xqm string) error {
+func (m *MockClassRepoProxy) DeleteClass(ctx context.Context, req model.DeleteClassReq) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteClass", ctx, classId, stuId, xnm, xqm)
+	ret := m.ctrl.Call(m, "DeleteClass", ctx, req)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteClass indicates an expected call of DeleteClass.
-func (mr *MockClassRepoProxyMockRecorder) DeleteClass(ctx, classId, stuId, xnm, xqm interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) DeleteClass(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClass", reflect.TypeOf((*MockClassRepoProxy)(nil).DeleteClass), ctx, classId, stuId, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClass", reflect.TypeOf((*MockClassRepoProxy)(nil).DeleteClass), ctx, req)
 }
 
 // GetAllClasses mocks base method.
-func (m *MockClassRepoProxy) GetAllClasses(ctx context.Context, stuId, xnm, xqm string) ([]*biz.ClassInfo, error) {
+func (m *MockClassRepoProxy) GetAllClasses(ctx context.Context, req model.GetAllClassesReq) (*model.GetAllClassesResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllClasses", ctx, stuId, xnm, xqm)
-	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret := m.ctrl.Call(m, "GetAllClasses", ctx, req)
+	ret0, _ := ret[0].(*model.GetAllClassesResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllClasses indicates an expected call of GetAllClasses.
-func (mr *MockClassRepoProxyMockRecorder) GetAllClasses(ctx, stuId, xnm, xqm interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) GetAllClasses(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllClasses", reflect.TypeOf((*MockClassRepoProxy)(nil).GetAllClasses), ctx, stuId, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllClasses", reflect.TypeOf((*MockClassRepoProxy)(nil).GetAllClasses), ctx, req)
 }
 
 // GetAllSchoolClassInfos mocks base method.
-func (m *MockClassRepoProxy) GetAllSchoolClassInfos(ctx context.Context, xnm, xqm string) []*biz.ClassInfo {
+func (m *MockClassRepoProxy) GetAllSchoolClassInfos(ctx context.Context, req model.GetAllSchoolClassInfosReq) *model.GetAllSchoolClassInfosResp {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllSchoolClassInfos", ctx, xnm, xqm)
-	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret := m.ctrl.Call(m, "GetAllSchoolClassInfos", ctx, req)
+	ret0, _ := ret[0].(*model.GetAllSchoolClassInfosResp)
 	return ret0
 }
 
 // GetAllSchoolClassInfos indicates an expected call of GetAllSchoolClassInfos.
-func (mr *MockClassRepoProxyMockRecorder) GetAllSchoolClassInfos(ctx, xnm, xqm interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) GetAllSchoolClassInfos(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassInfos", reflect.TypeOf((*MockClassRepoProxy)(nil).GetAllSchoolClassInfos), ctx, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchoolClassInfos", reflect.TypeOf((*MockClassRepoProxy)(nil).GetAllSchoolClassInfos), ctx, req)
 }
 
 // GetRecycledIds mocks base method.
-func (m *MockClassRepoProxy) GetRecycledIds(ctx context.Context, stuId, xnm, xqm string) ([]string, error) {
+func (m *MockClassRepoProxy) GetRecycledIds(ctx context.Context, req model.GetRecycledIdsReq) (*model.GetRecycledIdsResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRecycledIds", ctx, stuId, xnm, xqm)
-	ret0, _ := ret[0].([]string)
+	ret := m.ctrl.Call(m, "GetRecycledIds", ctx, req)
+	ret0, _ := ret[0].(*model.GetRecycledIdsResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetRecycledIds indicates an expected call of GetRecycledIds.
-func (mr *MockClassRepoProxyMockRecorder) GetRecycledIds(ctx, stuId, xnm, xqm interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) GetRecycledIds(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecycledIds", reflect.TypeOf((*MockClassRepoProxy)(nil).GetRecycledIds), ctx, stuId, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecycledIds", reflect.TypeOf((*MockClassRepoProxy)(nil).GetRecycledIds), ctx, req)
 }
 
 // GetSpecificClassInfo mocks base method.
-func (m *MockClassRepoProxy) GetSpecificClassInfo(ctx context.Context, classId string) (*biz.ClassInfo, error) {
+func (m *MockClassRepoProxy) GetSpecificClassInfo(ctx context.Context, req model.GetSpecificClassInfoReq) (*model.GetSpecificClassInfoResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSpecificClassInfo", ctx, classId)
-	ret0, _ := ret[0].(*biz.ClassInfo)
+	ret := m.ctrl.Call(m, "GetSpecificClassInfo", ctx, req)
+	ret0, _ := ret[0].(*model.GetSpecificClassInfoResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSpecificClassInfo indicates an expected call of GetSpecificClassInfo.
-func (mr *MockClassRepoProxyMockRecorder) GetSpecificClassInfo(ctx, classId interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) GetSpecificClassInfo(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpecificClassInfo", reflect.TypeOf((*MockClassRepoProxy)(nil).GetSpecificClassInfo), ctx, classId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpecificClassInfo", reflect.TypeOf((*MockClassRepoProxy)(nil).GetSpecificClassInfo), ctx, req)
 }
 
-// RemoveClassFromRecycledBin mocks base method.
-func (m *MockClassRepoProxy) RemoveClassFromRecycledBin(ctx context.Context, stuId, xnm, xqm, classId string) error {
+// RecoverClassFromRecycledBin mocks base method.
+func (m *MockClassRepoProxy) RecoverClassFromRecycledBin(ctx context.Context, req model.RecoverClassFromRecycleBinReq) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveClassFromRecycledBin", ctx, stuId, xnm, xqm, classId)
+	ret := m.ctrl.Call(m, "RecoverClassFromRecycledBin", ctx, req)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// RemoveClassFromRecycledBin indicates an expected call of RemoveClassFromRecycledBin.
-func (mr *MockClassRepoProxyMockRecorder) RemoveClassFromRecycledBin(ctx, stuId, xnm, xqm, classId interface{}) *gomock.Call {
+// RecoverClassFromRecycledBin indicates an expected call of RecoverClassFromRecycledBin.
+func (mr *MockClassRepoProxyMockRecorder) RecoverClassFromRecycledBin(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveClassFromRecycledBin", reflect.TypeOf((*MockClassRepoProxy)(nil).RemoveClassFromRecycledBin), ctx, stuId, xnm, xqm, classId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecoverClassFromRecycledBin", reflect.TypeOf((*MockClassRepoProxy)(nil).RecoverClassFromRecycledBin), ctx, req)
 }
 
 // SaveClasses mocks base method.
-func (m *MockClassRepoProxy) SaveClasses(ctx context.Context, stuId, xnm, xqm string, claInfos []*biz.ClassInfo, scs []*biz.StudentCourse) error {
+func (m *MockClassRepoProxy) SaveClasses(ctx context.Context, req model.SaveClassReq) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveClasses", ctx, stuId, xnm, xqm, claInfos, scs)
+	ret := m.ctrl.Call(m, "SaveClasses", ctx, req)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveClasses indicates an expected call of SaveClasses.
-func (mr *MockClassRepoProxyMockRecorder) SaveClasses(ctx, stuId, xnm, xqm, claInfos, scs interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) SaveClasses(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveClasses", reflect.TypeOf((*MockClassRepoProxy)(nil).SaveClasses), ctx, stuId, xnm, xqm, claInfos, scs)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveClasses", reflect.TypeOf((*MockClassRepoProxy)(nil).SaveClasses), ctx, req)
 }
 
 // UpdateClass mocks base method.
-func (m *MockClassRepoProxy) UpdateClass(ctx context.Context, newClassInfo *biz.ClassInfo, newSc *biz.StudentCourse, stuId, oldClassId, xnm, xqm string) error {
+func (m *MockClassRepoProxy) UpdateClass(ctx context.Context, req model.UpdateClassReq) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateClass", ctx, newClassInfo, newSc, stuId, oldClassId, xnm, xqm)
+	ret := m.ctrl.Call(m, "UpdateClass", ctx, req)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateClass indicates an expected call of UpdateClass.
-func (mr *MockClassRepoProxyMockRecorder) UpdateClass(ctx, newClassInfo, newSc, stuId, oldClassId, xnm, xqm interface{}) *gomock.Call {
+func (mr *MockClassRepoProxyMockRecorder) UpdateClass(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClass", reflect.TypeOf((*MockClassRepoProxy)(nil).UpdateClass), ctx, newClassInfo, newSc, stuId, oldClassId, xnm, xqm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClass", reflect.TypeOf((*MockClassRepoProxy)(nil).UpdateClass), ctx, req)
 }
 
 // MockJxbRepo is a mock of JxbRepo interface.

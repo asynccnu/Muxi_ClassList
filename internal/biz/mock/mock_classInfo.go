@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
+	model "github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,7 +36,7 @@ func (m *MockClassInfoDBRepo) EXPECT() *MockClassInfoDBRepoMockRecorder {
 }
 
 // AddClassInfoToDB mocks base method.
-func (m *MockClassInfoDBRepo) AddClassInfoToDB(ctx context.Context, classInfo *biz.ClassInfo) error {
+func (m *MockClassInfoDBRepo) AddClassInfoToDB(ctx context.Context, classInfo *model.ClassInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddClassInfoToDB", ctx, classInfo)
 	ret0, _ := ret[0].(error)
@@ -64,10 +64,10 @@ func (mr *MockClassInfoDBRepoMockRecorder) DeleteClassInfoInDB(ctx, ID interface
 }
 
 // GetAllClassInfos mocks base method.
-func (m *MockClassInfoDBRepo) GetAllClassInfos(ctx context.Context, xnm, xqm string) ([]*biz.ClassInfo, error) {
+func (m *MockClassInfoDBRepo) GetAllClassInfos(ctx context.Context, xnm, xqm string) ([]*model.ClassInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllClassInfos", ctx, xnm, xqm)
-	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret0, _ := ret[0].([]*model.ClassInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -79,10 +79,10 @@ func (mr *MockClassInfoDBRepoMockRecorder) GetAllClassInfos(ctx, xnm, xqm interf
 }
 
 // GetClassInfoFromDB mocks base method.
-func (m *MockClassInfoDBRepo) GetClassInfoFromDB(ctx context.Context, ID string) (*biz.ClassInfo, error) {
+func (m *MockClassInfoDBRepo) GetClassInfoFromDB(ctx context.Context, ID string) (*model.ClassInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClassInfoFromDB", ctx, ID)
-	ret0, _ := ret[0].(*biz.ClassInfo)
+	ret0, _ := ret[0].(*model.ClassInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -94,7 +94,7 @@ func (mr *MockClassInfoDBRepoMockRecorder) GetClassInfoFromDB(ctx, ID interface{
 }
 
 // SaveClassInfosToDB mocks base method.
-func (m *MockClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*biz.ClassInfo) error {
+func (m *MockClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*model.ClassInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveClassInfosToDB", ctx, classInfo)
 	ret0, _ := ret[0].(error)
@@ -131,7 +131,7 @@ func (m *MockClassInfoCacheRepo) EXPECT() *MockClassInfoCacheRepoMockRecorder {
 }
 
 // AddClassInfoToCache mocks base method.
-func (m *MockClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, classInfoKey, classInfosKey string, classInfo *biz.ClassInfo) error {
+func (m *MockClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, classInfoKey, classInfosKey string, classInfo *model.ClassInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddClassInfoToCache", ctx, classInfoKey, classInfosKey, classInfo)
 	ret0, _ := ret[0].(error)
@@ -159,7 +159,7 @@ func (mr *MockClassInfoCacheRepoMockRecorder) DeleteClassInfoFromCache(ctx, dele
 }
 
 // FixClassInfoInCache mocks base method.
-func (m *MockClassInfoCacheRepo) FixClassInfoInCache(ctx context.Context, oldID, classInfoKey, classInfosKey string, classInfo *biz.ClassInfo) error {
+func (m *MockClassInfoCacheRepo) FixClassInfoInCache(ctx context.Context, oldID, classInfoKey, classInfosKey string, classInfo *model.ClassInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FixClassInfoInCache", ctx, oldID, classInfoKey, classInfosKey, classInfo)
 	ret0, _ := ret[0].(error)
@@ -173,10 +173,10 @@ func (mr *MockClassInfoCacheRepoMockRecorder) FixClassInfoInCache(ctx, oldID, cl
 }
 
 // GetClassInfoFromCache mocks base method.
-func (m *MockClassInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key string) (*biz.ClassInfo, error) {
+func (m *MockClassInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key string) (*model.ClassInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClassInfoFromCache", ctx, key)
-	ret0, _ := ret[0].(*biz.ClassInfo)
+	ret0, _ := ret[0].(*model.ClassInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -188,10 +188,10 @@ func (mr *MockClassInfoCacheRepoMockRecorder) GetClassInfoFromCache(ctx, key int
 }
 
 // GetClassInfosFromCache mocks base method.
-func (m *MockClassInfoCacheRepo) GetClassInfosFromCache(ctx context.Context, key string) ([]*biz.ClassInfo, error) {
+func (m *MockClassInfoCacheRepo) GetClassInfosFromCache(ctx context.Context, key string) ([]*model.ClassInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClassInfosFromCache", ctx, key)
-	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret0, _ := ret[0].([]*model.ClassInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -203,7 +203,7 @@ func (mr *MockClassInfoCacheRepoMockRecorder) GetClassInfosFromCache(ctx, key in
 }
 
 // OnlyAddClassInfoToCache mocks base method.
-func (m *MockClassInfoCacheRepo) OnlyAddClassInfoToCache(ctx context.Context, key string, classInfo *biz.ClassInfo) error {
+func (m *MockClassInfoCacheRepo) OnlyAddClassInfoToCache(ctx context.Context, key string, classInfo *model.ClassInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "OnlyAddClassInfoToCache", ctx, key, classInfo)
 	ret0, _ := ret[0].(error)
@@ -217,7 +217,7 @@ func (mr *MockClassInfoCacheRepoMockRecorder) OnlyAddClassInfoToCache(ctx, key, 
 }
 
 // OnlyAddClassInfosToCache mocks base method.
-func (m *MockClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*biz.ClassInfo) error {
+func (m *MockClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*model.ClassInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "OnlyAddClassInfosToCache", ctx, key, classInfos)
 	ret0, _ := ret[0].(error)
@@ -231,7 +231,7 @@ func (mr *MockClassInfoCacheRepoMockRecorder) OnlyAddClassInfosToCache(ctx, key,
 }
 
 // SaveManyClassInfosToCache mocks base method.
-func (m *MockClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*biz.ClassInfo) error {
+func (m *MockClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*model.ClassInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveManyClassInfosToCache", ctx, keys, classInfos)
 	ret0, _ := ret[0].(error)

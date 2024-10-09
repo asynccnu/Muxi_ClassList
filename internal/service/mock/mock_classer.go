@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
+	model "github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,7 +36,7 @@ func (m *MockClassCtrl) EXPECT() *MockClassCtrlMockRecorder {
 }
 
 // AddClass mocks base method.
-func (m *MockClassCtrl) AddClass(ctx context.Context, stuId string, info *biz.ClassInfo) error {
+func (m *MockClassCtrl) AddClass(ctx context.Context, stuId string, info *model.ClassInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddClass", ctx, stuId, info)
 	ret0, _ := ret[0].(error)
@@ -78,10 +78,10 @@ func (mr *MockClassCtrlMockRecorder) DeleteClass(ctx, classId, stuId, xnm, xqm i
 }
 
 // GetAllSchoolClassInfosToOtherService mocks base method.
-func (m *MockClassCtrl) GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*biz.ClassInfo {
+func (m *MockClassCtrl) GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*model.ClassInfo {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllSchoolClassInfosToOtherService", ctx, xnm, xqm)
-	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret0, _ := ret[0].([]*model.ClassInfo)
 	return ret0
 }
 
@@ -92,10 +92,10 @@ func (mr *MockClassCtrlMockRecorder) GetAllSchoolClassInfosToOtherService(ctx, x
 }
 
 // GetClasses mocks base method.
-func (m *MockClassCtrl) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm, cookie string) ([]*biz.Class, error) {
+func (m *MockClassCtrl) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm, cookie string) ([]*model.Class, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClasses", ctx, StuId, week, xnm, xqm, cookie)
-	ret0, _ := ret[0].([]*biz.Class)
+	ret0, _ := ret[0].([]*model.Class)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -107,10 +107,10 @@ func (mr *MockClassCtrlMockRecorder) GetClasses(ctx, StuId, week, xnm, xqm, cook
 }
 
 // GetRecycledClassInfos mocks base method.
-func (m *MockClassCtrl) GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*biz.ClassInfo, error) {
+func (m *MockClassCtrl) GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*model.ClassInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRecycledClassInfos", ctx, stuId, xnm, xqm)
-	ret0, _ := ret[0].([]*biz.ClassInfo)
+	ret0, _ := ret[0].([]*model.ClassInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -151,10 +151,10 @@ func (mr *MockClassCtrlMockRecorder) RecoverClassInfo(ctx, stuId, xnm, xqm, clas
 }
 
 // SearchClass mocks base method.
-func (m *MockClassCtrl) SearchClass(ctx context.Context, classId string) (*biz.ClassInfo, error) {
+func (m *MockClassCtrl) SearchClass(ctx context.Context, classId string) (*model.ClassInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchClass", ctx, classId)
-	ret0, _ := ret[0].(*biz.ClassInfo)
+	ret0, _ := ret[0].(*model.ClassInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -166,7 +166,7 @@ func (mr *MockClassCtrlMockRecorder) SearchClass(ctx, classId interface{}) *gomo
 }
 
 // UpdateClass mocks base method.
-func (m *MockClassCtrl) UpdateClass(ctx context.Context, newClassInfo *biz.ClassInfo, newSc *biz.StudentCourse, stuId, oldClassId, xnm, xqm string) error {
+func (m *MockClassCtrl) UpdateClass(ctx context.Context, newClassInfo *model.ClassInfo, newSc *model.StudentCourse, stuId, oldClassId, xnm, xqm string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateClass", ctx, newClassInfo, newSc, stuId, oldClassId, xnm, xqm)
 	ret0, _ := ret[0].(error)

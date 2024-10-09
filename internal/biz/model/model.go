@@ -1,4 +1,4 @@
-package biz
+package model
 
 import (
 	"fmt"
@@ -46,8 +46,8 @@ type StudentCourse struct {
 
 // Jxb 用来存取教学班
 type Jxb struct {
-	JxbId string `gorm:"column:jxb_id;index" json:"jxb_id"` //教学班ID
-	StuId string `gorm:"column:stu_id" json:"stu_id"`       //学号
+	JxbId string `gorm:"column:jxb_id;index" json:"jxb_id"` // 教学班ID
+	StuId string `gorm:"column:stu_id;index" json:"stu_id"` // 学号
 }
 
 func (ci *ClassInfo) TableName() string {

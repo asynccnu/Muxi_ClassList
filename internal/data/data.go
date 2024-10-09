@@ -1,7 +1,7 @@
 package data
 
 import (
-	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis"
@@ -61,7 +61,7 @@ func NewDB(c *conf.Data) *gorm.DB {
 	if err != nil {
 		panic("connect mysql failed")
 	}
-	if err := db.AutoMigrate(&biz.ClassInfo{}, &biz.StudentCourse{}); err != nil {
+	if err := db.AutoMigrate(&model.ClassInfo{}, &model.StudentCourse{}, &model.Jxb{}); err != nil {
 		panic(err)
 	}
 	return db

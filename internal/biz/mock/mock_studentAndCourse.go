@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	biz "github.com/asynccnu/Muxi_ClassList/internal/biz"
+	model "github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -79,7 +79,7 @@ func (mr *MockStudentAndCourseDBRepoMockRecorder) GetClassIDsFromSCInDB(ctx, stu
 }
 
 // SaveManyStudentAndCourseToDB mocks base method.
-func (m *MockStudentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context, scs []*biz.StudentCourse) error {
+func (m *MockStudentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context, scs []*model.StudentCourse) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveManyStudentAndCourseToDB", ctx, scs)
 	ret0, _ := ret[0].(error)
@@ -93,7 +93,7 @@ func (mr *MockStudentAndCourseDBRepoMockRecorder) SaveManyStudentAndCourseToDB(c
 }
 
 // SaveStudentAndCourseToDB mocks base method.
-func (m *MockStudentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc *biz.StudentCourse) error {
+func (m *MockStudentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc *model.StudentCourse) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveStudentAndCourseToDB", ctx, sc)
 	ret0, _ := ret[0].(error)

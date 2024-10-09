@@ -1,11 +1,14 @@
 package biz
 
-import "context"
+import (
+	"context"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
+)
 
 //go:generate mockgen -source=./studentAndCourse.go -destination=./mock/mock_studentAndCourse.go -package=mock_biz
 type StudentAndCourseDBRepo interface {
-	SaveManyStudentAndCourseToDB(ctx context.Context, scs []*StudentCourse) error
-	SaveStudentAndCourseToDB(ctx context.Context, sc *StudentCourse) error
+	SaveManyStudentAndCourseToDB(ctx context.Context, scs []*model.StudentCourse) error
+	SaveStudentAndCourseToDB(ctx context.Context, sc *model.StudentCourse) error
 	GetClassIDsFromSCInDB(ctx context.Context, stuId, xnm, xqm string) ([]string, error)
 	DeleteStudentAndCourseInDB(ctx context.Context, ID string) error
 	CheckExists(ctx context.Context, xnm, xqm, stuId, classId string) bool

@@ -3,23 +3,22 @@ package service
 import (
 	"context"
 	pb "github.com/asynccnu/Muxi_ClassList/api/classer/v1"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
-	"time"
 )
 
 //go:generate mockgen -source=./classer.go -destination=./mock/mock_classer.go -package=mock_service
 type ClassCtrl interface {
 	CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool
-	GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, cookie string) ([]*biz.Class, error)
-	AddClass(ctx context.Context, stuId string, info *biz.ClassInfo) error
+	GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, cookie string) ([]*model.Class, error)
+	AddClass(ctx context.Context, stuId string, info *model.ClassInfo) error
 	DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error
-	SearchClass(ctx context.Context, classId string) (*biz.ClassInfo, error)
-	UpdateClass(ctx context.Context, newClassInfo *biz.ClassInfo, newSc *biz.StudentCourse, stuId, oldClassId, xnm, xqm string) error
-	GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*biz.ClassInfo
-	GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*biz.ClassInfo, error)
+	SearchClass(ctx context.Context, classId string) (*model.ClassInfo, error)
+	UpdateClass(ctx context.Context, newClassInfo *model.ClassInfo, newSc *model.StudentCourse, stuId, oldClassId, xnm, xqm string) error
+	GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*model.ClassInfo
+	GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*model.ClassInfo, error)
 	RecoverClassInfo(ctx context.Context, stuId, xnm, xqm, classId string) error
 	GetStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error)
 }
@@ -47,16 +46,16 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 	}
 	//time1 := time.Now()
 	// 设置超时时间
-	timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
-	defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
+	//timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
+	//defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
 
-	cookie, err := s.Cs.GetCookie(timeoutCtx, req.GetStuId())
-	if err != nil {
-		s.log.FuncError(s.Cs.GetCookie, err)
-	}
+	//cookie, err := s.Cs.GetCookie(timeoutCtx, req.GetStuId())
+	//if err != nil {
+	//	s.log.FuncError(s.Cs.GetCookie, err)
+	//}
 	//fmt.Println("getcookie past: ", time.Now().Sub(time1))
 	//调试专用
-	//ccnuCookie := "JSESSIONID=92EFB739D2895F26E2D35A2527C27C0F"
+	cookie := "JSESSIONID=A8BBF856C51BE30EAEDA3FE4C4DCFCBC"
 	//time2 := time.Now()
 
 	pclasses := make([]*pb.Class, 0)
@@ -83,7 +82,7 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 		return &pb.AddClassResponse{}, errcode.ErrParam
 	}
 	weekDur := tool.FormatWeeks(tool.ParseWeeks(req.Weeks))
-	var classInfo = &biz.ClassInfo{
+	var classInfo = &model.ClassInfo{
 		Day:          req.GetDay(),
 		Teacher:      req.GetTeacher(),
 		Where:        req.GetWhere(),
@@ -170,7 +169,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 	}
 
 	oldclassInfo.UpdateID()
-	newSc := &biz.StudentCourse{
+	newSc := &model.StudentCourse{
 		StuID:           req.GetStuId(),
 		ClaID:           oldclassInfo.ID,
 		Year:            oldclassInfo.Year,
@@ -241,7 +240,7 @@ func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClas
 		ClassInfos: pbClassInfos,
 	}, nil
 }
-func HandleClass(info *biz.ClassInfo) *pb.ClassInfo {
+func HandleClass(info *model.ClassInfo) *pb.ClassInfo {
 	return &pb.ClassInfo{
 		Day:          info.Day,
 		Teacher:      info.Teacher,
