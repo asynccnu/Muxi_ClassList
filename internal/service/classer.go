@@ -7,6 +7,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
+	"time"
 )
 
 //go:generate mockgen -source=./classer.go -destination=./mock/mock_classer.go -package=mock_service
@@ -46,16 +47,16 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 	}
 	//time1 := time.Now()
 	// 设置超时时间
-	//timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
-	//defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
+	timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
+	defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
 
-	//cookie, err := s.Cs.GetCookie(timeoutCtx, req.GetStuId())
-	//if err != nil {
-	//	s.log.FuncError(s.Cs.GetCookie, err)
-	//}
+	cookie, err := s.Cs.GetCookie(timeoutCtx, req.GetStuId())
+	if err != nil {
+		s.log.FuncError(s.Cs.GetCookie, err)
+	}
 	//fmt.Println("getcookie past: ", time.Now().Sub(time1))
 	//调试专用
-	cookie := "JSESSIONID=A8BBF856C51BE30EAEDA3FE4C4DCFCBC"
+	//cookie := "JSESSIONID=A8BBF856C51BE30EAEDA3FE4C4DCFCBC"
 	//time2 := time.Now()
 
 	pclasses := make([]*pb.Class, 0)
