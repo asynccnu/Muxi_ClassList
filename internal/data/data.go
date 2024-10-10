@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	Expiration        = 7 * 24 * time.Hour
+	Expiration        = 5 * 24 * time.Hour
 	RecycleExpiration = 2 * 30 * 24 * time.Hour
 )
 

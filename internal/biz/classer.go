@@ -64,8 +64,9 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 	if resp1 != nil {
 		classInfos = resp1.ClassInfos
 	}
-
-	if err != nil {
+	// 如果数据库中没有
+	// 或者时间是每周周一，就(有些特殊时间比如2,9月月末和3,10月月初，默认会优先爬取)默认有0.3的概率去爬取，这样是为了防止课表更新了，但一直会从数据库中获取，导致，课表无法更新
+	if err != nil || tool.IsNeedCraw() {
 		if tool.CheckIsUndergraduate(StuId) { //针对是否是本科生，进行分类
 			resp, err := cluc.Crawler.GetClassInfosForUndergraduate(ctx, model.GetClassInfosForUndergraduateReq{
 				Cookie: cookie,
@@ -88,8 +89,12 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 				Xnm:    xnm,
 				Xqm:    xqm,
 			})
-			classInfos = resp2.ClassInfos
-			Scs = resp2.StudentCourses
+			if resp2.ClassInfos != nil {
+				classInfos = resp2.ClassInfos
+			}
+			if resp2.StudentCourses != nil {
+				Scs = resp2.StudentCourses
+			}
 			if err != nil {
 				cluc.log.FuncError(cluc.Crawler.GetClassInfoForGraduateStudent, err)
 				return nil, err
@@ -126,6 +131,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 	go func() {
 		var err error
 		for k, _ := range Jxbmp {
+			//防止ctx因为return就被取消了，所以就改用background，因为这个存取没有精确的要求，所以可以后台完成，用户不需要感知
 			err = cluc.JxbRepo.SaveJxb(context.Background(), k, StuId)
 			if err != nil {
 				cluc.log.FuncError(cluc.JxbRepo.SaveJxb, err)

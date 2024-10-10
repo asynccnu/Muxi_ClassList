@@ -183,3 +183,17 @@ func TestCheckIfThisWeek(t *testing.T) {
 		})
 	}
 }
+
+func TestRandomBool(t *testing.T) {
+	for j := 1; j <= 10; j++ {
+		cnt := 0
+		N := 100
+		for i := 1; i <= N; i++ {
+			if RandomBool(0.3) {
+				cnt++
+			}
+		}
+		t.Logf("happened:%d/%d", cnt, N)
+	}
+
+}
