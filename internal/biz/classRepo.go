@@ -4,22 +4,23 @@ import (
 	"context"
 	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
+	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	log "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
+	"github.com/go-kratos/kratos/v2/log"
 )
 
 type ClassRepo struct {
 	ClaRepo *ClassInfoRepo
 	Sac     *StudentAndCourseRepo
 	TxCtrl  Transaction //控制事务的开启
-	log     log.LogerPrinter
+	log     *log.Helper
 }
 
-func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl Transaction, Sac *StudentAndCourseRepo, log log.LogerPrinter) *ClassRepo {
+func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl Transaction, Sac *StudentAndCourseRepo, logger log.Logger) *ClassRepo {
 	return &ClassRepo{
 		ClaRepo: ClaRepo,
 		Sac:     Sac,
-		log:     log,
+		log:     log.NewHelper(logger),
 		TxCtrl:  TxCtrl,
 	}
 }
@@ -28,12 +29,10 @@ func (cla ClassRepo) SaveClasses(ctx context.Context, r model.SaveClassReq) erro
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
 		err1 := cla.ClaRepo.DB.SaveClassInfosToDB(ctx, r.ClassInfos)
 		if err1 != nil {
-			cla.log.FuncError(cla.ClaRepo.DB.SaveClassInfosToDB, err1)
 			return errcode.ErrCourseSave
 		}
 		err2 := cla.Sac.DB.SaveManyStudentAndCourseToDB(ctx, r.Scs)
 		if err2 != nil {
-			cla.log.FuncError(cla.Sac.DB.SaveManyStudentAndCourseToDB, err2)
 			return errcode.ErrCourseSave
 		}
 		return nil
@@ -50,7 +49,9 @@ func (cla ClassRepo) SaveClasses(ctx context.Context, r model.SaveClassReq) erro
 			GenerateClassInfosKey(r.StuId, r.Xnm, r.Xqm),
 			r.ClassInfos)
 		if err != nil {
-			cla.log.FuncError(cla.ClaRepo.Cache.OnlyAddClassInfosToCache, err)
+			cla.log.Warnw(classLog.Msg, "func:OnlyAddClassInfosToCache err",
+				classLog.Param, fmt.Sprintf("%v,%v", GenerateClassInfosKey(r.StuId, r.Xnm, r.Xqm), r.ClassInfos),
+				classLog.Reason, err)
 		}
 		var classIds = make([]string, 0)
 		var ClassInfoKeys = make([]string, 0)
@@ -62,12 +63,16 @@ func (cla ClassRepo) SaveClasses(ctx context.Context, r model.SaveClassReq) erro
 		//添加所有单个课程信息到缓存
 		err = cla.ClaRepo.Cache.SaveManyClassInfosToCache(context.Background(), ClassInfoKeys, r.ClassInfos)
 		if err != nil {
-			cla.log.FuncError(cla.ClaRepo.Cache.SaveManyClassInfosToCache, err)
+			cla.log.Warnw(classLog.Msg, "func:SaveManyClassInfosToCache err",
+				classLog.Param, fmt.Sprintf("%v,%v", ClassInfoKeys, r.ClassInfos),
+				classLog.Reason, err)
 		}
 		//保存学生ID与课程ID的对应关系到缓存
 		err = cla.Sac.Cache.SaveManyStudentAndCourseToCache(context.Background(), ScKey, classIds)
 		if err != nil {
-			cla.log.FuncError(cla.Sac.Cache.SaveManyStudentAndCourseToCache, err)
+			cla.log.Warnw(classLog.Msg, "func:SaveManyStudentAndCourseToCache err",
+				classLog.Param, fmt.Sprintf("%v,%v", ScKey, classIds),
+				classLog.Reason, err)
 		}
 	}()
 	return nil
@@ -84,33 +89,37 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, req model.GetAllClassesR
 
 	if err != nil {
 		cacheGet = false
-		cla.log.FuncError(cla.ClaRepo.Cache.GetClassInfosFromCache, err)
+		cla.log.Warnw(classLog.Msg, "func:GetClassInfosFromCache err",
+			classLog.Param, fmt.Sprintf("%v", key),
+			classLog.Reason, err)
 	}
 	if !cacheGet {
 		//从数据库中获取并用缓存加速
 		var claIds []string
 		claIds, err = cla.Sac.Cache.GetClassIdsFromCache(ctx, GenerateScSetName(req.StuId, req.Xnm, req.Xqm))
 		if err != nil || len(claIds) == 0 {
-			if err != nil {
-				cla.log.FuncError(cla.Sac.Cache.GetClassIdsFromCache, err)
-			}
+			cla.log.Warnw(classLog.Msg, "func:GetClassIdsFromCache err",
+				classLog.Param, fmt.Sprintf("%v", GenerateScSetName(req.StuId, req.Xnm, req.Xqm)),
+				classLog.Reason, err)
 			claIds, err = cla.Sac.DB.GetClassIDsFromSCInDB(ctx, req.StuId, req.Xnm, req.Xqm)
 			if err != nil {
-				if err != nil {
-					cla.log.FuncError(cla.Sac.DB.GetClassIDsFromSCInDB, err)
-				}
+				cla.log.Errorw(classLog.Msg, "func:GetClassIDsFromSCInDB err",
+					classLog.Param, fmt.Sprintf("%v,%v,%v", req.StuId, req.Xnm, req.Xqm),
+					classLog.Reason, err)
 				return nil, errcode.ErrClassNotFound
 			}
 		}
 		for _, Id := range claIds {
 			classInfo, err := cla.ClaRepo.Cache.GetClassInfoFromCache(ctx, GenerateClassInfoKey(Id))
 			if err != nil || classInfo == nil {
-				if err != nil {
-					cla.log.FuncError(cla.ClaRepo.Cache.GetClassInfoFromCache, err)
-				}
+				cla.log.Warnw(classLog.Msg, "func:GetClassInfoFromCache err",
+					classLog.Param, fmt.Sprintf("%v", GenerateClassInfoKey(Id)),
+					classLog.Reason, err)
 				classInfo, err = cla.ClaRepo.DB.GetClassInfoFromDB(ctx, Id)
 				if err != nil {
-					cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
+					cla.log.Errorw(classLog.Msg, "func:GetClassInfoFromDB err",
+						classLog.Param, fmt.Sprintf("%v", Id),
+						classLog.Reason, err)
 					return nil, errcode.ErrClassNotFound
 				}
 			}
@@ -121,7 +130,9 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, req model.GetAllClassesR
 			//注意:如果未获取到，即classInfos为nil，redis仍然会设置key-value，只不过value为NULL
 			err := cla.ClaRepo.Cache.OnlyAddClassInfosToCache(context.Background(), key, classInfos)
 			if err != nil {
-				cla.log.FuncError(cla.ClaRepo.Cache.OnlyAddClassInfosToCache, err)
+				cla.log.Warnw(classLog.Msg, "func:OnlyAddClassInfosToCache err",
+					classLog.Param, fmt.Sprintf("%v,%v", key, classInfos),
+					classLog.Reason, err)
 			}
 			//将学号与课程的ID存入缓存
 			//若classIds为nil,不会进入for循环，即没有经过redis
@@ -130,14 +141,18 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, req model.GetAllClassesR
 				GenerateScSetName(req.StuId, req.Xnm, req.Xqm),
 				claIds)
 			if err != nil {
-				cla.log.FuncError(cla.Sac.Cache.SaveManyStudentAndCourseToCache, err)
+				cla.log.Warnw(classLog.Msg, "func:SaveManyStudentAndCourseToCache err",
+					classLog.Param, fmt.Sprintf("%v,%v", GenerateScSetName(req.StuId, req.Xnm, req.Xqm), claIds),
+					classLog.Reason, err)
 			}
 			//同时存取各个课程信息
 			for _, classInfo := range classInfos {
 				key1 := GenerateClassInfoKey(classInfo.ID)
 				err = cla.ClaRepo.Cache.OnlyAddClassInfoToCache(context.Background(), key1, classInfo)
 				if err != nil {
-					cla.log.FuncError(cla.ClaRepo.Cache.OnlyAddClassInfoToCache, err)
+					cla.log.Warnw(classLog.Msg, "func:OnlyAddClassInfoToCache err",
+						classLog.Param, fmt.Sprintf("%v,%v", key1, classInfo),
+						classLog.Reason, err)
 				}
 			}
 
@@ -156,17 +171,23 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, req model.GetAllClassesR
 func (cla ClassRepo) GetSpecificClassInfo(ctx context.Context, req model.GetSpecificClassInfoReq) (*model.GetSpecificClassInfoResp, error) {
 	classInfo, err := cla.ClaRepo.Cache.GetClassInfoFromCache(ctx, req.ClassId)
 	if err != nil {
-		cla.log.FuncError(cla.ClaRepo.Cache.GetClassInfoFromCache, err)
+		cla.log.Warnw(classLog.Msg, "func:GetClassInfoFromCache err",
+			classLog.Param, fmt.Sprintf("%v", req.ClassId),
+			classLog.Reason, err)
 		classInfo, err = cla.ClaRepo.DB.GetClassInfoFromDB(ctx, req.ClassId)
 		if err != nil || classInfo == nil {
-			cla.log.FuncError(cla.ClaRepo.DB.GetClassInfoFromDB, err)
+			cla.log.Errorw(classLog.Msg, "func:GetClassInfoFromDB err",
+				classLog.Param, fmt.Sprintf("%v", req.ClassId),
+				classLog.Reason, err)
 			return nil, errcode.ErrClassNotFound
 		}
 		go func() {
 			// 缓存
 			err := cla.ClaRepo.Cache.OnlyAddClassInfoToCache(ctx, GenerateClassInfoKey(req.ClassId), classInfo)
 			if err != nil {
-				cla.log.FuncError(cla.ClaRepo.Cache.OnlyAddClassInfoToCache, err)
+				cla.log.Warnw(classLog.Msg, "func:OnlyAddClassInfoToCache err",
+					classLog.Param, fmt.Sprintf("%v,%v", GenerateClassInfoKey(req.ClassId), classInfo),
+					classLog.Reason, err)
 			}
 		}()
 	}
@@ -175,13 +196,17 @@ func (cla ClassRepo) GetSpecificClassInfo(ctx context.Context, req model.GetSpec
 func (cla ClassRepo) AddClass(ctx context.Context, req model.AddClassReq) error {
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
 		if err := cla.ClaRepo.DB.AddClassInfoToDB(ctx, req.ClassInfo); err != nil {
-			cla.log.FuncError(cla.ClaRepo.DB.AddClassInfoToDB, err)
+			cla.log.Errorw(classLog.Msg, "func:AddClassInfoToDB err",
+				classLog.Param, fmt.Sprintf("%v", req.ClassInfo),
+				classLog.Reason, err)
 			return errcode.ErrClassUpdate
 		}
 
 		// 处理 StudentCourse
 		if err := cla.Sac.DB.SaveStudentAndCourseToDB(ctx, req.Sc); err != nil {
-			cla.log.FuncError(cla.Sac.DB.SaveStudentAndCourseToDB, err)
+			cla.log.Errorw(classLog.Msg, "func:SaveStudentAndCourseToDB err",
+				classLog.Param, fmt.Sprintf("%v", req.Sc),
+				classLog.Reason, err)
 			return errcode.ErrClassUpdate
 		}
 		return nil
@@ -196,9 +221,16 @@ func (cla ClassRepo) AddClass(ctx context.Context, req model.AddClassReq) error 
 		key1 := GenerateClassInfoKey(req.ClassInfo.ID)
 		key2 := GenerateScSetName(req.Sc.StuID, req.Xnm, req.Xqm)
 		err := cla.ClaRepo.Cache.AddClassInfoToCache(context.Background(), key1, GenerateClassInfosKey(stuId, req.Xnm, req.Xqm), req.ClassInfo)
+		if err != nil {
+			cla.log.Warnw(classLog.Msg, "func:AddClassInfoToCache err",
+				classLog.Param, fmt.Sprintf("%v,%v,%v", key1, GenerateClassInfosKey(stuId, req.Xnm, req.Xqm), req.ClassInfo),
+				classLog.Reason, err)
+		}
 		err = cla.Sac.Cache.AddStudentAndCourseToCache(context.Background(), key2, req.Sc.ClaID)
 		if err != nil {
-			cla.log.FuncError(cla.Sac.Cache.AddStudentAndCourseToCache, err)
+			cla.log.Warnw(classLog.Msg, "func:AddStudentAndCourseToCache err",
+				classLog.Param, fmt.Sprintf("%v,%v", key2, req.Sc.ClaID),
+				classLog.Reason, err)
 		}
 	}()
 	// 不等待缓存写入完成，直接返回
@@ -208,7 +240,9 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, req model.DeleteClassReq) 
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
 		err := cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, model.GenerateSCID(req.StuId, req.ClassId, req.Xnm, req.Xqm))
 		if err != nil {
-			cla.log.FuncError(cla.Sac.DB.DeleteStudentAndCourseInDB, err)
+			cla.log.Errorw(classLog.Msg, "func:DeleteStudentAndCourseInDB err",
+				classLog.Param, fmt.Sprintf("%v", model.GenerateSCID(req.StuId, req.ClassId, req.Xnm, req.Xqm)),
+				classLog.Reason, err)
 			return errcode.ErrClassDelete
 		}
 		return nil
@@ -218,7 +252,9 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, req model.DeleteClassReq) 
 	}
 	err := cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, req.ClassId, GenerateClassInfosKey(req.StuId, req.Xnm, req.Xqm))
 	if err != nil {
-		cla.log.FuncError(cla.ClaRepo.Cache.DeleteClassInfoFromCache, err)
+		cla.log.Errorw(classLog.Msg, "func:DeleteClassInfoFromCache err",
+			classLog.Param, fmt.Sprintf("%v,%v", req.ClassId, GenerateClassInfosKey(req.StuId, req.Xnm, req.Xqm)),
+			classLog.Reason, err)
 		return err
 	}
 	key1 := GenerateScSetName(req.StuId, req.Xnm, req.Xqm)
@@ -226,7 +262,9 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, req model.DeleteClassReq) 
 	//删除并添加进回收站
 	err = cla.Sac.Cache.DeleteAndRecycleClassId(ctx, key1, key2, req.ClassId)
 	if err != nil {
-		cla.log.FuncError(cla.Sac.Cache.DeleteAndRecycleClassId, err)
+		cla.log.Errorw(classLog.Msg, "func:DeleteAndRecycleClassId err",
+			classLog.Param, fmt.Sprintf("%v,%v,%v", key1, key2, req.ClassId),
+			classLog.Reason, err)
 		return err
 	}
 	return nil
@@ -235,7 +273,9 @@ func (cla ClassRepo) GetRecycledIds(ctx context.Context, req model.GetRecycledId
 	recycleKey := GenerateRecycleSetName(req.StuId, req.Xnm, req.Xqm)
 	classIds, err := cla.Sac.Cache.GetRecycledClassIds(ctx, recycleKey)
 	if err != nil {
-		cla.log.FuncError(cla.Sac.Cache.GetRecycledClassIds, err)
+		cla.log.Errorw(classLog.Msg, "func:GetRecycledClassIds err",
+			classLog.Param, fmt.Sprintf("%v", recycleKey),
+			classLog.Reason, err)
 		return nil, err
 	}
 	return &model.GetRecycledIdsResp{Ids: classIds}, nil
@@ -253,19 +293,25 @@ func (cla ClassRepo) UpdateClass(ctx context.Context, req model.UpdateClassReq) 
 		//添加新的课程信息
 		err := cla.ClaRepo.DB.AddClassInfoToDB(ctx, req.NewClassInfo)
 		if err != nil {
-			cla.log.FuncError(cla.ClaRepo.DB.AddClassInfoToDB, err)
+			cla.log.Errorw(classLog.Msg, "func:AddClassInfoToDB err",
+				classLog.Param, fmt.Sprintf("%v", req.NewClassInfo),
+				classLog.Reason, err)
 			return errcode.ErrClassUpdate
 		}
 		//删除原本的学生与课程的对应关系
 		err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, model.GenerateSCID(req.StuId, req.OldClassId, req.Xnm, req.Xqm))
 		if err != nil {
-			cla.log.FuncError(cla.Sac.DB.DeleteStudentAndCourseInDB, err)
+			cla.log.Errorw(classLog.Msg, "func:DeleteStudentAndCourseInDB err",
+				classLog.Param, fmt.Sprintf("%v", model.GenerateSCID(req.StuId, req.OldClassId, req.Xnm, req.Xqm)),
+				classLog.Reason, err)
 			return errcode.ErrClassUpdate
 		}
 		//添加新的对应关系
 		err = cla.Sac.DB.SaveStudentAndCourseToDB(ctx, req.NewSc)
 		if err != nil {
-			cla.log.FuncError(cla.Sac.DB.SaveStudentAndCourseToDB, err)
+			cla.log.Errorw(classLog.Msg, "func:SaveStudentAndCourseToDB err",
+				classLog.Param, fmt.Sprintf("%v", req.NewSc),
+				classLog.Reason, err)
 			return errcode.ErrClassUpdate
 		}
 		return nil
@@ -283,16 +329,25 @@ func (cla ClassRepo) UpdateClass(ctx context.Context, req model.UpdateClassReq) 
 			GenerateClassInfosKey(req.StuId, req.Xnm, req.Xqm),
 			req.NewClassInfo)
 		if err != nil {
-			cla.log.FuncError(cla.ClaRepo.Cache.FixClassInfoInCache, err)
+			cla.log.Warnw(classLog.Msg, "func:FixClassInfoInCache err",
+				classLog.Param, fmt.Sprintf("%v,%v,%v,%v", req.OldClassId,
+					GenerateClassInfoKey(req.NewClassInfo.ID),
+					GenerateClassInfosKey(req.StuId, req.Xnm, req.Xqm),
+					req.NewClassInfo),
+				classLog.Reason, err)
 		}
 		//删除老的对应关系，添加新的对应关系
 		err = cla.Sac.Cache.DeleteStudentAndCourseFromCache(context.Background(), GenerateScSetName(req.StuId, req.Xnm, req.Xqm), req.OldClassId)
 		if err != nil {
-			cla.log.FuncError(cla.Sac.Cache.DeleteStudentAndCourseFromCache, err)
+			cla.log.Warnw(classLog.Msg, "func:FixClassInfoInCache err",
+				classLog.Param, fmt.Sprintf("%v,%v", GenerateScSetName(req.StuId, req.Xnm, req.Xqm), req.OldClassId),
+				classLog.Reason, err)
 		}
 		err = cla.Sac.Cache.AddStudentAndCourseToCache(context.Background(), GenerateScSetName(req.StuId, req.Xnm, req.Xqm), req.NewSc.ClaID)
 		if err != nil {
-			cla.log.FuncError(cla.Sac.Cache.AddStudentAndCourseToCache, err)
+			cla.log.Warnw(classLog.Msg, "func:FixClassInfoInCache err",
+				classLog.Param, fmt.Sprintf("%v,%v", GenerateScSetName(req.StuId, req.Xnm, req.Xqm), req.NewSc.ClaID),
+				classLog.Reason, err)
 		}
 	}()
 	return nil
@@ -308,7 +363,9 @@ func (cla ClassRepo) CheckSCIdsExist(ctx context.Context, req model.CheckSCIdsEx
 func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context, req model.GetAllSchoolClassInfosReq) *model.GetAllSchoolClassInfosResp {
 	classInfos, err := cla.ClaRepo.DB.GetAllClassInfos(ctx, req.Xnm, req.Xqm)
 	if err != nil {
-		cla.log.FuncError(cla.ClaRepo.DB.GetAllClassInfos, err)
+		cla.log.Warnw(classLog.Msg, "func:FixClassInfoInCache err",
+			classLog.Param, fmt.Sprintf("%v,%v", req.Xnm, req.Xqm),
+			classLog.Reason, err)
 		return nil
 	}
 	return &model.GetAllSchoolClassInfosResp{ClassInfos: classInfos}

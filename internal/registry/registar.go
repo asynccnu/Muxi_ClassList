@@ -27,6 +27,7 @@ func NewRegistrarServer(c *conf.Registry, logger log.Logger) *etcd.Registry {
 	if err != nil {
 		panic(err)
 	}
+	logger.Log(log.LevelInfo, "msg", "service registry successfully")
 	//fmt.Println("connect successfully")
 	// 创建服务注册 registrar
 	registrar := etcd.New(client)

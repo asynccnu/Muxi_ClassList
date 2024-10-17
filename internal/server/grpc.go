@@ -5,6 +5,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/metrics"
 	"github.com/asynccnu/Muxi_ClassList/internal/service"
+	"github.com/go-kratos/kratos/v2/middleware/logging"
 	"github.com/go-kratos/kratos/v2/middleware/validate"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -19,6 +20,7 @@ func NewGRPCServer(c *conf.Server, greeter *service.ClasserService, logger log.L
 			recovery.Recovery(),
 			metrics.QPSMiddleware(),
 			metrics.DelayMiddleware(),
+			logging.Server(logger),
 			validate.Validator(),
 		),
 	}

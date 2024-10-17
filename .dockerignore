@@ -3,3 +3,4 @@
 **/mock/
  ./deploy/mysql/
  ./deploy/redis/
+ ./log/

@@ -10,7 +10,6 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/client"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/data"
-	log2 "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/crawler"
 	"github.com/asynccnu/Muxi_ClassList/internal/registry"
@@ -27,7 +26,6 @@ func wireApp(*conf.Server, *conf.Data, *conf.Registry, log.Logger) (*kratos.App,
 		data.ProviderSet,
 		biz.ProviderSet,
 		pkg.ProviderSet,
-		log2.ProviderSet,
 		registry.ProviderSet,
 		service.ProviderSet,
 		client.ProviderSet,
@@ -38,7 +36,7 @@ func wireApp(*conf.Server, *conf.Data, *conf.Registry, log.Logger) (*kratos.App,
 		wire.Bind(new(biz.StudentAndCourseDBRepo), new(*data.StudentAndCourseDBRepo)),
 		wire.Bind(new(biz.StudentAndCourseCacheRepo), new(*data.StudentAndCourseCacheRepo)),
 		wire.Bind(new(service.ClassCtrl), new(*biz.ClassUsercase)),
-		wire.Bind(new(service.CCNUServiceProxy), new(*client.CCNUService)),
+		wire.Bind(new(biz.CCNUServiceProxy), new(*client.CCNUService)),
 		wire.Bind(new(biz.ClassRepoProxy), new(*biz.ClassRepo)),
 		wire.Bind(new(biz.JxbRepo), new(*data.JxbDBRepo)),
 	))

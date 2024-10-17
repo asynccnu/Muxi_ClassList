@@ -2,11 +2,14 @@ package biz
 
 import (
 	"context"
+	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
+	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	log2 "github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
+	"github.com/go-kratos/kratos/v2/log"
 	"sync"
+	"time"
 )
 
 // ClassCrawler 课程爬虫接口
@@ -33,23 +36,28 @@ type JxbRepo interface {
 	SaveJxb(ctx context.Context, jxbId, stuId string) error
 	FindStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error)
 }
+type CCNUServiceProxy interface {
+	GetCookie(ctx context.Context, stu string) (string, error)
+}
 type ClassUsercase struct {
 	ClassRepo ClassRepoProxy
 	Crawler   ClassCrawler
+	Cs        CCNUServiceProxy
 	JxbRepo   JxbRepo
-	log       log2.LogerPrinter
+	log       *log.Helper
 }
 
-func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo JxbRepo, log log2.LogerPrinter) *ClassUsercase {
+func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo JxbRepo, Cs CCNUServiceProxy, logger log.Logger) *ClassUsercase {
 	return &ClassUsercase{
 		ClassRepo: classRepo,
 		Crawler:   crawler,
 		JxbRepo:   JxbRepo,
-		log:       log,
+		Cs:        Cs,
+		log:       log.NewHelper(logger),
 	}
 }
 
-func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, cookie string) ([]*model.Class, error) {
+func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string) ([]*model.Class, error) {
 	//var classInfos = make([]*ClassInfo, 0)
 	var Scs = make([]*model.StudentCourse, 0)
 	var Jxbmp = make(map[string]struct{}, 10)
@@ -67,7 +75,18 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 	// 如果数据库中没有
 	// 或者时间是每周周一，就(有些特殊时间比如2,9月月末和3,10月月初，默认会优先爬取)默认有0.3的概率去爬取，这样是为了防止课表更新了，但一直会从数据库中获取，导致，课表无法更新
 	if err != nil || tool.IsNeedCraw() {
+		timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
+		defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
+
+		cookie, err := cluc.Cs.GetCookie(timeoutCtx, StuId)
+		if err != nil {
+			cluc.log.Warnw(classLog.Msg, "func:GetCookie err",
+				classLog.Param, fmt.Sprintf("%v", StuId),
+				classLog.Reason, err)
+			return nil, err
+		}
 		if tool.CheckIsUndergraduate(StuId) { //针对是否是本科生，进行分类
+
 			resp, err := cluc.Crawler.GetClassInfosForUndergraduate(ctx, model.GetClassInfosForUndergraduateReq{
 				Cookie: cookie,
 				Xnm:    xnm,
@@ -80,7 +99,6 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 				Scs = resp.StudentCourses
 			}
 			if err != nil {
-				cluc.log.FuncError(cluc.Crawler.GetClassInfosForUndergraduate, err)
 				return nil, err
 			}
 		} else {
@@ -96,7 +114,6 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 				Scs = resp2.StudentCourses
 			}
 			if err != nil {
-				cluc.log.FuncError(cluc.Crawler.GetClassInfoForGraduateStudent, err)
 				return nil, err
 			}
 		}
@@ -112,7 +129,15 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 				Scs:        Scs,
 			})
 			if err != nil {
-				cluc.log.FuncError(cluc.ClassRepo.SaveClasses, err)
+				cluc.log.Warnw(classLog.Msg, "func:SaveClasses err",
+					classLog.Param, fmt.Sprintf("%v", model.SaveClassReq{
+						StuId:      StuId,
+						Xnm:        xnm,
+						Xqm:        xqm,
+						ClassInfos: classInfos,
+						Scs:        Scs,
+					}),
+					classLog.Reason, err)
 			}
 		}()
 	}
@@ -134,7 +159,9 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 			//防止ctx因为return就被取消了，所以就改用background，因为这个存取没有精确的要求，所以可以后台完成，用户不需要感知
 			err = cluc.JxbRepo.SaveJxb(context.Background(), k, StuId)
 			if err != nil {
-				cluc.log.FuncError(cluc.JxbRepo.SaveJxb, err)
+				cluc.log.Warnw(classLog.Msg, "func:SaveClasses err",
+					classLog.Param, fmt.Sprintf("%v,%v", k, StuId),
+					classLog.Reason, err)
 			}
 		}
 	}()
@@ -157,7 +184,6 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuId string, info *mod
 		Xqm:       info.Semester,
 	})
 	if err != nil {
-		cluc.log.FuncError(cluc.ClassRepo.AddClass, err)
 		return err
 	}
 	return nil
@@ -170,7 +196,6 @@ func (cluc *ClassUsercase) DeleteClass(ctx context.Context, classId string, stuI
 		Xqm:     xqm,
 	})
 	if err != nil {
-		cluc.log.FuncError(cluc.ClassRepo.DeleteClass, err)
 		return err
 	}
 	return nil
@@ -182,14 +207,12 @@ func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuId, xnm
 		Xqm:   xqm,
 	})
 	if err != nil {
-		cluc.log.FuncError(cluc.ClassRepo.GetRecycledIds, err)
 		return nil, err
 	}
 	classInfos := make([]*model.ClassInfo, 0)
 	for _, classId := range RecycledClassIds.Ids {
 		resp, err := cluc.ClassRepo.GetSpecificClassInfo(ctx, model.GetSpecificClassInfoReq{ClassId: classId})
 		if err != nil {
-			cluc.log.FuncError(cluc.ClassRepo.GetSpecificClassInfo, err)
 			continue
 		}
 		classInfos = append(classInfos, resp.ClassInfo)
@@ -208,12 +231,10 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuId, xnm, xqm
 	}
 	RecycledClassInfo, err := cluc.SearchClass(ctx, classId)
 	if err != nil {
-		cluc.log.FuncError(cluc.SearchClass, err)
 		return errcode.ErrRecover
 	}
 	err = cluc.AddClass(ctx, stuId, RecycledClassInfo)
 	if err != nil {
-		cluc.log.FuncError(cluc.AddClass, err)
 		return errcode.ErrRecover
 	}
 	err = cluc.ClassRepo.RecoverClassFromRecycledBin(ctx, model.RecoverClassFromRecycleBinReq{
@@ -223,7 +244,6 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuId, xnm, xqm
 		ClassId: classId,
 	})
 	if err != nil {
-		cluc.log.FuncError(cluc.ClassRepo.RecoverClassFromRecycledBin, err)
 		return errcode.ErrRecover
 	}
 	return nil
@@ -231,7 +251,6 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuId, xnm, xqm
 func (cluc *ClassUsercase) SearchClass(ctx context.Context, classId string) (*model.ClassInfo, error) {
 	resp, err := cluc.ClassRepo.GetSpecificClassInfo(ctx, model.GetSpecificClassInfoReq{ClassId: classId})
 	if err != nil {
-		cluc.log.FuncError(cluc.ClassRepo.GetSpecificClassInfo, err)
 		return nil, err
 	}
 	return resp.ClassInfo, nil
@@ -246,7 +265,6 @@ func (cluc *ClassUsercase) UpdateClass(ctx context.Context, newClassInfo *model.
 		Xqm:          xqm,
 	})
 	if err != nil {
-		cluc.log.FuncError(cluc.ClassRepo.UpdateClass, err)
 		return err
 	}
 	return nil

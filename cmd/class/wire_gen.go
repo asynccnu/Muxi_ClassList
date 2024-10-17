@@ -11,7 +11,6 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/client"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/data"
-	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/crawler"
 	"github.com/asynccnu/Muxi_ClassList/internal/registry"
 	"github.com/asynccnu/Muxi_ClassList/internal/server"
@@ -33,19 +32,17 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	if err != nil {
 		return nil, nil, err
 	}
-	logerPrinter := logPrinter.NewLogger(logger)
-	classInfoDBRepo := data.NewClassInfoDBRepo(dataData, logerPrinter)
+	classInfoDBRepo := data.NewClassInfoDBRepo(dataData, logger)
 	redisClient := data.NewRedisDB(confData)
-	classInfoCacheRepo := data.NewClassInfoCacheRepo(redisClient, logerPrinter)
+	classInfoCacheRepo := data.NewClassInfoCacheRepo(redisClient, logger)
 	classInfoRepo := biz.NewClassInfoRepo(classInfoDBRepo, classInfoCacheRepo)
 	transaction := data.NewTransaction(dataData)
-	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(dataData, logerPrinter)
-	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, logerPrinter)
+	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(dataData, logger)
+	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, logger)
 	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
-	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logerPrinter)
-	crawlerCrawler := crawler.NewClassCrawler(logerPrinter)
-	jxbDBRepo := data.NewJxbDBRepo(dataData, logerPrinter)
-	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, jxbDBRepo, logerPrinter)
+	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logger)
+	crawlerCrawler := crawler.NewClassCrawler(logger)
+	jxbDBRepo := data.NewJxbDBRepo(dataData, logger)
 	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
 	userServiceClient, err := client.NewClient(etcdRegistry, logger)
 	if err != nil {
@@ -53,7 +50,8 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 		return nil, nil, err
 	}
 	ccnuService := client.NewCCNUService(userServiceClient)
-	classerService := service.NewClasserService(classUsercase, ccnuService, logerPrinter)
+	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, jxbDBRepo, ccnuService, logger)
+	classerService := service.NewClasserService(classUsercase, logger)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
 	app := newApp(logger, grpcServer, etcdRegistry)
 	return app, func() {

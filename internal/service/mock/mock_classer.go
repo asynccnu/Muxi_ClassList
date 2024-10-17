@@ -92,18 +92,18 @@ func (mr *MockClassCtrlMockRecorder) GetAllSchoolClassInfosToOtherService(ctx, x
 }
 
 // GetClasses mocks base method.
-func (m *MockClassCtrl) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm, cookie string) ([]*model.Class, error) {
+func (m *MockClassCtrl) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string) ([]*model.Class, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClasses", ctx, StuId, week, xnm, xqm, cookie)
+	ret := m.ctrl.Call(m, "GetClasses", ctx, StuId, week, xnm, xqm)
 	ret0, _ := ret[0].([]*model.Class)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetClasses indicates an expected call of GetClasses.
-func (mr *MockClassCtrlMockRecorder) GetClasses(ctx, StuId, week, xnm, xqm, cookie interface{}) *gomock.Call {
+func (mr *MockClassCtrlMockRecorder) GetClasses(ctx, StuId, week, xnm, xqm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClasses", reflect.TypeOf((*MockClassCtrl)(nil).GetClasses), ctx, StuId, week, xnm, xqm, cookie)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClasses", reflect.TypeOf((*MockClassCtrl)(nil).GetClasses), ctx, StuId, week, xnm, xqm)
 }
 
 // GetRecycledClassInfos mocks base method.
@@ -177,42 +177,4 @@ func (m *MockClassCtrl) UpdateClass(ctx context.Context, newClassInfo *model.Cla
 func (mr *MockClassCtrlMockRecorder) UpdateClass(ctx, newClassInfo, newSc, stuId, oldClassId, xnm, xqm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClass", reflect.TypeOf((*MockClassCtrl)(nil).UpdateClass), ctx, newClassInfo, newSc, stuId, oldClassId, xnm, xqm)
-}
-
-// MockCCNUServiceProxy is a mock of CCNUServiceProxy interface.
-type MockCCNUServiceProxy struct {
-	ctrl     *gomock.Controller
-	recorder *MockCCNUServiceProxyMockRecorder
-}
-
-// MockCCNUServiceProxyMockRecorder is the mock recorder for MockCCNUServiceProxy.
-type MockCCNUServiceProxyMockRecorder struct {
-	mock *MockCCNUServiceProxy
-}
-
-// NewMockCCNUServiceProxy creates a new mock instance.
-func NewMockCCNUServiceProxy(ctrl *gomock.Controller) *MockCCNUServiceProxy {
-	mock := &MockCCNUServiceProxy{ctrl: ctrl}
-	mock.recorder = &MockCCNUServiceProxyMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockCCNUServiceProxy) EXPECT() *MockCCNUServiceProxyMockRecorder {
-	return m.recorder
-}
-
-// GetCookie mocks base method.
-func (m *MockCCNUServiceProxy) GetCookie(ctx context.Context, stu string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCookie", ctx, stu)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetCookie indicates an expected call of GetCookie.
-func (mr *MockCCNUServiceProxyMockRecorder) GetCookie(ctx, stu interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCookie", reflect.TypeOf((*MockCCNUServiceProxy)(nil).GetCookie), ctx, stu)
 }

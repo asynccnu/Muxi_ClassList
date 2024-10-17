@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
+	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
+	"github.com/go-kratos/kratos/v2/log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -21,14 +22,14 @@ var mp = map[string]string{
 }
 
 type Crawler struct {
-	logPrinter logPrinter.LogerPrinter
-	client     *http.Client
+	log    *log.Helper
+	client *http.Client
 }
 
-func NewClassCrawler(logPrinter logPrinter.LogerPrinter) *Crawler {
+func NewClassCrawler(logger log.Logger) *Crawler {
 	return &Crawler{
-		logPrinter: logPrinter,
-		client:     &http.Client{},
+		log:    log.NewHelper(logger),
+		client: &http.Client{},
 	}
 }
 
@@ -46,7 +47,9 @@ func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model.Ge
 	var data = strings.NewReader(param)
 	req, err := http.NewRequest("POST", "https://grd.ccnu.edu.cn/yjsxt/kbcx/xskbcx_cxXsKb.html?gnmkdm=N2151", data)
 	if err != nil {
-		c.logPrinter.FuncError(http.NewRequest, err)
+		c.log.Errorw(classLog.Msg, "func:http.NewRequest err",
+			classLog.Param, fmt.Sprintf("%v,%v,%v", "POST", "https://grd.ccnu.edu.cn/yjsxt/kbcx/xskbcx_cxXsKb.html?gnmkdm=N2151", data),
+			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
 	req.Header.Set("Cookie", r.Cookie)
@@ -66,18 +69,22 @@ func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model.Ge
 	req.Header.Set("sec-ch-ua-platform", `"Windows"`)
 	resp, err := client.Do(req)
 	if err != nil {
-		c.logPrinter.FuncError(client.Do, err)
+		c.log.Errorw(classLog.Msg, "http request send err",
+			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
-		c.logPrinter.FuncError(json.NewDecoder(resp.Body).Decode, err)
+		c.log.Errorw(classLog.Msg, "json decode err",
+			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
 	infos, Scs, err := ToClassInfo2(reply, r.Xnm, r.Xqm)
 	if err != nil {
-		c.logPrinter.FuncError(ToClassInfo1, err)
+		c.log.Errorw(classLog.Msg, "func:ToClassInfo2",
+			classLog.Param, fmt.Sprintf("%v,%v,%v", reply, r.Xnm, r.Xqm),
+			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
 	return &model.GetClassInfoForGraduateStudentResp{
@@ -99,7 +106,9 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model.Get
 	var data = strings.NewReader(formdata)
 	req, err := http.NewRequest("POST", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N2151", data)
 	if err != nil {
-		c.logPrinter.FuncError(http.NewRequest, err)
+		c.log.Errorw(classLog.Msg, "func:http.NewRequest err",
+			classLog.Param, fmt.Sprintf("%v,%v,%v", "POST", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N2151", data),
+			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
 	req.Header.Set("Cookie", r.Cookie) //设置cookie
@@ -119,19 +128,23 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model.Get
 	req.Header.Set("sec-ch-ua-platform", `"Windows"`)
 	resp, err := c.client.Do(req)
 	if err != nil {
-		c.logPrinter.FuncError(c.client.Do, err)
+		c.log.Errorw(classLog.Msg, "http request send err",
+			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
 
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
-		c.logPrinter.FuncError(json.NewDecoder(resp.Body).Decode, err)
+		c.log.Errorw(classLog.Msg, "json decode err",
+			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
 	infos, Scs, err := ToClassInfo1(reply, r.Xnm, r.Xqm)
 	if err != nil {
-		c.logPrinter.FuncError(ToClassInfo1, err)
+		c.log.Errorw(classLog.Msg, "func:ToClassInfo2",
+			classLog.Param, fmt.Sprintf("%v,%v,%v", reply, r.Xnm, r.Xqm),
+			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
 	return &model.GetClassInfosForUndergraduateResp{

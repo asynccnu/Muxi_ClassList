@@ -5,15 +5,14 @@ import (
 	pb "github.com/asynccnu/Muxi_ClassList/api/classer/v1"
 	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	"github.com/asynccnu/Muxi_ClassList/internal/logPrinter"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
-	"time"
+	"github.com/go-kratos/kratos/v2/log"
 )
 
 //go:generate mockgen -source=./classer.go -destination=./mock/mock_classer.go -package=mock_service
 type ClassCtrl interface {
 	CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool
-	GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string, cookie string) ([]*model.Class, error)
+	GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string) ([]*model.Class, error)
 	AddClass(ctx context.Context, stuId string, info *model.ClassInfo) error
 	DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error
 	SearchClass(ctx context.Context, classId string) (*model.ClassInfo, error)
@@ -23,21 +22,17 @@ type ClassCtrl interface {
 	RecoverClassInfo(ctx context.Context, stuId, xnm, xqm, classId string) error
 	GetStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error)
 }
-type CCNUServiceProxy interface {
-	GetCookie(ctx context.Context, stu string) (string, error)
-}
+
 type ClasserService struct {
 	pb.UnimplementedClasserServer
 	Clu ClassCtrl
-	Cs  CCNUServiceProxy
-	log logPrinter.LogerPrinter
+	log *log.Helper
 }
 
-func NewClasserService(clu ClassCtrl, cs CCNUServiceProxy, log logPrinter.LogerPrinter) *ClasserService {
+func NewClasserService(clu ClassCtrl, logger log.Logger) *ClasserService {
 	return &ClasserService{
 		Clu: clu,
-		Cs:  cs,
-		log: log,
+		log: log.NewHelper(logger),
 	}
 }
 
@@ -47,22 +42,15 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 	}
 	//time1 := time.Now()
 	// 设置超时时间
-	timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
-	defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
 
-	cookie, err := s.Cs.GetCookie(timeoutCtx, req.GetStuId())
-	if err != nil {
-		s.log.FuncError(s.Cs.GetCookie, err)
-	}
 	//fmt.Println("getcookie past: ", time.Now().Sub(time1))
 	//调试专用
 	//cookie := "JSESSIONID=A8BBF856C51BE30EAEDA3FE4C4DCFCBC"
 	//time2 := time.Now()
 
 	pclasses := make([]*pb.Class, 0)
-	classes, err := s.Clu.GetClasses(ctx, req.GetStuId(), req.GetWeek(), req.GetYear(), req.GetSemester(), cookie)
+	classes, err := s.Clu.GetClasses(ctx, req.GetStuId(), req.GetWeek(), req.GetYear(), req.GetSemester())
 	if err != nil {
-		s.log.FuncError(s.Clu.GetClasses, err)
 		return &pb.GetClassResponse{}, err
 	}
 	for _, class := range classes {
@@ -101,7 +89,7 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 	classInfo.UpdateID()
 	err := s.Clu.AddClass(ctx, req.GetStuId(), classInfo)
 	if err != nil {
-		s.log.FuncError(s.Clu.AddClass, err)
+
 		return &pb.AddClassResponse{}, err
 	}
 
@@ -119,7 +107,7 @@ func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassReq
 	}
 	err := s.Clu.DeleteClass(ctx, req.GetId(), req.GetStuId(), req.GetYear(), req.GetSemester())
 	if err != nil {
-		s.log.FuncError(s.Clu.DeleteClass, err)
+
 		return &pb.DeleteClassResponse{}, err
 	}
 	return &pb.DeleteClassResponse{
@@ -139,7 +127,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 
 	oldclassInfo, err := s.Clu.SearchClass(ctx, req.GetClassId())
 	if err != nil {
-		s.log.FuncError(s.Clu.SearchClass, err)
+
 		return &pb.UpdateClassResponse{
 			Msg: "修改失败",
 		}, err
@@ -180,7 +168,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 	newSc.UpdateID()
 	err = s.Clu.UpdateClass(ctx, oldclassInfo, newSc, req.GetStuId(), req.GetClassId(), req.GetYear(), req.GetSemester())
 	if err != nil {
-		s.log.FuncError(s.Clu.UpdateClass, err)
+
 		return &pb.UpdateClassResponse{
 			Msg: "修改失败",
 		}, err
@@ -193,7 +181,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 func (s *ClasserService) GetRecycleBinClassInfos(ctx context.Context, req *pb.GetRecycleBinClassRequest) (*pb.GetRecycleBinClassResponse, error) {
 	classInfos, err := s.Clu.GetRecycledClassInfos(ctx, req.GetStuId(), req.GetYear(), req.GetSemester())
 	if err != nil {
-		s.log.FuncError(s.Clu.GetRecycledClassInfos, err)
+
 		return &pb.GetRecycleBinClassResponse{}, err
 	}
 	pbClassInfos := make([]*pb.ClassInfo, 0)
@@ -212,7 +200,7 @@ func (s *ClasserService) RecoverClass(ctx context.Context, req *pb.RecoverClassR
 	}
 	err := s.Clu.RecoverClassInfo(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
 	if err != nil {
-		s.log.FuncError(s.Clu.RecoverClassInfo, err)
+
 		return &pb.RecoverClassResponse{
 			Msg: "恢复课程失败",
 		}, err
@@ -224,7 +212,7 @@ func (s *ClasserService) RecoverClass(ctx context.Context, req *pb.RecoverClassR
 func (s *ClasserService) GetStuIdByJxbId(ctx context.Context, req *pb.GetStuIdByJxbIdRequest) (*pb.GetStuIdByJxbIdResponse, error) {
 	stuIds, err := s.Clu.GetStuIdsByJxbId(ctx, req.GetJxbId())
 	if err != nil {
-		s.log.FuncError(s.Clu.GetStuIdsByJxbId, err)
+
 		return &pb.GetStuIdByJxbIdResponse{}, errcode.ErrGetStuIdByJxbId
 	}
 	return &pb.GetStuIdByJxbIdResponse{

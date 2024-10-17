@@ -296,3 +296,41 @@ func (mr *MockJxbRepoMockRecorder) SaveJxb(ctx, jxbId, stuId interface{}) *gomoc
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveJxb", reflect.TypeOf((*MockJxbRepo)(nil).SaveJxb), ctx, jxbId, stuId)
 }
+
+// MockCCNUServiceProxy is a mock of CCNUServiceProxy interface.
+type MockCCNUServiceProxy struct {
+	ctrl     *gomock.Controller
+	recorder *MockCCNUServiceProxyMockRecorder
+}
+
+// MockCCNUServiceProxyMockRecorder is the mock recorder for MockCCNUServiceProxy.
+type MockCCNUServiceProxyMockRecorder struct {
+	mock *MockCCNUServiceProxy
+}
+
+// NewMockCCNUServiceProxy creates a new mock instance.
+func NewMockCCNUServiceProxy(ctrl *gomock.Controller) *MockCCNUServiceProxy {
+	mock := &MockCCNUServiceProxy{ctrl: ctrl}
+	mock.recorder = &MockCCNUServiceProxyMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCCNUServiceProxy) EXPECT() *MockCCNUServiceProxyMockRecorder {
+	return m.recorder
+}
+
+// GetCookie mocks base method.
+func (m *MockCCNUServiceProxy) GetCookie(ctx context.Context, stu string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCookie", ctx, stu)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCookie indicates an expected call of GetCookie.
+func (mr *MockCCNUServiceProxyMockRecorder) GetCookie(ctx, stu interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCookie", reflect.TypeOf((*MockCCNUServiceProxy)(nil).GetCookie), ctx, stu)
+}

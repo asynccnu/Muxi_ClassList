@@ -2,6 +2,7 @@ package tool
 
 import (
 	"math/rand"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -168,4 +169,10 @@ func isLastOrFirstWeek(t time.Time, first bool) bool {
 
 	// 如果下一个或者上一周的月份和当前月份不同，那么今天是当前月的最后一个周或者第一周
 	return currentMonth != WeekMonth
+}
+
+// IsExist 判断文件或者目录是否存在
+func IsExist(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil || os.IsExist(err)
 }
