@@ -55,13 +55,13 @@ func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo Jx
 }
 
 func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string) ([]*model.Class, error) {
-	//var classInfos = make([]*ClassInfo, 0)
 	var (
-		Scs        = make([]*model.StudentCourse, 0)
-		Jxbmp      = make(map[string]struct{}, 10)
-		classes    = make([]*model.Class, 0)
-		classInfos = make([]*model.ClassInfo, 0)
-		wg         sync.WaitGroup
+		Scs            = make([]*model.StudentCourse, 0)
+		Jxbmp          = make(map[string]struct{}, 10)
+		classes        = make([]*model.Class, 0)
+		classInfos     = make([]*model.ClassInfo, 0)
+		wg             sync.WaitGroup
+		SearchFromCCNU = false
 	)
 
 	resp1, err := cluc.ClassRepo.GetAllClasses(ctx, model.GetAllClassesReq{
@@ -75,6 +75,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 	// 如果数据库中没有
 	// 或者时间是每周周一，就(有些特殊时间比如2,9月月末和3,10月月初，默认会优先爬取)默认有0.3的概率去爬取，这样是为了防止课表更新了，但一直会从数据库中获取，导致，课表无法更新
 	if err != nil || tool.IsNeedCraw() {
+		SearchFromCCNU = true
 		timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
 		defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
 
@@ -157,23 +158,27 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 			Info:     classInfo,
 			ThisWeek: thisWeek && tool.CheckIfThisYear(classInfo.Year, classInfo.Semester),
 		}
-		Jxbmp[class.Info.JxbId] = struct{}{}
+		if class.Info.JxbId != "" {
+			Jxbmp[class.Info.JxbId] = struct{}{}
+		}
 		classes = append(classes, class)
 	}
 	wg.Wait()
-	//开个协程来存取jxb
-	go func() {
-		var err error
-		for k, _ := range Jxbmp {
-			//防止ctx因为return就被取消了，所以就改用background，因为这个存取没有精确的要求，所以可以后台完成，用户不需要感知
-			err = cluc.JxbRepo.SaveJxb(context.Background(), k, StuId)
-			if err != nil {
-				cluc.log.Warnw(classLog.Msg, "func:SaveClasses err",
-					classLog.Param, fmt.Sprintf("%v,%v", k, StuId),
-					classLog.Reason, err)
+	if SearchFromCCNU { //如果是从CCNU那边查到的，就存下jxb_id
+		//开个协程来存取jxb
+		go func() {
+			var err error
+			for k := range Jxbmp {
+				//防止ctx因为return就被取消了，所以就改用background，因为这个存取没有精确的要求，所以可以后台完成，用户不需要感知
+				err = cluc.JxbRepo.SaveJxb(context.Background(), k, StuId)
+				if err != nil {
+					cluc.log.Warnw(classLog.Msg, "func:SaveClasses err",
+						classLog.Param, fmt.Sprintf("%v,%v", k, StuId),
+						classLog.Reason, err)
+				}
 			}
-		}
-	}()
+		}()
+	}
 	return classes, nil
 }
 

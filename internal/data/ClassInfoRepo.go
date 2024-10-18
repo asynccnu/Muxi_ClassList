@@ -11,6 +11,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ClassInfoDBRepo struct {
@@ -101,32 +102,6 @@ func (c ClassInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key strin
 	return classInfo, nil
 }
 
-// AddClassInfoToCache 添加课程的操作集合
-func (c ClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, classInfoKey, classInfosKey string, classInfo *model.ClassInfo) error {
-	oldClassInfos, err := c.GetClassInfosFromCache(ctx, classInfosKey)
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:GetClassInfosFromCache(ctx, %s) err", classInfoKey),
-			classLog.Reason, err)
-		return err
-	}
-	//将原本的classInfos中要添加的课程添加
-	newClassInfos := append(oldClassInfos, classInfo)
-	err = c.OnlyAddClassInfosToCache(ctx, classInfosKey, newClassInfos)
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:OnlyAddClassInfosToCache(ctx, %s, %v) err", classInfoKey, newClassInfos),
-			classLog.Reason, err)
-		return err
-	}
-	//添加单个课程信息到缓存中
-	err = c.OnlyAddClassInfoToCache(ctx, classInfoKey, classInfo)
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:OnlyAddClassInfoToCache(ctx, %s, %v) err", classInfoKey, classInfo),
-			classLog.Reason, err)
-		return err
-	}
-	return nil
-}
-
 // UpdateClassInfoInCache 修改缓存中的课表信息
 func (c ClassInfoCacheRepo) UpdateClassInfoInCache(ctx context.Context, oldID, classInfosKey string, classInfo *model.ClassInfo, add bool) error {
 	oldClassInfos, err := c.GetClassInfosFromCache(ctx, classInfosKey)
@@ -181,14 +156,13 @@ func (c ClassInfoCacheRepo) DeleteClassInfoFromCache(ctx context.Context, delete
 	}
 	return nil
 }
-func (c ClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfo []*model.ClassInfo) error {
+func (c ClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfos []*model.ClassInfo) error {
 	db := c.data.DB(ctx).Table(model.ClassInfoTableName).WithContext(ctx)
-	for _, cla := range classInfo {
-		if err := db.FirstOrCreate(cla).Error; err != nil {
-			c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:create %v in %s", cla, model.ClassInfoTableName),
-				classLog.Reason, err)
-			return errcode.ErrCourseSave
-		}
+	err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&classInfos).Error
+	if err != nil {
+		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:create %v in %s", classInfos, model.ClassInfoTableName),
+			classLog.Reason, err)
+		return errcode.ErrClassUpdate
 	}
 	return nil
 }
@@ -261,7 +235,7 @@ func (c ClassInfoDBRepo) GetClassInfos(ctx context.Context, stuId, xnm, xqm stri
 		err error
 	)
 	if stuId != "" {
-		err = db.Raw("SELECT c.id,c.jxb_id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c,student_course s WHERE c.id = s.cla_id AND s.stu_id = ? AND s.year = ? AND s.semester = ?", stuId, xnm, xqm).Scan(&cla).Error
+		err = db.Raw("SELECT c.id,c.jxb_id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c WHERE c.id IN (SELECT s.cla_id FROM student_course s WHERE s.stu_id = ? AND s.year = ? AND s.semester = ?)", stuId, xnm, xqm).Scan(&cla).Error
 		if err != nil {
 			c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (stu_id = %s,year = %s,semester = %s)",
 				stuId, xnm, xqm),
@@ -269,7 +243,7 @@ func (c ClassInfoDBRepo) GetClassInfos(ctx context.Context, stuId, xnm, xqm stri
 			return nil, err
 		}
 	} else {
-		err = db.Raw("SELECT c.id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c,student_course s WHERE c.id = s.cla_id AND s.is_manually_added = ? AND s.year = ? AND s.semester = ?", false, xnm, xqm).Scan(&cla).Error
+		err = db.Raw("SELECT c.id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c WHERE c.id IN (SELECT s.cla_id FROM student_course s WHERE s.is_manually_added = ? AND s.year = ? AND s.semester = ? )", false, xnm, xqm).Scan(&cla).Error
 		if err != nil {
 			c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (is_manually_added = %v,year = %s,semester = %s)",
 				false, xnm, xqm),
