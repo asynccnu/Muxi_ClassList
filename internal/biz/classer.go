@@ -83,7 +83,16 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 			cluc.log.Warnw(classLog.Msg, "func:GetCookie err",
 				classLog.Param, fmt.Sprintf("%v", StuId),
 				classLog.Reason, err)
-			return nil, err
+			//封装class
+			for _, classInfo := range classInfos {
+				thisWeek := classInfo.SearchWeek(week)
+				class := &model.Class{
+					Info:     classInfo,
+					ThisWeek: thisWeek && tool.CheckIfThisYear(classInfo.Year, classInfo.Semester),
+				}
+				classes = append(classes, class)
+			}
+			return classes, err
 		}
 		if tool.CheckIsUndergraduate(StuId) { //针对是否是本科生，进行分类
 

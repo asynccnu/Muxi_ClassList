@@ -17,6 +17,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/service"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
+	"os"
 )
 
 import (
@@ -26,8 +27,8 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Registry, logger log.Logger) (*kratos.App, func(), error) {
-	db := data.NewDB(confData)
+func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Registry, file *os.File, logger log.Logger) (*kratos.App, func(), error) {
+	db := data.NewDB(confData, file)
 	dataData, cleanup, err := data.NewData(confData, db, logger)
 	if err != nil {
 		return nil, nil, err

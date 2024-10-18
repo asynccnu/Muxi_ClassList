@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/metrics"
+	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -81,7 +82,12 @@ func main() {
 		"service.id", id,
 		"service.name", Name,
 	)
-	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Registry, logger)
+	logfile, err := tool.OpenFile(bc.Data.Database.LogPath, bc.Data.Database.LogFileName)
+	if err != nil {
+		panic(err)
+	}
+	defer logfile.Close()
+	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Registry, logfile, logger)
 	if err != nil {
 		panic(err)
 	}

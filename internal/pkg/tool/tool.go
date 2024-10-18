@@ -3,6 +3,7 @@ package tool
 import (
 	"math/rand"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -175,4 +176,25 @@ func isLastOrFirstWeek(t time.Time, first bool) bool {
 func IsExist(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil || os.IsExist(err)
+}
+
+func OpenFile(path string, name string) (*os.File, error) {
+	var logfile *os.File
+	var err error
+	filename := filepath.Join(path, name)
+	// 判断日志路径是否存在，如果不存在就创建
+	if exist := IsExist(path); !exist {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			return nil, err
+		}
+	}
+	if exist := IsExist(filename); !exist {
+		logfile, err = os.Create(filepath.Join(filename))
+	} else {
+		logfile, err = os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return logfile, nil
 }
