@@ -35,8 +35,8 @@ type ClassInfo struct {
 }
 type StudentCourse struct {
 	ID              string    `gorm:"primaryKey;column:id" json:"id"`
-	StuID           string    `gorm:"column:stu_id;not null" json:"stu_id"`                            //学号
-	ClaID           string    `gorm:"column:cla_id;not null" json:"cla_id"`                            //课程ID
+	StuID           string    `gorm:"column:stu_id;not null;index" json:"stu_id"`                      //学号
+	ClaID           string    `gorm:"column:cla_id;not null;index" json:"cla_id"`                      //课程ID
 	Year            string    `gorm:"column:year;not null;index" json:"year"`                          //学年
 	Semester        string    `gorm:"column:semester;not null;index" json:"semester"`                  //学期
 	IsManuallyAdded bool      `gorm:"column:is_manually_added;default:false" json:"is_manually_added"` //是否为手动添加
@@ -82,7 +82,7 @@ func (ci *ClassInfo) AddWeek(week int64) {
 	ci.Weeks |= 1<<week - 1
 }
 func (ci *ClassInfo) SearchWeek(week int64) bool {
-	return (ci.Weeks & (1<<week - 1)) == 1
+	return (ci.Weeks & (1<<week - 1)) != 0
 }
 func (ci *ClassInfo) UpdateID() {
 	ci.ID = fmt.Sprintf("Class:%s:%s:%s:%d:%s:%s:%s:%d", ci.Classname, ci.Year, ci.Semester, ci.Day, ci.ClassWhen, ci.Teacher, ci.Where, ci.Weeks)

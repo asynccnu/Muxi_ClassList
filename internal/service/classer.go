@@ -9,7 +9,6 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 )
 
-//go:generate mockgen -source=./classer.go -destination=./mock/mock_classer.go -package=mock_service
 type ClassCtrl interface {
 	CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool
 	GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string) ([]*model.Class, error)
@@ -82,6 +81,7 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 		Weeks:        req.GetWeeks(),
 		Semester:     req.GetSemester(),
 		Year:         req.GetYear(),
+		JxbId:        "unavailable",
 	}
 	if req.Credit != nil {
 		classInfo.Credit = req.GetCredit()

@@ -35,40 +35,6 @@ func NewClassInfoCacheRepo(rdb *redis.Client, logger log.Logger) *ClassInfoCache
 	}
 }
 
-// SaveManyClassInfosToCache 一次性存多个单个课程信息
-func (c ClassInfoCacheRepo) SaveManyClassInfosToCache(ctx context.Context, keys []string, classInfos []*model.ClassInfo) error {
-	err := c.rdb.Watch(func(tx *redis.Tx) error {
-		// 开始事务
-		_, err := tx.TxPipelined(func(pipe redis.Pipeliner) error {
-			for k, classInfo := range classInfos {
-				val, err := json.Marshal(classInfo)
-				if err != nil {
-					c.log.Errorw(classLog.Msg, fmt.Sprintf("json Marshal (%v) err", classInfo),
-						classLog.Reason, err)
-					return err
-				}
-				// 将数据设置到 Redis 中，使用事务管道
-				err = pipe.Set(keys[k], val, Expiration).Err()
-				if err != nil {
-					c.log.Errorw(classLog.Msg, fmt.Sprintf("Redis:add command(set) to pipe err"),
-						classLog.Reason, err)
-					return err
-				}
-			}
-			return nil
-		})
-		return err
-	}, keys...) // 监控所有将被设置的键
-
-	if err != nil {
-		c.log.Errorw(classLog.Msg, "Redis:watch SaveManyClassInfosToCache",
-			classLog.Reason, err)
-		return err
-	}
-
-	return nil
-}
-
 // OnlyAddClassInfosToCache 将整个课表存到缓存中去
 func (c ClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*model.ClassInfo) error {
 	val, err := json.Marshal(classInfos)
@@ -161,31 +127,33 @@ func (c ClassInfoCacheRepo) AddClassInfoToCache(ctx context.Context, classInfoKe
 	return nil
 }
 
-// FixClassInfoInCache 修改缓存中的课表信息
-func (c ClassInfoCacheRepo) FixClassInfoInCache(ctx context.Context, oldID, classInfoKey, classInfosKey string, classInfo *model.ClassInfo) error {
+// UpdateClassInfoInCache 修改缓存中的课表信息
+func (c ClassInfoCacheRepo) UpdateClassInfoInCache(ctx context.Context, oldID, classInfosKey string, classInfo *model.ClassInfo, add bool) error {
 	oldClassInfos, err := c.GetClassInfosFromCache(ctx, classInfosKey)
+	if oldClassInfos == nil {
+		c.log.Warn(classLog.Msg, fmt.Sprintf("func:GetClassInfosFromCache(ctx, %s) get classinfos is empty", classInfosKey))
+		return nil
+	}
 	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:GetClassInfosFromCache(ctx, %s) err", classInfoKey),
+		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:GetClassInfosFromCache(ctx, %s) err", classInfosKey),
 			classLog.Reason, err)
 		return err
 	}
-	//将原本的classInfos中要更改的课程更改
-	for k, oldClassInfo := range oldClassInfos {
-		if oldClassInfo.ID == oldID {
-			oldClassInfos[k] = classInfo
-			break
+	if !add {
+		//将原本的classInfos中要更改的课程更改
+		for k, oldClassInfo := range oldClassInfos {
+			if oldClassInfo.ID == oldID {
+				oldClassInfos[k] = classInfo
+				break
+			}
 		}
+	} else {
+		oldClassInfos = append(oldClassInfos, classInfo)
 	}
+
 	err = c.OnlyAddClassInfosToCache(ctx, classInfosKey, oldClassInfos)
 	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:OnlyAddClassInfosToCache(ctx, %s, %v) err", classInfoKey, oldClassInfos),
-			classLog.Reason, err)
-		return err
-	}
-	//添加单个课程信息到缓存中
-	err = c.OnlyAddClassInfoToCache(ctx, classInfoKey, classInfo)
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:OnlyAddClassInfoToCache(ctx, %s, %v) err", classInfoKey, classInfo),
+		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:OnlyAddClassInfosToCache(ctx, %s, %v) err", classInfosKey, oldClassInfos),
 			classLog.Reason, err)
 		return err
 	}
@@ -286,15 +254,29 @@ func (c ClassInfoDBRepo) UpdateClassInfoInDB(ctx context.Context, classInfo *mod
 	}
 	return nil
 }
-func (c ClassInfoDBRepo) GetAllClassInfos(ctx context.Context, xnm, xqm string) ([]*model.ClassInfo, error) {
-	db := c.data.Mysql.Table(model.ClassInfoTableName).WithContext(ctx)
-	cla := make([]*model.ClassInfo, 0)
-	err := db.Where("year = ? AND semester = ?", xnm, xqm).Find(&cla).Error
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos in %s where (year = %s,semester = %s)",
-			model.ClassInfoTableName, xnm, xqm),
-			classLog.Reason, err)
-		return nil, err
+func (c ClassInfoDBRepo) GetClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*model.ClassInfo, error) {
+	db := c.data.Mysql.WithContext(ctx)
+	var (
+		cla = make([]*model.ClassInfo, 0)
+		err error
+	)
+	if stuId != "" {
+		err = db.Raw("SELECT c.id,c.jxb_id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c,student_course s WHERE c.id = s.cla_id AND s.stu_id = ? AND s.year = ? AND s.semester = ?", stuId, xnm, xqm).Scan(&cla).Error
+		if err != nil {
+			c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (stu_id = %s,year = %s,semester = %s)",
+				stuId, xnm, xqm),
+				classLog.Reason, err)
+			return nil, err
+		}
+	} else {
+		err = db.Raw("SELECT c.id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c,student_course s WHERE c.id = s.cla_id AND s.is_manually_added = ? AND s.year = ? AND s.semester = ?", false, xnm, xqm).Scan(&cla).Error
+		if err != nil {
+			c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (is_manually_added = %v,year = %s,semester = %s)",
+				false, xnm, xqm),
+				classLog.Reason, err)
+			return nil, err
+		}
 	}
+
 	return cla, nil
 }

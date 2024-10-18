@@ -12,9 +12,6 @@ import (
 	"time"
 )
 
-// ClassCrawler 课程爬虫接口
-//
-//go:generate mockgen -source=./classer.go -destination=./mock/mock_classer_crawler.go -package=mock_biz
 type ClassCrawler interface {
 	GetClassInfosForUndergraduate(ctx context.Context, req model.GetClassInfosForUndergraduateReq) (*model.GetClassInfosForUndergraduateResp, error)
 	GetClassInfoForGraduateStudent(ctx context.Context, req model.GetClassInfoForGraduateStudentReq) (*model.GetClassInfoForGraduateStudentResp, error)
@@ -59,11 +56,14 @@ func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo Jx
 
 func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string) ([]*model.Class, error) {
 	//var classInfos = make([]*ClassInfo, 0)
-	var Scs = make([]*model.StudentCourse, 0)
-	var Jxbmp = make(map[string]struct{}, 10)
-	var classes = make([]*model.Class, 0)
-	var classInfos = make([]*model.ClassInfo, 0)
-	var wg sync.WaitGroup
+	var (
+		Scs        = make([]*model.StudentCourse, 0)
+		Jxbmp      = make(map[string]struct{}, 10)
+		classes    = make([]*model.Class, 0)
+		classInfos = make([]*model.ClassInfo, 0)
+		wg         sync.WaitGroup
+	)
+
 	resp1, err := cluc.ClassRepo.GetAllClasses(ctx, model.GetAllClassesReq{
 		StuId: StuId,
 		Xnm:   xnm,
