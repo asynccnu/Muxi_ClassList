@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	v1 "github.com/asynccnu/be-api/gen/proto/user/v1"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
@@ -22,7 +23,10 @@ type CCNUService struct {
 func NewCCNUService(cs v1.UserServiceClient) *CCNUService {
 	return &CCNUService{Cs: cs}
 }
-func (c *CCNUService) GetCookie(ctx context.Context, stu string) (string, error) {
+func (c *CCNUService) GetCookie(ctx context.Context) (string, error) {
+	var (
+		stu = model.GetCommonInfoFromCtx(ctx).StuId
+	)
 	resp, err := c.Cs.GetCookie(ctx, &v1.GetCookieRequest{
 		StudentId: stu,
 	})

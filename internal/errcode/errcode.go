@@ -18,4 +18,5 @@ var (
 	ErrRecycleBinDoNotHaveIt = errors.New(459, v1.ErrorReason_RECYCLEBINDONOTHAVETHECLASS.String(), "回收站中不存在该课程")
 	ErrRecover               = errors.New(460, v1.ErrorReason_RECOVERFAILED.String(), "恢复课程失败")
 	ErrGetStuIdByJxbId       = errors.New(461, v1.ErrorReason_GETSTUIDBYJXBID.String(), "通过jxb_id获取stu_ids获取失败")
+	ErrClassIsExist          = errors.New(462, v1.ErrorReason_CLASSISEXIST.String(), "已有该课程")
 )

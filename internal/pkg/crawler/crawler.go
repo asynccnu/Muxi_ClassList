@@ -35,14 +35,19 @@ func NewClassCrawler(logger log.Logger) *Crawler {
 
 // GetClassInfoForGraduateStudent 获取研究生课程信息
 func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model.GetClassInfoForGraduateStudentReq) (*model.GetClassInfoForGraduateStudentResp, error) {
-	var reply CrawReply2
-	yn := tool.CheckSY(r.Xqm, r.Xnm)
+	var (
+		reply CrawReply2
+		Xnm   = model.GetCommonInfoFromCtx(ctx).Year
+		Xqm   = model.GetCommonInfoFromCtx(ctx).Semester
+		yn    = tool.CheckSY(Xqm, Xnm)
+	)
+
 	if !yn {
 		return nil, errcode.ErrParam
 	}
 	client := &http.Client{}
-	tmp1 := GetXNM(r.Xnm)
-	tmp2 := GetXQM(r.Xqm)
+	tmp1 := GetXNM(Xnm)
+	tmp2 := GetXQM(Xqm)
 	param := fmt.Sprintf("xnm=%s&xqm=%s", tmp1, tmp2)
 	var data = strings.NewReader(param)
 	req, err := http.NewRequest("POST", "https://grd.ccnu.edu.cn/yjsxt/kbcx/xskbcx_cxXsKb.html?gnmkdm=N2151", data)
@@ -80,10 +85,10 @@ func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model.Ge
 			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
-	infos, Scs, err := ToClassInfo2(reply, r.Xnm, r.Xqm)
+	infos, Scs, err := ToClassInfo2(reply, Xnm, Xqm)
 	if err != nil {
 		c.log.Errorw(classLog.Msg, "func:ToClassInfo2",
-			classLog.Param, fmt.Sprintf("%v,%v,%v", reply, r.Xnm, r.Xqm),
+			classLog.Param, fmt.Sprintf("%v,%v,%v", reply, Xnm, Xqm),
 			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
@@ -95,13 +100,18 @@ func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model.Ge
 
 // GetClassInfosForUndergraduate  获取本科生课程信息
 func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model.GetClassInfosForUndergraduateReq) (*model.GetClassInfosForUndergraduateResp, error) {
-	var reply CrawReply1
-	yn := tool.CheckSY(r.Xqm, r.Xnm)
+	var (
+		reply CrawReply1
+		Xnm   = model.GetCommonInfoFromCtx(ctx).Year
+		Xqm   = model.GetCommonInfoFromCtx(ctx).Semester
+		yn    = tool.CheckSY(Xqm, Xnm)
+	)
+
 	if !yn {
 		return nil, errcode.ErrParam
 	}
-	tmp1 := GetXNM(r.Xnm)
-	tmp2 := GetXQM(r.Xqm)
+	tmp1 := GetXNM(Xnm)
+	tmp2 := GetXQM(Xqm)
 	formdata := fmt.Sprintf("xnm=%s&xqm=%s&kzlx=ck&xsdm=", tmp1, tmp2)
 	var data = strings.NewReader(formdata)
 	req, err := http.NewRequest("POST", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N2151", data)
@@ -140,10 +150,10 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model.Get
 			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
-	infos, Scs, err := ToClassInfo1(reply, r.Xnm, r.Xqm)
+	infos, Scs, err := ToClassInfo1(reply, Xnm, Xqm)
 	if err != nil {
 		c.log.Errorw(classLog.Msg, "func:ToClassInfo2",
-			classLog.Param, fmt.Sprintf("%v,%v,%v", reply, r.Xnm, r.Xqm),
+			classLog.Param, fmt.Sprintf("%v,%v,%v", reply, Xnm, Xqm),
 			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}

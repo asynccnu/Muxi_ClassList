@@ -18,15 +18,15 @@ type ClassCrawler interface {
 }
 type ClassRepoProxy interface {
 	SaveClasses(ctx context.Context, req model.SaveClassReq) error
-	GetAllClasses(ctx context.Context, req model.GetAllClassesReq) (*model.GetAllClassesResp, error)
+	GetAllClasses(ctx context.Context) (*model.GetAllClassesResp, error)
 	GetSpecificClassInfo(ctx context.Context, req model.GetSpecificClassInfoReq) (*model.GetSpecificClassInfoResp, error)
 	AddClass(ctx context.Context, req model.AddClassReq) error
 	DeleteClass(ctx context.Context, req model.DeleteClassReq) error
-	GetRecycledIds(ctx context.Context, req model.GetRecycledIdsReq) (*model.GetRecycledIdsResp, error)
+	GetRecycledIds(ctx context.Context) (*model.GetRecycledIdsResp, error)
 	RecoverClassFromRecycledBin(ctx context.Context, req model.RecoverClassFromRecycleBinReq) error
 	UpdateClass(ctx context.Context, req model.UpdateClassReq) error
 	CheckSCIdsExist(ctx context.Context, req model.CheckSCIdsExistReq) bool
-	GetAllSchoolClassInfos(ctx context.Context, req model.GetAllSchoolClassInfosReq) *model.GetAllSchoolClassInfosResp
+	GetAllSchoolClassInfos(ctx context.Context) *model.GetAllSchoolClassInfosResp
 	CheckClassIdIsInRecycledBin(ctx context.Context, req model.CheckClassIdIsInRecycledBinReq) bool
 }
 type JxbRepo interface {
@@ -34,7 +34,7 @@ type JxbRepo interface {
 	FindStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error)
 }
 type CCNUServiceProxy interface {
-	GetCookie(ctx context.Context, stu string) (string, error)
+	GetCookie(ctx context.Context) (string, error)
 }
 type ClassUsercase struct {
 	ClassRepo ClassRepoProxy
@@ -54,7 +54,7 @@ func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo Jx
 	}
 }
 
-func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week int64, xnm, xqm string) ([]*model.Class, error) {
+func (cluc *ClassUsercase) GetClasses(ctx context.Context, week int64) ([]*model.Class, error) {
 	var (
 		Scs            = make([]*model.StudentCourse, 0)
 		Jxbmp          = make(map[string]struct{}, 10)
@@ -62,13 +62,9 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 		classInfos     = make([]*model.ClassInfo, 0)
 		wg             sync.WaitGroup
 		SearchFromCCNU = false
+		StuId          = model.GetCommonInfoFromCtx(ctx).StuId
 	)
-
-	resp1, err := cluc.ClassRepo.GetAllClasses(ctx, model.GetAllClassesReq{
-		StuId: StuId,
-		Xnm:   xnm,
-		Xqm:   xqm,
-	})
+	resp1, err := cluc.ClassRepo.GetAllClasses(ctx)
 	if resp1 != nil {
 		classInfos = resp1.ClassInfos
 	}
@@ -79,10 +75,9 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 		timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
 		defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
 
-		cookie, err := cluc.Cs.GetCookie(timeoutCtx, StuId)
+		cookie, err := cluc.Cs.GetCookie(timeoutCtx)
 		if err != nil {
 			cluc.log.Warnw(classLog.Msg, "func:GetCookie err",
-				classLog.Param, fmt.Sprintf("%v", StuId),
 				classLog.Reason, err)
 			//封装class
 			for _, classInfo := range classInfos {
@@ -99,8 +94,6 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 
 			resp, err := cluc.Crawler.GetClassInfosForUndergraduate(ctx, model.GetClassInfosForUndergraduateReq{
 				Cookie: cookie,
-				Xnm:    xnm,
-				Xqm:    xqm,
 			})
 			if resp.ClassInfos != nil {
 				classInfos = resp.ClassInfos
@@ -114,8 +107,6 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 		} else {
 			resp2, err := cluc.Crawler.GetClassInfoForGraduateStudent(ctx, model.GetClassInfoForGraduateStudentReq{
 				Cookie: cookie,
-				Xnm:    xnm,
-				Xqm:    xqm,
 			})
 			if resp2.ClassInfos != nil {
 				classInfos = resp2.ClassInfos
@@ -132,18 +123,12 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 		go func() {
 			defer wg.Done()
 			err := cluc.ClassRepo.SaveClasses(ctx, model.SaveClassReq{
-				StuId:      StuId,
-				Xnm:        xnm,
-				Xqm:        xqm,
 				ClassInfos: classInfos,
 				Scs:        Scs,
 			})
 			if err != nil {
 				cluc.log.Warnw(classLog.Msg, "func:SaveClasses err",
 					classLog.Param, fmt.Sprintf("%v", model.SaveClassReq{
-						StuId:      StuId,
-						Xnm:        xnm,
-						Xqm:        xqm,
 						ClassInfos: classInfos,
 						Scs:        Scs,
 					}),
@@ -182,7 +167,10 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, StuId string, week in
 	return classes, nil
 }
 
-func (cluc *ClassUsercase) AddClass(ctx context.Context, stuId string, info *model.ClassInfo) error {
+func (cluc *ClassUsercase) AddClass(ctx context.Context, info *model.ClassInfo) error {
+	var (
+		stuId = model.GetCommonInfoFromCtx(ctx).StuId
+	)
 	sc := &model.StudentCourse{
 		StuID:           stuId,
 		ClaID:           info.ID,
@@ -191,35 +179,31 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuId string, info *mod
 		IsManuallyAdded: true,
 	}
 	sc.UpdateID()
+	if cluc.ClassRepo.CheckSCIdsExist(ctx, model.CheckSCIdsExistReq{ClassId: info.ID}) {
+		cluc.log.Warnw(classLog.Msg, fmt.Sprintf("the id(%s) is try add class(%s) which is existed", stuId, info.ID),
+			classLog.Reason, errcode.ErrClassIsExist)
+		return errcode.ErrClassIsExist
+	}
 	err := cluc.ClassRepo.AddClass(ctx, model.AddClassReq{
 		ClassInfo: info,
 		Sc:        sc,
-		Xnm:       info.Year,
-		Xqm:       info.Semester,
 	})
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (cluc *ClassUsercase) DeleteClass(ctx context.Context, classId string, stuId string, xnm string, xqm string) error {
+func (cluc *ClassUsercase) DeleteClass(ctx context.Context, classId string) error {
 	err := cluc.ClassRepo.DeleteClass(ctx, model.DeleteClassReq{
 		ClassId: classId,
-		StuId:   stuId,
-		Xnm:     xnm,
-		Xqm:     xqm,
 	})
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*model.ClassInfo, error) {
-	RecycledClassIds, err := cluc.ClassRepo.GetRecycledIds(ctx, model.GetRecycledIdsReq{
-		StuId: stuId,
-		Xnm:   xnm,
-		Xqm:   xqm,
-	})
+func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context) ([]*model.ClassInfo, error) {
+	RecycledClassIds, err := cluc.ClassRepo.GetRecycledIds(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -233,11 +217,8 @@ func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuId, xnm
 	}
 	return classInfos, nil
 }
-func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuId, xnm, xqm, classId string) error {
+func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, classId string) error {
 	exist := cluc.ClassRepo.CheckClassIdIsInRecycledBin(ctx, model.CheckClassIdIsInRecycledBinReq{
-		StuId:   stuId,
-		Xnm:     xnm,
-		Xqm:     xqm,
 		ClassId: classId,
 	})
 	if !exist {
@@ -247,14 +228,11 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuId, xnm, xqm
 	if err != nil {
 		return errcode.ErrRecover
 	}
-	err = cluc.AddClass(ctx, stuId, RecycledClassInfo)
+	err = cluc.AddClass(ctx, RecycledClassInfo)
 	if err != nil {
 		return errcode.ErrRecover
 	}
 	err = cluc.ClassRepo.RecoverClassFromRecycledBin(ctx, model.RecoverClassFromRecycleBinReq{
-		StuId:   stuId,
-		Xnm:     xnm,
-		Xqm:     xqm,
 		ClassId: classId,
 	})
 	if err != nil {
@@ -269,33 +247,24 @@ func (cluc *ClassUsercase) SearchClass(ctx context.Context, classId string) (*mo
 	}
 	return resp.ClassInfo, nil
 }
-func (cluc *ClassUsercase) UpdateClass(ctx context.Context, newClassInfo *model.ClassInfo, newSc *model.StudentCourse, stuId, oldClassId, xnm, xqm string) error {
+func (cluc *ClassUsercase) UpdateClass(ctx context.Context, newClassInfo *model.ClassInfo, newSc *model.StudentCourse, oldClassId string) error {
 	err := cluc.ClassRepo.UpdateClass(ctx, model.UpdateClassReq{
 		NewClassInfo: newClassInfo,
 		NewSc:        newSc,
-		StuId:        stuId,
 		OldClassId:   oldClassId,
-		Xnm:          xnm,
-		Xqm:          xqm,
 	})
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (cluc *ClassUsercase) CheckSCIdsExist(ctx context.Context, stuId, classId, xnm, xqm string) bool {
+func (cluc *ClassUsercase) CheckSCIdsExist(ctx context.Context, classId string) bool {
 	return cluc.ClassRepo.CheckSCIdsExist(ctx, model.CheckSCIdsExistReq{
-		StuId:   stuId,
 		ClassId: classId,
-		Xnm:     xnm,
-		Xqm:     xqm,
 	})
 }
-func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context, xnm, xqm string) []*model.ClassInfo {
-	return cluc.ClassRepo.GetAllSchoolClassInfos(ctx, model.GetAllSchoolClassInfosReq{
-		Xnm: xnm,
-		Xqm: xqm,
-	}).ClassInfos
+func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context) []*model.ClassInfo {
+	return cluc.ClassRepo.GetAllSchoolClassInfos(ctx).ClassInfos
 }
 func (cluc *ClassUsercase) GetStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error) {
 	return cluc.JxbRepo.FindStuIdsByJxbId(ctx, jxbId)
