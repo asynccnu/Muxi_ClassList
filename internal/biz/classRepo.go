@@ -261,17 +261,9 @@ func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context, req model.GetAl
 	return &model.GetAllSchoolClassInfosResp{ClassInfos: classInfos}
 }
 
-//func GenerateScSetName(stuId, xnm, xqm string) string {
-//	return fmt.Sprintf("StuAndCla:%s:%s:%s", stuId, xnm, xqm)
-//}
-
 func GenerateRecycleSetName(stuId, xnm, xqm string) string {
 	return fmt.Sprintf("Recycle:%s:%s:%s", stuId, xnm, xqm)
 }
 func GenerateClassInfosKey(stuId, xnm, xqm string) string {
 	return fmt.Sprintf("ClassInfos:%s:%s:%s", stuId, xnm, xqm)
 }
-
-//func GenerateClassInfoKey(classId string) string {
-//	return fmt.Sprintf("ClassInfo:%s", classId)
-//}
