@@ -235,7 +235,7 @@ func (c ClassInfoDBRepo) GetClassInfos(ctx context.Context, stuId, xnm, xqm stri
 		err error
 	)
 	if stuId != "" {
-		err = db.Raw("SELECT c.id,c.jxb_id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c WHERE c.id IN (SELECT s.cla_id FROM student_course s WHERE s.stu_id = ? AND s.year = ? AND s.semester = ?)", stuId, xnm, xqm).Scan(&cla).Error
+		err = db.Raw("SELECT c.id,c.jxb_id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c WHERE c.id IN (SELECT s.cla_id FROM student_course s WHERE s.stu_id = ? AND s.year = ? AND s.semester = ?) ORDER BY c.day ASC,c.class_when ASC", stuId, xnm, xqm).Scan(&cla).Error
 		if err != nil {
 			c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (stu_id = %s,year = %s,semester = %s)",
 				stuId, xnm, xqm),
@@ -243,7 +243,7 @@ func (c ClassInfoDBRepo) GetClassInfos(ctx context.Context, stuId, xnm, xqm stri
 			return nil, err
 		}
 	} else {
-		err = db.Raw("SELECT c.id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c WHERE c.id IN (SELECT s.cla_id FROM student_course s WHERE s.is_manually_added = ? AND s.year = ? AND s.semester = ? )", false, xnm, xqm).Scan(&cla).Error
+		err = db.Raw("SELECT c.id,c.day,c.teacher,c.where,c.class_when,c.week_duration,c.class_name,c.credit,c.weeks,c.year,c.semester FROM class_info c WHERE c.id IN (SELECT s.cla_id FROM student_course s WHERE s.is_manually_added = ? AND s.year = ? AND s.semester = ? ) ORDER BY c.day ASC,c.class_when ASC", false, xnm, xqm).Scan(&cla).Error
 		if err != nil {
 			c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (is_manually_added = %v,year = %s,semester = %s)",
 				false, xnm, xqm),
