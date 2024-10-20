@@ -30,16 +30,16 @@ type ClassInfo struct {
 	Classname    string  `gorm:"column:class_name;not null" json:"classname"`        //课程名称
 	Credit       float64 `gorm:"column:credit;default:1.0" json:"credit"`            //学分
 	Weeks        int64   `gorm:"column:weeks;not null" json:"weeks"`                 //哪些周
-	Semester     string  `gorm:"column:semester;not null;index" json:"semester"`     //学期
-	Year         string  `gorm:"column:year;not null;index" json:"year"`             //学年
+	Semester     string  `gorm:"column:semester;not null" json:"semester"`           //学期
+	Year         string  `gorm:"column:year;not null" json:"year"`                   //学年
 }
 type StudentCourse struct {
 	ID              string    `gorm:"primaryKey;column:id" json:"id"`
-	StuID           string    `gorm:"column:stu_id;not null;index" json:"stu_id"`                      //学号
-	ClaID           string    `gorm:"column:cla_id;not null;index" json:"cla_id"`                      //课程ID
-	Year            string    `gorm:"column:year;not null;index" json:"year"`                          //学年
-	Semester        string    `gorm:"column:semester;not null;index" json:"semester"`                  //学期
-	IsManuallyAdded bool      `gorm:"column:is_manually_added;default:false" json:"is_manually_added"` //是否为手动添加
+	StuID           string    `gorm:"column:stu_id;not null;index" json:"stu_id"`                         //学号
+	ClaID           string    `gorm:"column:cla_id;not null;index" json:"cla_id"`                         //课程ID
+	Year            string    `gorm:"column:year;not null;index:idx_time,priority:1" json:"year"`         //学年
+	Semester        string    `gorm:"column:semester;not null;index:idx_time,priority:2" json:"semester"` //学期
+	IsManuallyAdded bool      `gorm:"column:is_manually_added;default:false" json:"is_manually_added"`    //是否为手动添加
 	CreatedAt       time.Time `json:"-"`
 	UpdatedAt       time.Time `json:"-"`
 }

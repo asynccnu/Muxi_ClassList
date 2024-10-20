@@ -72,6 +72,9 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, week int64) ([]*model
 	// 或者时间是每周周一，就(有些特殊时间比如2,9月月末和3,10月月初，默认会优先爬取)默认有0.3的概率去爬取，这样是为了防止课表更新了，但一直会从数据库中获取，导致，课表无法更新
 	if err != nil || tool.IsNeedCraw() {
 		SearchFromCCNU = true
+		////测试用的
+		//cookie := "JSESSIONID=E6F1CDB285CE1833B6C07B7EEACD6255"
+
 		timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
 		defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
 
