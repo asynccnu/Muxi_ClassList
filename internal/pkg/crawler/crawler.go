@@ -143,7 +143,7 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model.Get
 		return nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
-
+	fmt.Println(resp)
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
 		c.log.Errorw(classLog.Msg, "json decode err",

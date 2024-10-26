@@ -73,10 +73,10 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, week int64) ([]*model
 	if err != nil || tool.IsNeedCraw() {
 		SearchFromCCNU = true
 		////测试用的
-		//cookie := "JSESSIONID=E6F1CDB285CE1833B6C07B7EEACD6255"
+		//cookie := "JSESSIONID=C11EEB35C41D03A9D4F5CA2C44C0BDEB"
 
-		timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
-		defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
+		timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second) // 5秒超时,防止影响
+		defer cancel()                                                // 确保在函数返回前取消上下文，防止资源泄漏
 
 		cookie, err := cluc.Cs.GetCookie(timeoutCtx)
 		if err != nil {
