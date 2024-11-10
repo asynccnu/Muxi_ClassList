@@ -17,6 +17,7 @@ type ClassInfoDBRepo struct {
 	data *Data
 	log  classLog.Clogger
 }
+
 type ClassInfoCacheRepo struct {
 	rdb *redis.Client
 	log classLog.Clogger

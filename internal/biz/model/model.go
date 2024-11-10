@@ -65,15 +65,18 @@ func (ci *ClassInfo) BeforeUpdate(tx *gorm.DB) (err error) {
 func (sc *StudentCourse) TableName() string {
 	return StudentCourseTableName
 }
+
 func (sc *StudentCourse) BeforeCreate(tx *gorm.DB) (err error) {
 	sc.CreatedAt = time.Now()
 	sc.UpdatedAt = time.Now()
 	return
 }
+
 func (sc *StudentCourse) BeforeUpdate(tx *gorm.DB) (err error) {
 	sc.UpdatedAt = time.Now()
 	return
 }
+
 func (j *Jxb) TableName() string {
 	return JxbTableName
 }
@@ -81,15 +84,19 @@ func (j *Jxb) TableName() string {
 func (ci *ClassInfo) AddWeek(week int64) {
 	ci.Weeks |= 1<<week - 1
 }
+
 func (ci *ClassInfo) SearchWeek(week int64) bool {
 	return (ci.Weeks & (1<<week - 1)) != 0
 }
+
 func (ci *ClassInfo) UpdateID() {
 	ci.ID = fmt.Sprintf("Class:%s:%s:%s:%d:%s:%s:%s:%d", ci.Classname, ci.Year, ci.Semester, ci.Day, ci.ClassWhen, ci.Teacher, ci.Where, ci.Weeks)
 }
+
 func (sc *StudentCourse) UpdateID() {
 	sc.ID = fmt.Sprintf("StuAndCla:%s:%s:%s:%s", sc.StuID, sc.ClaID, sc.Year, sc.Semester)
 }
+
 func GenerateSCID(stuId, classId, xnm, xqm string) string {
 	return fmt.Sprintf("StuAndCla:%s:%s:%s:%s", stuId, classId, xnm, xqm)
 }
