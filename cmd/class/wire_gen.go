@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/client"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/data"
@@ -33,17 +34,18 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	if err != nil {
 		return nil, nil, err
 	}
-	classInfoDBRepo := data.NewClassInfoDBRepo(dataData, logger)
+	helper := classLog.NewClogger(logger)
+	classInfoDBRepo := data.NewClassInfoDBRepo(dataData, helper)
 	redisClient := data.NewRedisDB(confData)
-	classInfoCacheRepo := data.NewClassInfoCacheRepo(redisClient, logger)
+	classInfoCacheRepo := data.NewClassInfoCacheRepo(redisClient, helper)
 	classInfoRepo := biz.NewClassInfoRepo(classInfoDBRepo, classInfoCacheRepo)
 	transaction := data.NewTransaction(dataData)
-	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(dataData, logger)
-	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, logger)
+	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(dataData, helper)
+	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, helper)
 	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
-	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logger)
-	crawlerCrawler := crawler.NewClassCrawler(logger)
-	jxbDBRepo := data.NewJxbDBRepo(dataData, logger)
+	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, helper)
+	crawlerCrawler := crawler.NewClassCrawler(helper)
+	jxbDBRepo := data.NewJxbDBRepo(dataData, helper)
 	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
 	userServiceClient, err := client.NewClient(etcdRegistry, logger)
 	if err != nil {
@@ -51,7 +53,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 		return nil, nil, err
 	}
 	ccnuService := client.NewCCNUService(userServiceClient)
-	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, jxbDBRepo, ccnuService, logger)
+	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, jxbDBRepo, ccnuService, helper)
 	classerService := service.NewClasserService(classUsercase, logger)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
 	app := newApp(logger, grpcServer, etcdRegistry)

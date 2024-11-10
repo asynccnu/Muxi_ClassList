@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
-	"github.com/go-kratos/kratos/v2/log"
 )
 
 type JxbDBRepo struct {
 	data *Data
-	log  *log.Helper
+	log  classLog.Clogger
 }
 
-func NewJxbDBRepo(data *Data, logger log.Logger) *JxbDBRepo {
+func NewJxbDBRepo(data *Data, logger classLog.Clogger) *JxbDBRepo {
 	return &JxbDBRepo{
 		data: data,
-		log:  log.NewHelper(logger),
+		log:  logger,
 	}
 }
 

@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/client"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/data"
@@ -30,6 +31,7 @@ func wireApp(*conf.Server, *conf.Data, *conf.Registry, *os.File, log.Logger) (*k
 		registry.ProviderSet,
 		service.ProviderSet,
 		client.ProviderSet,
+		classLog.ProviderSet,
 		newApp,
 		wire.Bind(new(biz.ClassCrawler), new(*crawler.Crawler)),
 		wire.Bind(new(biz.ClassInfoDBRepo), new(*data.ClassInfoDBRepo)),
@@ -40,5 +42,6 @@ func wireApp(*conf.Server, *conf.Data, *conf.Registry, *os.File, log.Logger) (*k
 		wire.Bind(new(biz.CCNUServiceProxy), new(*client.CCNUService)),
 		wire.Bind(new(biz.ClassRepoProxy), new(*biz.ClassRepo)),
 		wire.Bind(new(biz.JxbRepo), new(*data.JxbDBRepo)),
+		wire.Bind(new(classLog.Clogger), new(*log.Helper)),
 	))
 }

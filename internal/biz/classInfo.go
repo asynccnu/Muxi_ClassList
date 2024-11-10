@@ -14,8 +14,7 @@ type ClassInfoDBRepo interface {
 }
 
 type ClassInfoCacheRepo interface {
-	OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*model.ClassInfo) error
-	GetClassInfoFromCache(ctx context.Context, key string) (*model.ClassInfo, error)
+	AddClaInfosToCache(ctx context.Context, key string, classInfos []*model.ClassInfo) error
 	GetClassInfosFromCache(ctx context.Context, key string) ([]*model.ClassInfo, error)
 	DeleteClassInfoFromCache(ctx context.Context, deletedId, classInfosKey string) error
 	UpdateClassInfoInCache(ctx context.Context, oldID, classInfosKey string, classInfo *model.ClassInfo, add bool) error

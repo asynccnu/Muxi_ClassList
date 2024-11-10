@@ -8,7 +8,6 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -16,28 +15,28 @@ import (
 
 type ClassInfoDBRepo struct {
 	data *Data
-	log  *log.Helper
+	log  classLog.Clogger
 }
 type ClassInfoCacheRepo struct {
 	rdb *redis.Client
-	log *log.Helper
+	log classLog.Clogger
 }
 
-func NewClassInfoDBRepo(data *Data, logger log.Logger) *ClassInfoDBRepo {
+func NewClassInfoDBRepo(data *Data, logger classLog.Clogger) *ClassInfoDBRepo {
 	return &ClassInfoDBRepo{
-		log:  log.NewHelper(logger),
+		log:  logger,
 		data: data,
 	}
 }
-func NewClassInfoCacheRepo(rdb *redis.Client, logger log.Logger) *ClassInfoCacheRepo {
+func NewClassInfoCacheRepo(rdb *redis.Client, logger classLog.Clogger) *ClassInfoCacheRepo {
 	return &ClassInfoCacheRepo{
 		rdb: rdb,
-		log: log.NewHelper(logger),
+		log: logger,
 	}
 }
 
-// OnlyAddClassInfosToCache 将整个课表存到缓存中去
-func (c ClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key string, classInfos []*model.ClassInfo) error {
+// AddClaInfosToCache 将整个课表转换成json格式，然后存到缓存中去
+func (c ClassInfoCacheRepo) AddClaInfosToCache(ctx context.Context, key string, classInfos []*model.ClassInfo) error {
 	val, err := json.Marshal(classInfos)
 	if err != nil {
 		c.log.Errorw(classLog.Msg, fmt.Sprintf("json Marshal (%v) err", classInfos),
@@ -53,26 +52,13 @@ func (c ClassInfoCacheRepo) OnlyAddClassInfosToCache(ctx context.Context, key st
 	return nil
 }
 
-// OnlyAddClassInfoToCache 仅添加单个课程信息到缓存中
-func (c ClassInfoCacheRepo) OnlyAddClassInfoToCache(ctx context.Context, key string, classInfo *model.ClassInfo) error {
-	val, err := json.Marshal(classInfo)
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("json Marshal (%v) err", classInfo),
-			classLog.Reason, err)
-		return err
-	}
-	err = c.rdb.Set(key, val, Expiration).Err()
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("Redis:Set k(%s)-v(%s) err", key, val),
-			classLog.Reason, err)
-		return err
-	}
-	return nil
-}
 func (c ClassInfoCacheRepo) GetClassInfosFromCache(ctx context.Context, key string) ([]*model.ClassInfo, error) {
 	var classInfos = make([]*model.ClassInfo, 0)
 	val, err := c.rdb.Get(key).Result()
 	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, fmt.Errorf("error getting class info from cache: %w", err)
+		}
 		c.log.Errorw(classLog.Msg, fmt.Sprintf("Redis:get key(%s) err", key),
 			classLog.Reason, err)
 		return nil, err
@@ -84,22 +70,6 @@ func (c ClassInfoCacheRepo) GetClassInfosFromCache(ctx context.Context, key stri
 		return nil, err
 	}
 	return classInfos, nil
-}
-func (c ClassInfoCacheRepo) GetClassInfoFromCache(ctx context.Context, key string) (*model.ClassInfo, error) {
-	var classInfo = &model.ClassInfo{}
-	val, err := c.rdb.Get(key).Result()
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("Redis:get key(%s) err", key),
-			classLog.Reason, err)
-		return nil, err
-	}
-	err = json.Unmarshal([]byte(val), &classInfo)
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("json Unmarshal (%v) err", val),
-			classLog.Reason, err)
-		return nil, err
-	}
-	return classInfo, nil
 }
 
 // UpdateClassInfoInCache 修改缓存中的课表信息
@@ -126,9 +96,9 @@ func (c ClassInfoCacheRepo) UpdateClassInfoInCache(ctx context.Context, oldID, c
 		oldClassInfos = append(oldClassInfos, classInfo)
 	}
 
-	err = c.OnlyAddClassInfosToCache(ctx, classInfosKey, oldClassInfos)
+	err = c.AddClaInfosToCache(ctx, classInfosKey, oldClassInfos)
 	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:OnlyAddClassInfosToCache(ctx, %s, %v) err", classInfosKey, oldClassInfos),
+		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:AddClaInfosToCache(ctx, %s, %v) err", classInfosKey, oldClassInfos),
 			classLog.Reason, err)
 		return err
 	}
@@ -137,6 +107,9 @@ func (c ClassInfoCacheRepo) UpdateClassInfoInCache(ctx context.Context, oldID, c
 func (c ClassInfoCacheRepo) DeleteClassInfoFromCache(ctx context.Context, deletedId, classInfosKey string) error {
 	var Indx int
 	oldClassInfos, err := c.GetClassInfosFromCache(ctx, classInfosKey)
+	if errors.Is(err, redis.Nil) || oldClassInfos == nil {
+		return nil
+	}
 	if err != nil {
 		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:GetClassInfosFromCache(ctx, %s) err", classInfosKey),
 			classLog.Reason, err)
@@ -148,9 +121,9 @@ func (c ClassInfoCacheRepo) DeleteClassInfoFromCache(ctx context.Context, delete
 		}
 	}
 	newClassInfos := append(oldClassInfos[:Indx], oldClassInfos[Indx+1:]...)
-	err = c.OnlyAddClassInfosToCache(ctx, classInfosKey, newClassInfos)
+	err = c.AddClaInfosToCache(ctx, classInfosKey, newClassInfos)
 	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:OnlyAddClassInfosToCache(ctx, %s, %v) err", classInfosKey, newClassInfos),
+		c.log.Errorw(classLog.Msg, fmt.Sprintf("func:AddClaInfosToCache(ctx, %s, %v) err", classInfosKey, newClassInfos),
 			classLog.Reason, err)
 		return err
 	}
@@ -162,7 +135,7 @@ func (c ClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfos []*m
 	if err != nil {
 		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:create %v in %s", classInfos, model.ClassInfoTableName),
 			classLog.Reason, err)
-		return errcode.ErrClassUpdate
+		return err
 	}
 	return nil
 }

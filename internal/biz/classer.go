@@ -7,7 +7,6 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
-	"github.com/go-kratos/kratos/v2/log"
 	"sync"
 	"time"
 )
@@ -41,16 +40,16 @@ type ClassUsercase struct {
 	Crawler   ClassCrawler
 	Cs        CCNUServiceProxy
 	JxbRepo   JxbRepo
-	log       *log.Helper
+	log       classLog.Clogger
 }
 
-func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo JxbRepo, Cs CCNUServiceProxy, logger log.Logger) *ClassUsercase {
+func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo JxbRepo, Cs CCNUServiceProxy, logger classLog.Clogger) *ClassUsercase {
 	return &ClassUsercase{
 		ClassRepo: classRepo,
 		Crawler:   crawler,
 		JxbRepo:   JxbRepo,
 		Cs:        Cs,
-		log:       log.NewHelper(logger),
+		log:       logger,
 	}
 }
 
@@ -73,7 +72,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, week int64) ([]*model
 	if err != nil || tool.IsNeedCraw() {
 		SearchFromCCNU = true
 		////测试用的
-		//cookie := "JSESSIONID=E6F1CDB285CE1833B6C07B7EEACD6255"
+		//cookie := "JSESSIONID=3A1C306D0BDBF0637D5DF687583D53B2"
 
 		timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
 		defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
@@ -201,7 +200,7 @@ func (cluc *ClassUsercase) DeleteClass(ctx context.Context, classId string) erro
 		ClassId: classId,
 	})
 	if err != nil {
-		return err
+		return errcode.ErrClassDelete
 	}
 	return nil
 }

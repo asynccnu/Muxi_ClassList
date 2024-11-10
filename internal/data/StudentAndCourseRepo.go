@@ -6,29 +6,29 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis"
 )
 
 type StudentAndCourseDBRepo struct {
 	data *Data
-	log  *log.Helper
-}
-type StudentAndCourseCacheRepo struct {
-	rdb *redis.Client
-	log *log.Helper
+	log  classLog.Clogger
 }
 
-func NewStudentAndCourseDBRepo(data *Data, logger log.Logger) *StudentAndCourseDBRepo {
+type StudentAndCourseCacheRepo struct {
+	rdb *redis.Client
+	log classLog.Clogger
+}
+
+func NewStudentAndCourseDBRepo(data *Data, logger classLog.Clogger) *StudentAndCourseDBRepo {
 	return &StudentAndCourseDBRepo{
-		log:  log.NewHelper(logger),
+		log:  logger,
 		data: data,
 	}
 }
-func NewStudentAndCourseCacheRepo(rdb *redis.Client, logger log.Logger) *StudentAndCourseCacheRepo {
+func NewStudentAndCourseCacheRepo(rdb *redis.Client, logger classLog.Clogger) *StudentAndCourseCacheRepo {
 	return &StudentAndCourseCacheRepo{
 		rdb: rdb,
-		log: log.NewHelper(logger),
+		log: logger,
 	}
 }
 
@@ -121,4 +121,13 @@ func (s StudentAndCourseDBRepo) CheckExists(ctx context.Context, xnm, xqm, stuId
 		return false
 	}
 	return true
+}
+func (s StudentAndCourseDBRepo) CheckIfManuallyAdded(ctx context.Context, classID string) bool {
+	db := s.data.Mysql.WithContext(ctx).Table(model.StudentCourseTableName)
+	IMA := false
+	err := db.Select("is_manually_added").Where("cla_id =?", classID).Limit(1).Scan(&IMA).Error
+	if err != nil {
+		return false
+	}
+	return IMA
 }

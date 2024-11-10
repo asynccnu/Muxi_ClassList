@@ -8,7 +8,6 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
-	"github.com/go-kratos/kratos/v2/log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -22,13 +21,13 @@ var mp = map[string]string{
 }
 
 type Crawler struct {
-	log    *log.Helper
+	log    classLog.Clogger
 	client *http.Client
 }
 
-func NewClassCrawler(logger log.Logger) *Crawler {
+func NewClassCrawler(logger classLog.Clogger) *Crawler {
 	return &Crawler{
-		log:    log.NewHelper(logger),
+		log:    logger,
 		client: &http.Client{},
 	}
 }

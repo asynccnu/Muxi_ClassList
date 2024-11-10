@@ -6,21 +6,20 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	"github.com/go-kratos/kratos/v2/log"
 )
 
 type ClassRepo struct {
 	ClaRepo *ClassInfoRepo
 	Sac     *StudentAndCourseRepo
 	TxCtrl  Transaction //控制事务的开启
-	log     *log.Helper
+	log     classLog.Clogger
 }
 
-func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl Transaction, Sac *StudentAndCourseRepo, logger log.Logger) *ClassRepo {
+func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl Transaction, Sac *StudentAndCourseRepo, logger classLog.Clogger) *ClassRepo {
 	return &ClassRepo{
 		ClaRepo: ClaRepo,
 		Sac:     Sac,
-		log:     log.NewHelper(logger),
+		log:     logger,
 		TxCtrl:  TxCtrl,
 	}
 }
@@ -34,27 +33,30 @@ func (cla ClassRepo) SaveClasses(ctx context.Context, r model.SaveClassReq) erro
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
 		err1 := cla.ClaRepo.DB.SaveClassInfosToDB(ctx, r.ClassInfos)
 		if err1 != nil {
-			return errcode.ErrCourseSave
+			return fmt.Errorf("error saving class In Transaction: %w", err1)
 		}
 		err2 := cla.Sac.DB.SaveManyStudentAndCourseToDB(ctx, r.Scs)
 		if err2 != nil {
-			return errcode.ErrCourseSave
+			return fmt.Errorf("error saving studentAndcourse In Transaction: %w", err2)
 		}
 		return nil
 	})
 	if errTx != nil {
+		cla.log.Errorw(
+			classLog.Msg, "func:InTx err",
+			classLog.Reason, errTx,
+		)
 		return errTx
 	}
 
 	go func() {
-
 		//缓存
 		//如果保存时其value为NULL,则直接覆盖
-		err := cla.ClaRepo.Cache.OnlyAddClassInfosToCache(context.Background(),
+		err := cla.ClaRepo.Cache.AddClaInfosToCache(context.Background(),
 			GenerateClassInfosKey(StuId, Xnm, Xqm),
 			r.ClassInfos)
 		if err != nil {
-			cla.log.Warnw(classLog.Msg, "func:OnlyAddClassInfosToCache err",
+			cla.log.Warnw(classLog.Msg, "func:AddClaInfosToCache err",
 				classLog.Param, fmt.Sprintf("%v,%v", GenerateClassInfosKey(StuId, Xnm, Xqm), r.ClassInfos),
 				classLog.Reason, err)
 		}
@@ -95,9 +97,9 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context) (*model.GetAllClassesRes
 		go func() {
 			//将课程信息当作整体存入redis
 			//注意:如果未获取到，即classInfos为nil，redis仍然会设置key-value，只不过value为NULL
-			err := cla.ClaRepo.Cache.OnlyAddClassInfosToCache(context.Background(), key, classInfos)
+			err := cla.ClaRepo.Cache.AddClaInfosToCache(context.Background(), key, classInfos)
 			if err != nil {
-				cla.log.Warnw(classLog.Msg, "func:OnlyAddClassInfosToCache err",
+				cla.log.Warnw(classLog.Msg, "func:AddClaInfosToCache err",
 					classLog.Param, fmt.Sprintf("%v,%v", key, classInfos),
 					classLog.Reason, err)
 			}
@@ -168,13 +170,18 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, req model.DeleteClassReq) 
 		Xnm   = model.GetCommonInfoFromCtx(ctx).Year
 		Xqm   = model.GetCommonInfoFromCtx(ctx).Semester
 	)
+	//判断该课程是否为手动添加，如果是就同时删除class_info中的数据
+	IMA := cla.Sac.DB.CheckIfManuallyAdded(ctx, req.ClassId)
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
 		err := cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, model.GenerateSCID(StuId, req.ClassId, Xnm, Xqm))
 		if err != nil {
-			cla.log.Errorw(classLog.Msg, "func:DeleteStudentAndCourseInDB err",
-				classLog.Param, fmt.Sprintf("%v", model.GenerateSCID(StuId, req.ClassId, Xnm, Xqm)),
-				classLog.Reason, err)
-			return errcode.ErrClassDelete
+			return fmt.Errorf("error deleting student: %w", err)
+		}
+		if IMA {
+			err = cla.ClaRepo.DB.DeleteClassInfoInDB(ctx, req.ClassId)
+			if err != nil {
+				return fmt.Errorf("error deleting classinfo: %w", err)
+			}
 		}
 		return nil
 	})
@@ -309,6 +316,18 @@ func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context) *model.GetAllSc
 		return nil
 	}
 	return &model.GetAllSchoolClassInfosResp{ClassInfos: classInfos}
+}
+
+// ExecuteTransaction 抽象事务的执行函数，接收所有需要在事务内执行的操作
+func (cla ClassRepo) executeTransaction(ctx context.Context, operations ...func(ctx context.Context) error) error {
+	return cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
+		for _, operation := range operations {
+			if err := operation(ctx); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func GenerateRecycleSetName(stuId, xnm, xqm string) string {
