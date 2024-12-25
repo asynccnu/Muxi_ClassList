@@ -2,25 +2,12 @@ package service
 
 import (
 	"context"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
+	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	pb "github.com/asynccnu/be-api/gen/proto/classlist/classlist" //此处改成了be-api中的,方便其他服务调用.
 	"github.com/go-kratos/kratos/v2/log"
 )
-
-type ClassCtrl interface {
-	CheckSCIdsExist(ctx context.Context, classid string) bool
-	GetClasses(ctx context.Context, week int64) ([]*model.Class, error)
-	AddClass(ctx context.Context, info *model.ClassInfo) error
-	DeleteClass(ctx context.Context, classId string) error
-	SearchClass(ctx context.Context, classId string) (*model.ClassInfo, error)
-	UpdateClass(ctx context.Context, newClassInfo *model.ClassInfo, newSc *model.StudentCourse, oldClassId string) error
-	GetAllSchoolClassInfosToOtherService(ctx context.Context) []*model.ClassInfo
-	GetRecycledClassInfos(ctx context.Context) ([]*model.ClassInfo, error)
-	RecoverClassInfo(ctx context.Context, classId string) error
-	GetStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error)
-}
 
 type ClasserService struct {
 	pb.UnimplementedClasserServer
@@ -39,15 +26,8 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 	if !tool.CheckSY(req.Semester, req.Year) || req.GetWeek() <= 0 {
 		return &pb.GetClassResponse{}, errcode.ErrParam
 	}
-	//将stuid,year,semester存入ctx中
-	commonInfo := model.CommonInfo{
-		StuId:    req.GetStuId(),
-		Year:     req.GetYear(),
-		Semester: req.GetSemester(),
-	}
-	ctx = model.StoreCommonInfoInCtx(ctx, commonInfo)
 	pclasses := make([]*pb.Class, 0)
-	classes, err := s.Clu.GetClasses(ctx, req.GetWeek())
+	classes, err := s.Clu.GetClasses(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetWeek())
 	if err != nil {
 		return &pb.GetClassResponse{}, err
 	}
@@ -59,7 +39,6 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 		}
 		pclasses = append(pclasses, pclass)
 	}
-	//fmt.Println("getclass past:", time.Now().Sub(time2))
 	return &pb.GetClassResponse{
 		Classes: pclasses,
 	}, nil
@@ -69,7 +48,7 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 		return &pb.AddClassResponse{}, errcode.ErrParam
 	}
 	weekDur := tool.FormatWeeks(tool.ParseWeeks(req.Weeks))
-	var classInfo = &model.ClassInfo{
+	var classInfo = &model2.ClassInfo{
 		Day:          req.GetDay(),
 		Teacher:      req.GetTeacher(),
 		Where:        req.GetWhere(),
@@ -86,14 +65,7 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 		classInfo.Credit = req.GetCredit()
 	}
 	classInfo.UpdateID()
-	//将stuid,year,semester存入ctx中
-	commonInfo := model.CommonInfo{
-		StuId:    req.GetStuId(),
-		Year:     req.GetYear(),
-		Semester: req.GetSemester(),
-	}
-	ctx = model.StoreCommonInfoInCtx(ctx, commonInfo)
-	err := s.Clu.AddClass(ctx, classInfo)
+	err := s.Clu.AddClass(ctx, req.GetStuId(), classInfo)
 	if err != nil {
 
 		return &pb.AddClassResponse{}, err
@@ -105,20 +77,13 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 	}, nil
 }
 func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassRequest) (*pb.DeleteClassResponse, error) {
-	//将stuid,year,semester存入ctx中
-	commonInfo := model.CommonInfo{
-		StuId:    req.GetStuId(),
-		Year:     req.GetYear(),
-		Semester: req.GetSemester(),
-	}
-	ctx = model.StoreCommonInfoInCtx(ctx, commonInfo)
-	exist := s.Clu.CheckSCIdsExist(ctx, req.GetId())
+	exist := s.Clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetId())
 	if !exist {
 		return &pb.DeleteClassResponse{
 			Msg: "该课程不存在",
 		}, errcode.ErrSCIDNOTEXIST
 	}
-	err := s.Clu.DeleteClass(ctx, req.GetId())
+	err := s.Clu.DeleteClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetId())
 	if err != nil {
 
 		return &pb.DeleteClassResponse{}, err
@@ -128,14 +93,7 @@ func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassReq
 	}, nil
 }
 func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassRequest) (*pb.UpdateClassResponse, error) {
-	//将stuid,year,semester存入ctx中
-	commonInfo := model.CommonInfo{
-		StuId:    req.GetStuId(),
-		Year:     req.GetYear(),
-		Semester: req.GetSemester(),
-	}
-	ctx = model.StoreCommonInfoInCtx(ctx, commonInfo)
-	exist := s.Clu.CheckSCIdsExist(ctx, req.GetClassId())
+	exist := s.Clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
 	if !exist {
 		return &pb.UpdateClassResponse{
 			Msg: "该课程不存在",
@@ -178,7 +136,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 	}
 
 	oldclassInfo.UpdateID()
-	newSc := &model.StudentCourse{
+	newSc := &model2.StudentCourse{
 		StuID:           req.GetStuId(),
 		ClaID:           oldclassInfo.ID,
 		Year:            oldclassInfo.Year,
@@ -186,7 +144,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 		IsManuallyAdded: false,
 	}
 	newSc.UpdateID()
-	err = s.Clu.UpdateClass(ctx, oldclassInfo, newSc, req.GetClassId())
+	err = s.Clu.UpdateClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), oldclassInfo, newSc, req.GetClassId())
 	if err != nil {
 
 		return &pb.UpdateClassResponse{
@@ -199,14 +157,8 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 	}, nil
 }
 func (s *ClasserService) GetRecycleBinClassInfos(ctx context.Context, req *pb.GetRecycleBinClassRequest) (*pb.GetRecycleBinClassResponse, error) {
-	//将stuid,year,semester存入ctx中
-	commonInfo := model.CommonInfo{
-		StuId:    req.GetStuId(),
-		Year:     req.GetYear(),
-		Semester: req.GetSemester(),
-	}
-	ctx = model.StoreCommonInfoInCtx(ctx, commonInfo)
-	classInfos, err := s.Clu.GetRecycledClassInfos(ctx)
+
+	classInfos, err := s.Clu.GetRecycledClassInfos(ctx, req.GetStuId(), req.GetYear(), req.GetSemester())
 	if err != nil {
 		return &pb.GetRecycleBinClassResponse{}, err
 	}
@@ -224,14 +176,8 @@ func (s *ClasserService) RecoverClass(ctx context.Context, req *pb.RecoverClassR
 			Msg: "恢复课程失败",
 		}, errcode.ErrParam
 	}
-	//将stuid,year,semester存入ctx中
-	commonInfo := model.CommonInfo{
-		StuId:    req.GetStuId(),
-		Year:     req.GetYear(),
-		Semester: req.GetSemester(),
-	}
-	ctx = model.StoreCommonInfoInCtx(ctx, commonInfo)
-	err := s.Clu.RecoverClassInfo(ctx, req.GetClassId())
+
+	err := s.Clu.RecoverClassInfo(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
 	if err != nil {
 
 		return &pb.RecoverClassResponse{
@@ -253,13 +199,7 @@ func (s *ClasserService) GetStuIdByJxbId(ctx context.Context, req *pb.GetStuIdBy
 	}, nil
 }
 func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClassInfoRequest) (*pb.GetAllClassInfoResponse, error) {
-	//将stuid,year,semester存入ctx中
-	commonInfo := model.CommonInfo{
-		Year:     req.GetYear(),
-		Semester: req.GetSemester(),
-	}
-	ctx = model.StoreCommonInfoInCtx(ctx, commonInfo)
-	classInfos := s.Clu.GetAllSchoolClassInfosToOtherService(ctx)
+	classInfos := s.Clu.GetAllSchoolClassInfosToOtherService(ctx, req.GetYear(), req.GetSemester())
 	pbClassInfos := make([]*pb.ClassInfo, 0)
 	for _, classInfo := range classInfos {
 		pbClassInfos = append(pbClassInfos, HandleClass(classInfo))
@@ -268,7 +208,7 @@ func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClas
 		ClassInfos: pbClassInfos,
 	}, nil
 }
-func HandleClass(info *model.ClassInfo) *pb.ClassInfo {
+func HandleClass(info *model2.ClassInfo) *pb.ClassInfo {
 	return &pb.ClassInfo{
 		Day:          info.Day,
 		Teacher:      info.Teacher,

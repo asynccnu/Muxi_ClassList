@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
+	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	"net/http"
 	"strconv"
@@ -21,23 +21,21 @@ var mp = map[string]string{
 }
 
 type Crawler struct {
-	log    classLog.Clogger
-	client *http.Client
+	log classLog.Clogger
 }
 
 func NewClassCrawler(logger classLog.Clogger) *Crawler {
 	return &Crawler{
-		log:    logger,
-		client: &http.Client{},
+		log: logger,
 	}
 }
 
 // GetClassInfoForGraduateStudent 获取研究生课程信息
-func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model.GetClassInfoForGraduateStudentReq) (*model.GetClassInfoForGraduateStudentResp, error) {
+func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model2.GetClassInfoForGraduateStudentReq) (*model2.GetClassInfoForGraduateStudentResp, error) {
 	var (
 		reply CrawReply2
-		Xnm   = model.GetCommonInfoFromCtx(ctx).Year
-		Xqm   = model.GetCommonInfoFromCtx(ctx).Semester
+		Xnm   = r.Year
+		Xqm   = r.Semester
 		yn    = tool.CheckSY(Xqm, Xnm)
 	)
 
@@ -91,19 +89,20 @@ func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model.Ge
 			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
-	return &model.GetClassInfoForGraduateStudentResp{
+	return &model2.GetClassInfoForGraduateStudentResp{
 		ClassInfos:     infos,
 		StudentCourses: Scs,
 	}, nil
 }
 
 // GetClassInfosForUndergraduate  获取本科生课程信息
-func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model.GetClassInfosForUndergraduateReq) (*model.GetClassInfosForUndergraduateResp, error) {
+func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model2.GetClassInfosForUndergraduateReq) (*model2.GetClassInfosForUndergraduateResp, error) {
 	var (
-		reply CrawReply1
-		Xnm   = model.GetCommonInfoFromCtx(ctx).Year
-		Xqm   = model.GetCommonInfoFromCtx(ctx).Semester
-		yn    = tool.CheckSY(Xqm, Xnm)
+		reply  CrawReply1
+		Xnm    = r.Year
+		Xqm    = r.Semester
+		yn     = tool.CheckSY(Xqm, Xnm)
+		client = &http.Client{}
 	)
 
 	if !yn {
@@ -135,7 +134,7 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model.Get
 	req.Header.Set("sec-ch-ua", `"Microsoft Edge";v="123", "Not:A-Brand";v="8", "Chromium";v="123"`)
 	req.Header.Set("sec-ch-ua-mobile", "?0")
 	req.Header.Set("sec-ch-ua-platform", `"Windows"`)
-	resp, err := c.client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		c.log.Errorw(classLog.Msg, "http request send err",
 			classLog.Reason, err)
@@ -156,19 +155,25 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model.Get
 			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
-	return &model.GetClassInfosForUndergraduateResp{
+	return &model2.GetClassInfosForUndergraduateResp{
 		ClassInfos:     infos,
 		StudentCourses: Scs,
 	}, nil
 }
 
 // ToClassInfo1 处理本科生
-func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model.ClassInfo, []*model.StudentCourse, error) {
-	var infos = make([]*model.ClassInfo, 0)
-	var Scs = make([]*model.StudentCourse, 0)
+func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model2.ClassInfo, []*model2.StudentCourse, error) {
+	var infos = make([]*model2.ClassInfo, 0)
+	var Scs = make([]*model2.StudentCourse, 0)
 	for _, v := range reply.KbList {
+		//这个字段为1代表这个课程是已经选上的
+		//所以防止把没选上的课程给包含进来
+		if v.Sxbj != "1" {
+			continue
+		}
+
 		//课程信息
-		var info = &model.ClassInfo{}
+		var info = &model2.ClassInfo{}
 		//var Sc = &biz.StudentCourse{}
 		//info.ClassId = v.Kch //课程编号
 		//info.StuID = reply.Xsxx.Xh                    //学号
@@ -187,7 +192,7 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model.ClassInfo, []*mod
 		info.UpdateID()      //课程ID
 		//-----------------------------------------------------
 		//学生与课程的映射关系
-		Sc := &model.StudentCourse{
+		Sc := &model2.StudentCourse{
 			StuID:           reply.Xsxx.Xh,
 			ClaID:           info.ID,
 			Year:            xnm,
@@ -202,12 +207,12 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model.ClassInfo, []*mod
 }
 
 // ToClassInfo2 处理研究生
-func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*model.ClassInfo, []*model.StudentCourse, error) {
-	var infos = make([]*model.ClassInfo, 0)
-	var Scs = make([]*model.StudentCourse, 0)
+func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*model2.ClassInfo, []*model2.StudentCourse, error) {
+	var infos = make([]*model2.ClassInfo, 0)
+	var Scs = make([]*model2.StudentCourse, 0)
 	for _, v := range reply.KbList {
 		//课程信息
-		var info = &model.ClassInfo{}
+		var info = &model2.ClassInfo{}
 		//var Sc = &biz.StudentCourse{}
 		//info.ClassId = v.Kch //课程编号
 		//info.StuID = reply.Xsxx.Xh                    //学号
@@ -225,7 +230,7 @@ func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*model.ClassInfo, []*mod
 		info.UpdateID() //课程ID
 		//-----------------------------------------------------
 		//学生与课程的映射关系
-		Sc := &model.StudentCourse{
+		Sc := &model2.StudentCourse{
 			StuID:           reply.Xsxx.Xh,
 			ClaID:           info.ID,
 			Year:            xnm,

@@ -1,8 +1,8 @@
 package data
 
 import (
-	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
+	"github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis"
 	"github.com/google/wire"
@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	Expiration        = 5 * 24 * time.Hour
-	RecycleExpiration = 2 * 30 * 24 * time.Hour
+	Expiration          = 5 * 24 * time.Hour
+	RecycleExpiration   = 2 * 30 * 24 * time.Hour
+	BlackListExpiration = 1 * time.Minute
 )
 
 // ProviderSet is data providers.
@@ -57,7 +58,7 @@ func NewDB(c *conf.Data, logfile *os.File) *gorm.DB {
 		logger3.New(logfile, "\r\n", logger3.LstdFlags),
 		logger2.Config{
 			SlowThreshold: time.Second,
-			LogLevel:      logger2.Info,
+			LogLevel:      logger2.Warn,
 			Colorful:      false,
 		},
 	)

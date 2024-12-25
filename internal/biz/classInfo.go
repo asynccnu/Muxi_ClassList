@@ -2,7 +2,7 @@ package biz
 
 import (
 	"context"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
+	"github.com/asynccnu/Muxi_ClassList/internal/model"
 )
 
 type ClassInfoDBRepo interface {
@@ -16,8 +16,7 @@ type ClassInfoDBRepo interface {
 type ClassInfoCacheRepo interface {
 	AddClaInfosToCache(ctx context.Context, key string, classInfos []*model.ClassInfo) error
 	GetClassInfosFromCache(ctx context.Context, key string) ([]*model.ClassInfo, error)
-	DeleteClassInfoFromCache(ctx context.Context, deletedId, classInfosKey string) error
-	UpdateClassInfoInCache(ctx context.Context, oldID, classInfosKey string, classInfo *model.ClassInfo, add bool) error
+	DeleteClassInfoFromCache(ctx context.Context, classInfosKey ...string) error
 }
 type ClassInfoRepo struct {
 	DB    ClassInfoDBRepo

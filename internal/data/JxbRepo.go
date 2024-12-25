@@ -3,8 +3,8 @@ package data
 import (
 	"context"
 	"fmt"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
+	"github.com/asynccnu/Muxi_ClassList/internal/model"
 )
 
 type JxbDBRepo struct {
