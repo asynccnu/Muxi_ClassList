@@ -139,14 +139,8 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, req model2.DeleteClassReq)
 	if err != nil {
 		return err
 	}
-
-	ids := make([]string, 0, len(req.ClassId))
-	for _, claID := range req.ClassId {
-		ids = append(ids, model2.GenerateSCID(req.StuID, claID, req.Year, req.Semester))
-	}
-
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
-		err := cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, ids...)
+		err := cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, req.StuID, req.Year, req.Semester, req.ClassId)
 		if err != nil {
 			return fmt.Errorf("error deleting student: %w", err)
 		}
@@ -186,7 +180,7 @@ func (cla ClassRepo) UpdateClass(ctx context.Context, req model2.UpdateClassReq)
 			return errcode.ErrClassUpdate
 		}
 		//删除原本的学生与课程的对应关系
-		err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, model2.GenerateSCID(req.StuID, req.OldClassId, req.Year, req.Semester))
+		err = cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, req.StuID, req.Year, req.Semester, []string{req.OldClassId})
 		if err != nil {
 			return errcode.ErrClassUpdate
 		}
@@ -255,7 +249,7 @@ func (cla ClassRepo) CheckAndSaveClass(ctx context.Context, stuID, year, semeste
 		//接下来就要重置，再添加了
 	}
 	err = cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
-		err := cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, delIDs...)
+		err := cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, stuID, year, semester, delIDs)
 		if err != nil {
 			return err
 		}

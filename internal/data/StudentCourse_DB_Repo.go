@@ -7,6 +7,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	"github.com/asynccnu/Muxi_ClassList/internal/model"
+	"gorm.io/gorm/clause"
 )
 
 type StudentAndCourseDBRepo struct {
@@ -26,7 +27,7 @@ func (s StudentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context
 
 	// 处理 StudentCourse
 	for _, sc := range scs {
-		if err := db.Debug().FirstOrCreate(sc).Error; err != nil {
+		if err := db.Debug().Clauses(clause.OnConflict{DoNothing: true}).Create(sc).Error; err != nil {
 			s.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:create StudentAndCourses(%v)", sc),
 				classLog.Reason, err)
 			return errcode.ErrCourseSave
@@ -37,7 +38,7 @@ func (s StudentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context
 
 func (s StudentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc *model.StudentCourse) error {
 	db := s.data.DB(ctx).Table(model.StudentCourseTableName).WithContext(ctx)
-	err := db.Debug().FirstOrCreate(sc).Error
+	err := db.Debug().Clauses(clause.OnConflict{DoNothing: true}).Create(sc).Error
 	if err != nil {
 		s.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:create StudentAndCourse(%v)", sc),
 			classLog.Reason, err)
@@ -46,15 +47,13 @@ func (s StudentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc
 	return nil
 }
 
-func (s StudentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Context, ID ...string) error {
-	if len(ID) == 0 {
+func (s StudentAndCourseDBRepo) DeleteStudentAndCourseInDB(ctx context.Context, stuID, year, semester string, claID []string) error {
+	if len(claID) == 0 {
 		return errors.New("mysql can't delete zero data")
 	}
 	db := s.data.DB(ctx).Table(model.StudentCourseTableName).WithContext(ctx)
-	err := db.Debug().Where("id IN ?", ID).Delete(&model.StudentCourse{}).Error
+	err := db.Debug().Where("year = ? AND semester = ? AND stu_id = ? AND cla_id IN ?", year, semester, stuID, claID).Delete(&model.StudentCourse{}).Error
 	if err != nil {
-		s.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:delete in %s where (id = %s)", model.StudentCourseTableName, ID),
-			classLog.Reason, err)
 		return errcode.ErrClassDelete
 	}
 	return nil
@@ -67,15 +66,6 @@ func (s StudentAndCourseDBRepo) CheckExists(ctx context.Context, xnm, xqm, stuId
 		return false
 	}
 	return true
-}
-func (s StudentAndCourseDBRepo) CheckIfManuallyAdded(ctx context.Context, classID string) bool {
-	db := s.data.Mysql.WithContext(ctx).Table(model.StudentCourseTableName)
-	IMA := false
-	err := db.Select("is_manually_added").Where("cla_id =?", classID).Limit(1).Scan(&IMA).Error
-	if err != nil {
-		return false
-	}
-	return IMA
 }
 
 func (s StudentAndCourseDBRepo) GetClassNum(ctx context.Context, stuID, year, semester string, isManuallyAdded bool) (num int64, err error) {

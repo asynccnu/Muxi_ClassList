@@ -134,7 +134,6 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuID string, info *mod
 		Semester:        info.Semester,
 		IsManuallyAdded: true,
 	}
-	sc.UpdateID()
 	if cluc.classRepo.CheckSCIdsExist(ctx, model2.CheckSCIdsExistReq{StuID: stuID, Year: info.Year, Semester: info.Semester, ClassId: info.ID}) {
 		return errcode.ErrClassIsExist
 	}

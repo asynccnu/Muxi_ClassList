@@ -199,7 +199,6 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model2.ClassInfo, []*mo
 			Semester:        xqm,
 			IsManuallyAdded: false,
 		}
-		Sc.UpdateID()               //更新ID
 		infos = append(infos, info) //添加课程
 		Scs = append(Scs, Sc)       //添加"学生与课程的映射关系"
 	}
@@ -237,7 +236,6 @@ func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*model2.ClassInfo, []*mo
 			Semester:        xqm,
 			IsManuallyAdded: false,
 		}
-		Sc.UpdateID()               //更新ID
 		infos = append(infos, info) //添加课程
 		Scs = append(Scs, Sc)       //添加"学生与课程的映射关系"
 	}

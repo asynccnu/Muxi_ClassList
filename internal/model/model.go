@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 const (
@@ -29,8 +28,4 @@ type Jxb struct {
 
 func (j *Jxb) TableName() string {
 	return JxbTableName
-}
-
-func GenerateSCID(stuId, classId, xnm, xqm string) string {
-	return fmt.Sprintf("StuAndCla:%s:%s:%s:%s", stuId, classId, xnm, xqm)
 }

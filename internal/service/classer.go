@@ -122,7 +122,6 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 	if req.DurClass != nil {
 		oldclassInfo.ClassWhen = req.GetDurClass()
 	}
-	//oldclassInfo.WeekDuration = weekDur
 	if req.Name != nil {
 		oldclassInfo.Classname = req.GetName()
 	}
@@ -143,7 +142,6 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 		Semester:        oldclassInfo.Semester,
 		IsManuallyAdded: false,
 	}
-	newSc.UpdateID()
 	err = s.Clu.UpdateClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), oldclassInfo, newSc, req.GetClassId())
 	if err != nil {
 
