@@ -8,6 +8,7 @@ import (
 	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	"sync"
+	"time"
 )
 
 type ClassUsercase struct {
@@ -49,18 +50,18 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 	if err != nil || tool.IsNeedCraw() {
 		SearchFromCCNU = true
 		////测试用的
-		cookie := "JSESSIONID=B3414E736467BF833BAA58CF866974A3"
+		//cookie := "JSESSIONID=B3414E736467BF833BAA58CF866974A3"
 
-		//timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
-		//defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
-		//
-		//cookie, err := cluc.ccnu.GetCookie(timeoutCtx,stuID)
-		//if err != nil {
-		//	//封装class
-		//	wc := model2.WrapClassInfo(classInfos)
-		//	classes, _ = wc.ConvertToClass(week)
-		//	return classes, nil
-		//}
+		timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
+		defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
+
+		cookie, err := cluc.ccnu.GetCookie(timeoutCtx, stuID)
+		if err != nil {
+			//封装class
+			wc := model2.WrapClassInfo(classInfos)
+			classes, _ = wc.ConvertToClass(week)
+			return classes, nil
+		}
 		if tool.CheckIsUndergraduate(stuID) { //针对是否是本科生，进行分类
 
 			resp, err := cluc.crawler.GetClassInfosForUndergraduate(ctx, model2.GetClassInfosForUndergraduateReq{
