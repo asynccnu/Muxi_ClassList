@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/model"
+	"gorm.io/gorm/clause"
 )
 
 type JxbDBRepo struct {
@@ -19,15 +20,19 @@ func NewJxbDBRepo(data *Data, logger classLog.Clogger) *JxbDBRepo {
 	}
 }
 
-func (j *JxbDBRepo) SaveJxb(ctx context.Context, jxbId, stuId string) error {
+func (j *JxbDBRepo) SaveJxb(ctx context.Context, stuID string, jxbID []string) error {
 	db := j.data.Mysql.Table(model.JxbTableName).WithContext(ctx)
-	jxb := &model.Jxb{
-		JxbId: jxbId,
-		StuId: stuId,
+	var jxb = make([]model.Jxb, 0, len(jxbID))
+	for _, id := range jxbID {
+		jxb = append(jxb, model.Jxb{
+			JxbId: id,
+			StuId: stuID,
+		})
 	}
-	err := db.Where("jxb_id = ? AND stu_id = ?", jxb.JxbId, jxb.StuId).FirstOrCreate(jxb).Error
+
+	err := db.Debug().Clauses(clause.OnConflict{DoNothing: true}).Create(&jxb).Error
 	if err != nil {
-		j.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:Save Jxb{jxb_id = %s, stu_id = %s} err)", jxbId, stuId),
+		j.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:Save Jxb{%+v} err)", jxb),
 			classLog.Reason, err)
 		return err
 	}

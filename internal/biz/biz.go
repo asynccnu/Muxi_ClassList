@@ -34,7 +34,7 @@ type ClassRepoProxy interface {
 	CheckClassIdIsInRecycledBin(ctx context.Context, req model2.CheckClassIdIsInRecycledBinReq) bool
 }
 type JxbRepo interface {
-	SaveJxb(ctx context.Context, jxbId, stuId string) error
+	SaveJxb(ctx context.Context, stuID string, jxbID []string) error
 	FindStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error)
 }
 type CCNUServiceProxy interface {

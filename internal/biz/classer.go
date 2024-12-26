@@ -31,7 +31,7 @@ func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo Jx
 
 func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester string, week int64) ([]*model2.Class, error) {
 	var (
-		Scs            = make([]*model2.StudentCourse, 0)
+		scs            = make([]*model2.StudentCourse, 0)
 		classes        = make([]*model2.Class, 0)
 		classInfos     = make([]*model2.ClassInfo, 0)
 		wg             sync.WaitGroup
@@ -62,47 +62,23 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			classes, _ = wc.ConvertToClass(week)
 			return classes, nil
 		}
-		if tool.CheckIsUndergraduate(stuID) { //针对是否是本科生，进行分类
 
-			resp, err := cluc.crawler.GetClassInfosForUndergraduate(ctx, model2.GetClassInfosForUndergraduateReq{
-				StuID:    stuID,
-				Year:     year,
-				Semester: semester,
-				Cookie:   cookie,
-			})
-			if resp != nil {
-				if resp.ClassInfos != nil {
-					classInfos = resp.ClassInfos
-				}
-				if resp.StudentCourses != nil {
-					Scs = resp.StudentCourses
-				}
-			}
-			if err != nil {
-				return nil, err
-			}
+		var stu Student
+		if tool.CheckIsUndergraduate(stuID) { //针对是否是本科生，进行分类
+			stu = &Undergraduate{}
 		} else {
-			resp2, err := cluc.crawler.GetClassInfoForGraduateStudent(ctx, model2.GetClassInfoForGraduateStudentReq{
-				StuID:    stuID,
-				Year:     year,
-				Semester: semester,
-				Cookie:   cookie,
-			})
-			if resp2.ClassInfos != nil {
-				classInfos = resp2.ClassInfos
-			}
-			if resp2.StudentCourses != nil {
-				Scs = resp2.StudentCourses
-			}
-			if err != nil {
-				return nil, err
-			}
+			stu = &GraduateStudent{}
 		}
+		classInfos, scs, err = stu.GetClass(ctx, stuID, year, semester, cookie, cluc.crawler)
+		if err != nil {
+			return nil, err
+		}
+
 		//存课程
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			cluc.classRepo.CheckAndSaveClass(context.Background(), stuID, year, semester, classInfos, Scs)
+			cluc.classRepo.CheckAndSaveClass(context.Background(), stuID, year, semester, classInfos, scs)
 
 		}()
 	}
@@ -113,14 +89,13 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 	if SearchFromCCNU { //如果是从CCNU那边查到的，就存下jxb_id
 		//开个协程来存取jxb
 		go func() {
-			for _, v := range jxbIDs {
-				//防止ctx因为return就被取消了，所以就改用background，因为这个存取没有精确的要求，所以可以后台完成，用户不需要感知
-				if err := cluc.jxbRepo.SaveJxb(context.Background(), v, stuID); err != nil {
-					cluc.log.Warnw(classLog.Msg, "func:SaveClasses err",
-						classLog.Param, fmt.Sprintf("%v,%v", v, stuID),
-						classLog.Reason, err)
-				}
+			//防止ctx因为return就被取消了，所以就改用background，因为这个存取没有精确的要求，所以可以后台完成，用户不需要感知
+			if err := cluc.jxbRepo.SaveJxb(context.Background(), stuID, jxbIDs); err != nil {
+				cluc.log.Warnw(classLog.Msg, "func:SaveClasses err",
+					classLog.Param, fmt.Sprintf("%v,%v", stuID, jxbIDs),
+					classLog.Reason, err)
 			}
+
 		}()
 	}
 	return classes, nil

@@ -37,10 +37,6 @@ func (ci *ClassInfo) BeforeUpdate(tx *gorm.DB) (err error) {
 	ci.UpdatedAt = time.Now()
 	return
 }
-func (ci *ClassInfo) AddWeek(week int64) {
-	ci.Weeks |= 1<<week - 1
-}
-
 func (ci *ClassInfo) SearchWeek(week int64) bool {
 	return (ci.Weeks & (1 << (week - 1))) != 0
 }
