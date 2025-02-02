@@ -5,22 +5,21 @@ go 1.22.5
 toolchain go1.22.7
 
 require (
-	github.com/asynccnu/be-api v0.0.0-20241024043006-cebcfe4da943
+	github.com/asynccnu/be-api v0.0.0-20250202091458-2048739a239d
 	github.com/envoyproxy/protoc-gen-validate v1.1.0
 	github.com/go-kratos/kratos/contrib/log/zap/v2 v2.0.0-20241014124617-8b8dc4b0f8be
 	github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20240829015636-da7356560385
 	github.com/go-kratos/kratos/v2 v2.8.1
 	github.com/go-redis/redis v6.15.9+incompatible
-	github.com/golang/mock v1.6.0
 	github.com/google/wire v0.6.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/prometheus/client_golang v1.20.2
 	go.etcd.io/etcd/client/v3 v3.5.15
 	go.uber.org/automaxprocs v1.5.3
 	go.uber.org/zap v1.27.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1
-	google.golang.org/grpc v1.66.1
-	google.golang.org/protobuf v1.34.3-0.20240816073751-94ecbc261689
+	google.golang.org/genproto/googleapis/api v0.0.0-20241015192408-796eee8c2d53
+	google.golang.org/grpc v1.69.0
+	google.golang.org/protobuf v1.36.4
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.11
 )
@@ -52,15 +51,15 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.15 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.15 // indirect
-	go.opentelemetry.io/otel v1.30.0 // indirect
-	go.opentelemetry.io/otel/metric v1.30.0 // indirect
-	go.opentelemetry.io/otel/trace v1.30.0 // indirect
+	go.opentelemetry.io/otel v1.31.0 // indirect
+	go.opentelemetry.io/otel/metric v1.31.0 // indirect
+	go.opentelemetry.io/otel/trace v1.31.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.29.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
-	golang.org/x/text v0.18.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
+	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -2,23 +2,26 @@ package service
 
 import (
 	"context"
+	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
-	pb "github.com/asynccnu/be-api/gen/proto/classlist/classlist" //此处改成了be-api中的,方便其他服务调用.
+	pb "github.com/asynccnu/be-api/gen/proto/classlist/v1" //此处改成了be-api中的,方便其他服务调用.
 	"github.com/go-kratos/kratos/v2/log"
 )
 
 type ClasserService struct {
 	pb.UnimplementedClasserServer
-	Clu ClassCtrl
-	log *log.Helper
+	clu       ClassCtrl
+	schoolday *conf.SchoolDay
+	log       *log.Helper
 }
 
-func NewClasserService(clu ClassCtrl, logger log.Logger) *ClasserService {
+func NewClasserService(clu ClassCtrl, day *conf.SchoolDay, logger log.Logger) *ClasserService {
 	return &ClasserService{
-		Clu: clu,
-		log: log.NewHelper(logger),
+		clu:       clu,
+		log:       log.NewHelper(logger),
+		schoolday: day,
 	}
 }
 
@@ -27,7 +30,7 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 		return &pb.GetClassResponse{}, errcode.ErrParam
 	}
 	pclasses := make([]*pb.Class, 0)
-	classes, err := s.Clu.GetClasses(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetWeek())
+	classes, err := s.clu.GetClasses(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetWeek())
 	if err != nil {
 		return &pb.GetClassResponse{}, err
 	}
@@ -65,7 +68,7 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 		classInfo.Credit = req.GetCredit()
 	}
 	classInfo.UpdateID()
-	err := s.Clu.AddClass(ctx, req.GetStuId(), classInfo)
+	err := s.clu.AddClass(ctx, req.GetStuId(), classInfo)
 	if err != nil {
 
 		return &pb.AddClassResponse{}, err
@@ -77,13 +80,13 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 	}, nil
 }
 func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassRequest) (*pb.DeleteClassResponse, error) {
-	exist := s.Clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetId())
+	exist := s.clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetId())
 	if !exist {
 		return &pb.DeleteClassResponse{
 			Msg: "该课程不存在",
 		}, errcode.ErrSCIDNOTEXIST
 	}
-	err := s.Clu.DeleteClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetId())
+	err := s.clu.DeleteClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetId())
 	if err != nil {
 
 		return &pb.DeleteClassResponse{}, err
@@ -93,7 +96,7 @@ func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassReq
 	}, nil
 }
 func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassRequest) (*pb.UpdateClassResponse, error) {
-	exist := s.Clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
+	exist := s.clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
 	if !exist {
 		return &pb.UpdateClassResponse{
 			Msg: "该课程不存在",
@@ -103,7 +106,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 		return &pb.UpdateClassResponse{}, errcode.ErrParam
 	}
 
-	oldclassInfo, err := s.Clu.SearchClass(ctx, req.GetClassId())
+	oldclassInfo, err := s.clu.SearchClass(ctx, req.GetClassId())
 	if err != nil {
 
 		return &pb.UpdateClassResponse{
@@ -142,7 +145,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 		Semester:        oldclassInfo.Semester,
 		IsManuallyAdded: false,
 	}
-	err = s.Clu.UpdateClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), oldclassInfo, newSc, req.GetClassId())
+	err = s.clu.UpdateClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), oldclassInfo, newSc, req.GetClassId())
 	if err != nil {
 
 		return &pb.UpdateClassResponse{
@@ -156,7 +159,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 }
 func (s *ClasserService) GetRecycleBinClassInfos(ctx context.Context, req *pb.GetRecycleBinClassRequest) (*pb.GetRecycleBinClassResponse, error) {
 
-	classInfos, err := s.Clu.GetRecycledClassInfos(ctx, req.GetStuId(), req.GetYear(), req.GetSemester())
+	classInfos, err := s.clu.GetRecycledClassInfos(ctx, req.GetStuId(), req.GetYear(), req.GetSemester())
 	if err != nil {
 		return &pb.GetRecycleBinClassResponse{}, err
 	}
@@ -175,7 +178,7 @@ func (s *ClasserService) RecoverClass(ctx context.Context, req *pb.RecoverClassR
 		}, errcode.ErrParam
 	}
 
-	err := s.Clu.RecoverClassInfo(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
+	err := s.clu.RecoverClassInfo(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
 	if err != nil {
 
 		return &pb.RecoverClassResponse{
@@ -187,7 +190,7 @@ func (s *ClasserService) RecoverClass(ctx context.Context, req *pb.RecoverClassR
 	}, nil
 }
 func (s *ClasserService) GetStuIdByJxbId(ctx context.Context, req *pb.GetStuIdByJxbIdRequest) (*pb.GetStuIdByJxbIdResponse, error) {
-	stuIds, err := s.Clu.GetStuIdsByJxbId(ctx, req.GetJxbId())
+	stuIds, err := s.clu.GetStuIdsByJxbId(ctx, req.GetJxbId())
 	if err != nil {
 
 		return &pb.GetStuIdByJxbIdResponse{}, errcode.ErrGetStuIdByJxbId
@@ -197,7 +200,7 @@ func (s *ClasserService) GetStuIdByJxbId(ctx context.Context, req *pb.GetStuIdBy
 	}, nil
 }
 func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClassInfoRequest) (*pb.GetAllClassInfoResponse, error) {
-	classInfos := s.Clu.GetAllSchoolClassInfosToOtherService(ctx, req.GetYear(), req.GetSemester())
+	classInfos := s.clu.GetAllSchoolClassInfosToOtherService(ctx, req.GetYear(), req.GetSemester())
 	pbClassInfos := make([]*pb.ClassInfo, 0)
 	for _, classInfo := range classInfos {
 		pbClassInfos = append(pbClassInfos, HandleClass(classInfo))
@@ -206,6 +209,14 @@ func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClas
 		ClassInfos: pbClassInfos,
 	}, nil
 }
+
+func (s *ClasserService) GetSchoolDay(ctx context.Context, req *pb.GetSchoolDayReq) (*pb.GetSchoolDayResp, error) {
+	return &pb.GetSchoolDayResp{
+		HolidayTime: s.schoolday.HolidayTime,
+		SchoolTime:  s.schoolday.SchoolTime,
+	}, nil
+}
+
 func HandleClass(info *model2.ClassInfo) *pb.ClassInfo {
 	return &pb.ClassInfo{
 		Day:          info.Day,

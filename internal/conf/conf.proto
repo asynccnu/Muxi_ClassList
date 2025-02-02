@@ -10,6 +10,7 @@ message Bootstrap {
   Data data = 2;
   Registry registry = 3;
   ZapLogConfigs zaplog = 4;
+  SchoolDay schoolday = 5;
 }
 
 message Server {
@@ -60,4 +61,8 @@ message ZapLogConfigs {
   int32 log_max_age = 7;         // 日志保留时间，单位: 天 (day)
   bool log_compress = 8;         // 是否压缩日志
   bool log_stdout = 9;           // 是否输出到控制台
+}
+message SchoolDay{
+  string holidayTime = 1; //放假日期(正式放假的第一天)
+  string schoolTime = 2;  //上学日期(正式上学的第一天)
 }

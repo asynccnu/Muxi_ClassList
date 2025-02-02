@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/metrics"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
@@ -76,6 +77,28 @@ func main() {
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
+
+	if err := c.Watch("schoolday.holidayTime", func(key string, value config.Value) {
+		res, err1 := value.String()
+		if err1 != nil {
+			log.Info("config change failed: %s\n", key)
+		}
+		bc.Schoolday.HolidayTime = res
+		fmt.Printf("config changed: %s = %v\n", key, value)
+	}); err != nil {
+		log.Error(err)
+	}
+	if err := c.Watch("schoolday.schoolTime", func(key string, value config.Value) {
+		res, err1 := value.String()
+		if err1 != nil {
+			log.Info("config change failed: %s\n", key)
+		}
+		bc.Schoolday.SchoolTime = res
+		fmt.Printf("config changed: %s = %v\n", key, value)
+	}); err != nil {
+		log.Error(err)
+	}
+
 	logger := classLog.Logger(bc.Zaplog)
 	logger = log.With(logger,
 		"caller", log.DefaultCaller,
@@ -90,7 +113,7 @@ func main() {
 		panic(err)
 	}
 	defer logfile.Close()
-	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Registry, logfile, logger)
+	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Registry, bc.Schoolday, logfile, logger)
 	if err != nil {
 		panic(err)
 	}

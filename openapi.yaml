@@ -25,6 +25,18 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/classer.v1.AddClassResponse'
+    /class/day/get:
+        get:
+            tags:
+                - Classer
+            operationId: Classer_GetSchoolDay
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/classer.v1.GetSchoolDayResp'
     /class/delete/{stu_id}/{year}/{semester}/{id}:
         delete:
             tags:
@@ -295,6 +307,13 @@ components:
                     items:
                         $ref: '#/components/schemas/classer.v1.ClassInfo'
                     description: 回收站的课程
+        classer.v1.GetSchoolDayResp:
+            type: object
+            properties:
+                holidayTime:
+                    type: string
+                schoolTime:
+                    type: string
         classer.v1.RecoverClassRequest:
             required:
                 - stu_id

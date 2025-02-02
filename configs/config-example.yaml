@@ -42,3 +42,7 @@ zaplog:
   log_compress: false
   # 日志是否输出到控制台
   log_stdout: false
+schoolday:  # 相关时间,格式"2025-07-05"
+  # 这个可以热更新，修改后保存即可
+  holidayTime: "2025-07-05" #放假第一天
+  schoolTime: "2025-02-17" #上学第一天

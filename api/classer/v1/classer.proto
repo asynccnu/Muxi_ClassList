@@ -49,6 +49,13 @@ service Classer {
             body: "*"
         };
     }
+    rpc GetSchoolDay(GetSchoolDayReq) returns (GetSchoolDayResp) {
+        option (google.api.http) = {
+            get: "/class/day/get"
+        };
+    };
+
+
     //获取所有课程信息(为其他服务设置的)
     rpc GetAllClassInfo(GetAllClassInfoRequest) returns (GetAllClassInfoResponse) {};
     //获取教学班中的所有学生ID
@@ -219,3 +226,10 @@ message Class {
     bool thisweek=2 [json_name = "this_week"];
 }
 
+
+message  GetSchoolDayReq {}
+
+message GetSchoolDayResp {
+    string holidayTime = 1; //形式:"2025-07-05"
+    string schoolTime = 2;  //形式:"2025-02-17"
+}

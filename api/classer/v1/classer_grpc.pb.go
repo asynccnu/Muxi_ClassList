@@ -25,6 +25,7 @@ const (
 	Classer_UpdateClass_FullMethodName             = "/classer.v1.Classer/UpdateClass"
 	Classer_GetRecycleBinClassInfos_FullMethodName = "/classer.v1.Classer/GetRecycleBinClassInfos"
 	Classer_RecoverClass_FullMethodName            = "/classer.v1.Classer/RecoverClass"
+	Classer_GetSchoolDay_FullMethodName            = "/classer.v1.Classer/GetSchoolDay"
 	Classer_GetAllClassInfo_FullMethodName         = "/classer.v1.Classer/GetAllClassInfo"
 	Classer_GetStuIdByJxbId_FullMethodName         = "/classer.v1.Classer/GetStuIdByJxbId"
 )
@@ -45,6 +46,7 @@ type ClasserClient interface {
 	GetRecycleBinClassInfos(ctx context.Context, in *GetRecycleBinClassRequest, opts ...grpc.CallOption) (*GetRecycleBinClassResponse, error)
 	// 恢复课程
 	RecoverClass(ctx context.Context, in *RecoverClassRequest, opts ...grpc.CallOption) (*RecoverClassResponse, error)
+	GetSchoolDay(ctx context.Context, in *GetSchoolDayReq, opts ...grpc.CallOption) (*GetSchoolDayResp, error)
 	// 获取所有课程信息(为其他服务设置的)
 	GetAllClassInfo(ctx context.Context, in *GetAllClassInfoRequest, opts ...grpc.CallOption) (*GetAllClassInfoResponse, error)
 	// 获取教学班中的所有学生ID
@@ -119,6 +121,16 @@ func (c *classerClient) RecoverClass(ctx context.Context, in *RecoverClassReques
 	return out, nil
 }
 
+func (c *classerClient) GetSchoolDay(ctx context.Context, in *GetSchoolDayReq, opts ...grpc.CallOption) (*GetSchoolDayResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSchoolDayResp)
+	err := c.cc.Invoke(ctx, Classer_GetSchoolDay_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *classerClient) GetAllClassInfo(ctx context.Context, in *GetAllClassInfoRequest, opts ...grpc.CallOption) (*GetAllClassInfoResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetAllClassInfoResponse)
@@ -155,6 +167,7 @@ type ClasserServer interface {
 	GetRecycleBinClassInfos(context.Context, *GetRecycleBinClassRequest) (*GetRecycleBinClassResponse, error)
 	// 恢复课程
 	RecoverClass(context.Context, *RecoverClassRequest) (*RecoverClassResponse, error)
+	GetSchoolDay(context.Context, *GetSchoolDayReq) (*GetSchoolDayResp, error)
 	// 获取所有课程信息(为其他服务设置的)
 	GetAllClassInfo(context.Context, *GetAllClassInfoRequest) (*GetAllClassInfoResponse, error)
 	// 获取教学班中的所有学生ID
@@ -186,6 +199,9 @@ func (UnimplementedClasserServer) GetRecycleBinClassInfos(context.Context, *GetR
 }
 func (UnimplementedClasserServer) RecoverClass(context.Context, *RecoverClassRequest) (*RecoverClassResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RecoverClass not implemented")
+}
+func (UnimplementedClasserServer) GetSchoolDay(context.Context, *GetSchoolDayReq) (*GetSchoolDayResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSchoolDay not implemented")
 }
 func (UnimplementedClasserServer) GetAllClassInfo(context.Context, *GetAllClassInfoRequest) (*GetAllClassInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllClassInfo not implemented")
@@ -322,6 +338,24 @@ func _Classer_RecoverClass_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Classer_GetSchoolDay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSchoolDayReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClasserServer).GetSchoolDay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Classer_GetSchoolDay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClasserServer).GetSchoolDay(ctx, req.(*GetSchoolDayReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Classer_GetAllClassInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAllClassInfoRequest)
 	if err := dec(in); err != nil {
@@ -388,6 +422,10 @@ var Classer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RecoverClass",
 			Handler:    _Classer_RecoverClass_Handler,
+		},
+		{
+			MethodName: "GetSchoolDay",
+			Handler:    _Classer_GetSchoolDay_Handler,
 		},
 		{
 			MethodName: "GetAllClassInfo",
