@@ -7,6 +7,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
+	"github.com/go-kratos/kratos/v2/log"
 	"time"
 )
 
@@ -16,14 +17,14 @@ type ClassRepo struct {
 	ClaRepo *ClassInfoRepo
 	Sac     *StudentAndCourseRepo
 	TxCtrl  Transaction //控制事务的开启
-	log     classLog.Clogger
+	log     *log.Helper
 }
 
-func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl Transaction, Sac *StudentAndCourseRepo, logger classLog.Clogger) *ClassRepo {
+func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl Transaction, Sac *StudentAndCourseRepo, logger log.Logger) *ClassRepo {
 	return &ClassRepo{
 		ClaRepo: ClaRepo,
 		Sac:     Sac,
-		log:     logger,
+		log:     log.NewHelper(logger),
 		TxCtrl:  TxCtrl,
 	}
 }
@@ -41,10 +42,7 @@ func (cla ClassRepo) SaveClasses(ctx context.Context, req model2.SaveClassReq) e
 		return nil
 	})
 	if errTx != nil {
-		cla.log.Errorw(
-			classLog.Msg, "func:InTx err",
-			classLog.Reason, errTx,
-		)
+		cla.log.Errorf("Save Class %+v failed:%v", req, errTx)
 		return errTx
 	}
 	return nil
@@ -64,14 +62,13 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, req model2.GetAllClasses
 
 	if err != nil {
 		cacheGet = false
-		cla.log.Warnw(classLog.Msg, "func:GetClassInfosFromCache err",
-			classLog.Param, fmt.Sprintf("%v", key),
-			classLog.Reason, err)
+		cla.log.Warnf("Get Class [%+v] From Cache failed: %v", req, err)
 	}
 	if !cacheGet {
 		//从数据库中获取
 		classInfos, err = cla.ClaRepo.DB.GetClassInfos(ctx, req.StuID, req.Year, req.Semester)
 		if err != nil {
+			cla.log.Errorf("Get Class [%+v] From DB failed: %v", req, err)
 			return nil, errcode.ErrClassFound
 		}
 		go func() {
@@ -117,6 +114,7 @@ func (cla ClassRepo) AddClass(ctx context.Context, req model2.AddClassReq) error
 		return nil
 	})
 	if errTx != nil {
+		cla.log.Errorf("Add Class [%+v] failed:%v", req, errTx)
 		return errTx
 	}
 	go func() {
@@ -131,12 +129,14 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, req model2.DeleteClassReq)
 
 	err := cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, GenerateClassInfosKey(req.StuID, req.Year, req.Semester))
 	if err != nil {
+		cla.log.Errorf("Delete Class [%+v] from Cache failed:%v", req, err)
 		return err
 	}
 	//删除并添加进回收站
 	recycleSetName := GenerateRecycleSetName(req.StuID, req.Year, req.Semester)
 	err = cla.Sac.Cache.RecycleClassId(ctx, recycleSetName, req.ClassId...)
 	if err != nil {
+		cla.log.Errorf("Add Class [%+v] To RecycleBin failed:%v", req, err)
 		return err
 	}
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
@@ -147,6 +147,7 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, req model2.DeleteClassReq)
 		return nil
 	})
 	if errTx != nil {
+		cla.log.Errorf("Delete Class [%+v] In DB failed:%v", req, errTx)
 		return errTx
 	}
 	return nil
@@ -192,6 +193,7 @@ func (cla ClassRepo) UpdateClass(ctx context.Context, req model2.UpdateClassReq)
 		return nil
 	})
 	if errTx != nil {
+		cla.log.Errorf("Update Class [%+v] In DB  failed:%v", req, errTx)
 		return errTx
 	}
 

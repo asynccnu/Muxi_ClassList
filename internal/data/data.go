@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/go-kratos/kratos/v2/log"
@@ -64,11 +65,12 @@ func NewDB(c *conf.Data, logfile *os.File) *gorm.DB {
 	)
 	db, err := gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{Logger: newlogger})
 	if err != nil {
-		panic("connect mysql failed")
+		panic(fmt.Sprintf("connect mysql failed:%v", err))
 	}
 	if err := db.AutoMigrate(&model.ClassInfo{}, &model.StudentCourse{}, &model.Jxb{}); err != nil {
-		panic(err)
+		panic(fmt.Sprintf("mysql auto migrate failed:%v", err))
 	}
+	log.Info("connect mysql successfully")
 	return db
 }
 
@@ -83,7 +85,8 @@ func NewRedisDB(c *conf.Data) *redis.Client {
 	})
 	_, err := rdb.Ping().Result()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("connect redis err:%v", err))
 	}
+	log.Info("connect redis successfully")
 	return rdb
 }

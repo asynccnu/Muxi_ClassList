@@ -7,6 +7,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
+	"github.com/go-kratos/kratos/v2/log"
 	"sync"
 	"time"
 )
@@ -16,16 +17,16 @@ type ClassUsercase struct {
 	crawler   ClassCrawler
 	ccnu      CCNUServiceProxy
 	jxbRepo   JxbRepo
-	log       classLog.Clogger
+	log       *log.Helper
 }
 
-func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo JxbRepo, Cs CCNUServiceProxy, logger classLog.Clogger) *ClassUsercase {
+func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo JxbRepo, Cs CCNUServiceProxy, logger log.Logger) *ClassUsercase {
 	return &ClassUsercase{
 		classRepo: classRepo,
 		crawler:   crawler,
 		jxbRepo:   JxbRepo,
 		ccnu:      Cs,
-		log:       logger,
+		log:       log.NewHelper(logger),
 	}
 }
 
@@ -60,6 +61,8 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			//封装class
 			wc := model2.WrapClassInfo(classInfos)
 			classes, _ = wc.ConvertToClass(week)
+			cluc.log.Warnw(classLog.Msg, "get cookie failed",
+				classLog.Param, fmt.Sprintf("stu_id:%s,year:%s,semester:%s", stuID, year, semester))
 			return classes, nil
 		}
 
@@ -110,6 +113,7 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuID string, info *mod
 		IsManuallyAdded: true,
 	}
 	if cluc.classRepo.CheckSCIdsExist(ctx, model2.CheckSCIdsExistReq{StuID: stuID, Year: info.Year, Semester: info.Semester, ClassId: info.ID}) {
+		cluc.log.Errorf("[%v] already exists", info)
 		return errcode.ErrClassIsExist
 	}
 	err := cluc.classRepo.AddClass(ctx, model2.AddClassReq{
@@ -132,6 +136,7 @@ func (cluc *ClassUsercase) DeleteClass(ctx context.Context, stuID, year, semeste
 		ClassId:  []string{classId},
 	})
 	if err != nil {
+		cluc.log.Errorf("delete class [%v] failed", classId)
 		return errcode.ErrClassDelete
 	}
 	return nil

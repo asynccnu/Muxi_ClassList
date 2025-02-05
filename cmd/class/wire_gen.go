@@ -43,7 +43,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(dataData, helper)
 	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, helper)
 	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
-	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, helper)
+	classRepo := biz.NewClassRepo(classInfoRepo, transaction, studentAndCourseRepo, logger)
 	crawlerCrawler := crawler.NewClassCrawler(helper)
 	jxbDBRepo := data.NewJxbDBRepo(dataData, helper)
 	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
@@ -53,7 +53,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Re
 		return nil, nil, err
 	}
 	ccnuService := client.NewCCNUService(userServiceClient)
-	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, jxbDBRepo, ccnuService, helper)
+	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, jxbDBRepo, ccnuService, logger)
 	classerService := service.NewClasserService(classUsercase, schoolDay, logger)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
 	app := newApp(logger, grpcServer, etcdRegistry)

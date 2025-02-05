@@ -25,6 +25,7 @@ func NewRegistrarServer(c *conf.Registry, logger log.Logger) *etcd.Registry {
 	// 创建ETCD客户端
 	client, err := clientv3.New(etcdCfg)
 	if err != nil {
+		logger.Log(log.LevelError, "msg", "failed to connect etcd", "err", err)
 		panic(err)
 	}
 	logger.Log(log.LevelInfo, "msg", "service registry successfully")

@@ -2,16 +2,14 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
+	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/metrics"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"os"
-
-	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
@@ -78,30 +76,29 @@ func main() {
 		panic(err)
 	}
 
-	if err := c.Watch("schoolday.holidayTime", func(key string, value config.Value) {
-		res, err1 := value.String()
-		if err1 != nil {
-			log.Info("config change failed: %s\n", key)
-		}
-		bc.Schoolday.HolidayTime = res
-		fmt.Printf("config changed: %s = %v\n", key, value)
-	}); err != nil {
-		log.Error(err)
-	}
-	if err := c.Watch("schoolday.schoolTime", func(key string, value config.Value) {
-		res, err1 := value.String()
-		if err1 != nil {
-			log.Info("config change failed: %s\n", key)
-		}
-		bc.Schoolday.SchoolTime = res
-		fmt.Printf("config changed: %s = %v\n", key, value)
-	}); err != nil {
-		log.Error(err)
-	}
+	//if err := c.Watch("schoolday.holidayTime", func(key string, value config.Value) {
+	//	res, err1 := value.String()
+	//	if err1 != nil {
+	//		log.Info("config change failed: %s\n", key)
+	//	}
+	//	bc.Schoolday.HolidayTime = res
+	//	fmt.Printf("config changed: %s = %v\n", key, value)
+	//}); err != nil {
+	//	log.Error(err)
+	//}
+	//if err := c.Watch("schoolday.schoolTime", func(key string, value config.Value) {
+	//	res, err1 := value.String()
+	//	if err1 != nil {
+	//		log.Info("config change failed: %s\n", key)
+	//	}
+	//	bc.Schoolday.SchoolTime = res
+	//	fmt.Printf("config changed: %s = %v\n", key, value)
+	//}); err != nil {
+	//	log.Error(err)
+	//}
 
 	logger := classLog.Logger(bc.Zaplog)
 	logger = log.With(logger,
-		"caller", log.DefaultCaller,
 		"service.id", id,
 		"service.name", Name,
 	)

@@ -38,7 +38,8 @@ services:
     restart: "always"
     ## 注意要挂载配置文件，不然会运行错误
     volumes:
-      - "../configs:/data/conf"
+      # 此挂载路径是工作目录为当前的deploy的情况下
+      - "../configs/config.yaml:/data/conf/config.yaml"
     ports:
       - "8000:8000"
       - "9000:9000"
