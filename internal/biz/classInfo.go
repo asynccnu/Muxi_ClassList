@@ -9,7 +9,6 @@ type ClassInfoDBRepo interface {
 	SaveClassInfosToDB(ctx context.Context, classInfo []*model.ClassInfo) error
 	AddClassInfoToDB(ctx context.Context, classInfo *model.ClassInfo) error
 	GetClassInfoFromDB(ctx context.Context, ID string) (*model.ClassInfo, error)
-	DeleteClassInfoInDB(ctx context.Context, ID string) error
 	GetClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*model.ClassInfo, error)
 }
 

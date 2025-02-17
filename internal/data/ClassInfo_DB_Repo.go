@@ -63,27 +63,6 @@ func (c ClassInfoDBRepo) GetClassInfoFromDB(ctx context.Context, ID string) (*mo
 	return cla, err
 }
 
-func (c ClassInfoDBRepo) DeleteClassInfoInDB(ctx context.Context, ID string) error {
-	db := c.data.DB(ctx).Table(model.ClassInfoTableName).WithContext(ctx)
-	err := db.Debug().Where("id =?", ID).Delete(&model.ClassInfo{}).Error
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:delete class in %s where (id = %s)", model.ClassInfoTableName, ID),
-			classLog.Reason, err)
-		return errcode.ErrClassDelete
-	}
-	return nil
-}
-
-func (c ClassInfoDBRepo) UpdateClassInfoInDB(ctx context.Context, classInfo *model.ClassInfo) error {
-	db := c.data.DB(ctx).Table(model.ClassInfoTableName).WithContext(ctx)
-	err := db.Debug().Save(classInfo).Error
-	if err != nil {
-		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:update %v in %s", classInfo, model.ClassInfoTableName),
-			classLog.Reason, err)
-		return errcode.ErrClassUpdate
-	}
-	return nil
-}
 func (c ClassInfoDBRepo) GetClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*model.ClassInfo, error) {
 	db := c.data.Mysql.WithContext(ctx)
 	var (
