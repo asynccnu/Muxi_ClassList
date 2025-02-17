@@ -68,6 +68,10 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 		}
 	}
 
+	if len(classInfos) == 0 {
+		return nil, errcode.ErrClassNotFound
+	}
+
 	wc := model2.WrapClassInfo(classInfos)
 
 	//封装class
@@ -223,11 +227,7 @@ func (cluc *ClassUsercase) getCourseFromCrawler(ctx context.Context, stuID strin
 
 	cookie, err := cluc.ccnu.GetCookie(timeoutCtx, stuID)
 	if err != nil {
-		////封装class
-		//wc := model2.WrapClassInfo(classInfos)
-		//classes, _ = wc.ConvertToClass(week)
-		//cluc.log.Warnw(classLog.Msg, "get cookie failed",
-		//	classLog.Param, fmt.Sprintf("stu_id:%s,year:%s,semester:%s", stuID, year, semester))
+		cluc.log.Errorf("Error getting cookie(stu_id:%v) from other service", stuID)
 		return nil, nil, err
 	}
 
@@ -237,5 +237,10 @@ func (cluc *ClassUsercase) getCourseFromCrawler(ctx context.Context, stuID strin
 	} else {
 		stu = &GraduateStudent{}
 	}
-	return stu.GetClass(ctx, stuID, year, semester, cookie, cluc.crawler)
+	classinfos, scs, err := stu.GetClass(ctx, stuID, year, semester, cookie, cluc.crawler)
+	if err != nil {
+		cluc.log.Errorf("craw class(stu_id:%v year:%v semester:%v cookie:%v) failed: %v", stuID, year, semester, cookie, err)
+		return nil, nil, err
+	}
+	return classinfos, scs, nil
 }

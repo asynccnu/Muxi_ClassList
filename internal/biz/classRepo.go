@@ -210,7 +210,7 @@ func (cla ClassRepo) SaveClass(ctx context.Context, stuID, year, semester string
 		return nil
 	})
 	if err != nil {
-		cla.log.Errorw(classLog.Msg, fmt.Sprintf("save class[%v\n%v] in db err:%v", classInfos, scs, err))
+		cla.log.Errorw(classLog.Msg, fmt.Sprintf("save class[%v %v] in db err:%v", classInfos, scs, err))
 	}
 
 	go func() {

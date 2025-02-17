@@ -23,6 +23,11 @@ func NewStudentAndCourseDBRepo(data *Data, logger classLog.Clogger) *StudentAndC
 }
 
 func (s StudentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context, scs []*model.StudentCourse) error {
+
+	if len(scs) == 0 {
+		return nil
+	}
+
 	db := s.data.DB(ctx).Table(model.StudentCourseTableName).WithContext(ctx)
 
 	// 处理 StudentCourse
@@ -37,6 +42,10 @@ func (s StudentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context
 }
 
 func (s StudentAndCourseDBRepo) SaveStudentAndCourseToDB(ctx context.Context, sc *model.StudentCourse) error {
+	if sc == nil {
+		return nil
+	}
+
 	db := s.data.DB(ctx).Table(model.StudentCourseTableName).WithContext(ctx)
 	err := db.Debug().Clauses(clause.OnConflict{DoNothing: true}).Create(sc).Error
 	if err != nil {

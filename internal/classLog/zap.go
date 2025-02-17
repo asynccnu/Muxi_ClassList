@@ -42,7 +42,7 @@ func NewZapLogger(c *conf.ZapLogConfigs) *zap.Logger {
 		level = logLevel["info"]
 	}
 	core := zapcore.NewCore(encoder, writeSyncer, level)
-	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(2), zap.AddStacktrace(zapcore.ErrorLevel)) // classLog.Addcaller() 输出日志打印文件和行数如： classLog/logger_test.go:33
+	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(3), zap.AddStacktrace(zapcore.ErrorLevel)) // classLog.Addcaller() 输出日志打印文件和行数如： classLog/logger_test.go:33
 	return logger
 }
 

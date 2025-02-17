@@ -23,6 +23,10 @@ func NewClassInfoDBRepo(data *Data, logger classLog.Clogger) *ClassInfoDBRepo {
 	}
 }
 func (c ClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfos []*model.ClassInfo) error {
+	if len(classInfos) == 0 {
+		return nil
+	}
+
 	db := c.data.DB(ctx).Table(model.ClassInfoTableName).WithContext(ctx)
 	err := db.Debug().Clauses(clause.OnConflict{DoNothing: true}).Create(&classInfos).Error
 	if err != nil {
@@ -34,6 +38,9 @@ func (c ClassInfoDBRepo) SaveClassInfosToDB(ctx context.Context, classInfos []*m
 }
 
 func (c ClassInfoDBRepo) AddClassInfoToDB(ctx context.Context, classInfo *model.ClassInfo) error {
+	if classInfo == nil {
+		return nil
+	}
 	db := c.data.DB(ctx).Table(model.ClassInfoTableName).WithContext(ctx)
 	err := db.Debug().Clauses(clause.OnConflict{DoNothing: true}).Create(&classInfo).Error
 	if err != nil {

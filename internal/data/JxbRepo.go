@@ -21,6 +21,10 @@ func NewJxbDBRepo(data *Data, logger classLog.Clogger) *JxbDBRepo {
 }
 
 func (j *JxbDBRepo) SaveJxb(ctx context.Context, stuID string, jxbID []string) error {
+	if len(jxbID) == 0 {
+		return nil
+	}
+
 	db := j.data.Mysql.Table(model.JxbTableName).WithContext(ctx)
 	var jxb = make([]model.Jxb, 0, len(jxbID))
 	for _, id := range jxbID {
