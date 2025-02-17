@@ -20,8 +20,7 @@ type ClassCrawler interface {
 	GetClassInfoForGraduateStudent(ctx context.Context, req model2.GetClassInfoForGraduateStudentReq) (*model2.GetClassInfoForGraduateStudentResp, error)
 }
 type ClassRepoProxy interface {
-	CheckAndSaveClass(ctx context.Context, stuID, year, semester string, classInfos []*model2.ClassInfo, scs []*model2.StudentCourse)
-	SaveClasses(ctx context.Context, req model2.SaveClassReq) error
+	SaveClass(ctx context.Context, stuID, year, semester string, classInfos []*model2.ClassInfo, scs []*model2.StudentCourse)
 	GetAllClasses(ctx context.Context, req model2.GetAllClassesReq) (*model2.GetAllClassesResp, error)
 	GetSpecificClassInfo(ctx context.Context, req model2.GetSpecificClassInfoReq) (*model2.GetSpecificClassInfoResp, error)
 	AddClass(ctx context.Context, req model2.AddClassReq) error

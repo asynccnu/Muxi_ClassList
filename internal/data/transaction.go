@@ -2,16 +2,10 @@ package data
 
 import (
 	"context"
-	"github.com/asynccnu/Muxi_ClassList/internal/biz"
 	"gorm.io/gorm"
 )
 
 type contextTxKey struct{}
-
-// NewTransaction .
-func NewTransaction(d *Data) biz.Transaction {
-	return d
-}
 
 func (d *Data) InTx(ctx context.Context, fn func(ctx context.Context) error) error {
 	return d.Mysql.WithContext(ctx).Transaction(func(tx *gorm.DB) error {

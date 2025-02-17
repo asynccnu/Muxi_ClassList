@@ -8,7 +8,6 @@ import (
 	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	"github.com/go-kratos/kratos/v2/log"
-	"sync"
 	"time"
 )
 
@@ -30,75 +29,61 @@ func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo Jx
 	}
 }
 
-func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester string, week int64) ([]*model2.Class, error) {
+func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester string, week int64, refresh bool) ([]*model2.Class, error) {
 	var (
 		scs            = make([]*model2.StudentCourse, 0)
 		classes        = make([]*model2.Class, 0)
 		classInfos     = make([]*model2.ClassInfo, 0)
-		wg             sync.WaitGroup
-		SearchFromCCNU = false
+		SearchFromCCNU = refresh
 	)
-	resp1, err := cluc.classRepo.GetAllClasses(ctx, model2.GetAllClassesReq{
-		StuID:    stuID,
-		Year:     year,
-		Semester: semester,
-	})
-	if resp1 != nil {
-		classInfos = resp1.ClassInfos
+
+	if !refresh {
+		//直接从数据库中获取课表
+		resp1, err := cluc.classRepo.GetAllClasses(ctx, model2.GetAllClassesReq{
+			StuID:    stuID,
+			Year:     year,
+			Semester: semester,
+		})
+
+		if resp1 != nil && len(resp1.ClassInfos) > 0 {
+			classInfos = resp1.ClassInfos
+		}
+
+		// 如果数据库中没有
+		// 或者时间是每周周一，就(有些特殊时间比如2,9月月末和3,10月月初，默认会优先爬取)默认有0.3的概率去爬取，这样是为了防止课表更新了，但一直会从数据库中获取，导致，课表无法更新
+		if err != nil || tool.IsNeedCraw() {
+			SearchFromCCNU = true
+
+			crawClassInfos, crawScs, err := cluc.getCourseFromCrawler(ctx, stuID, year, semester)
+			if err == nil {
+				classInfos = crawClassInfos
+				scs = crawScs
+			}
+		}
+	} else {
+		crawClassInfos, crawScs, err := cluc.getCourseFromCrawler(ctx, stuID, year, semester)
+		if err == nil {
+			classInfos = crawClassInfos
+			scs = crawScs
+		}
 	}
-	// 如果数据库中没有
-	// 或者时间是每周周一，就(有些特殊时间比如2,9月月末和3,10月月初，默认会优先爬取)默认有0.3的概率去爬取，这样是为了防止课表更新了，但一直会从数据库中获取，导致，课表无法更新
-	if err != nil || tool.IsNeedCraw() {
-		SearchFromCCNU = true
-		////测试用的
-		//cookie := "JSESSIONID=B3414E736467BF833BAA58CF866974A3"
 
-		timeoutCtx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond) // 1秒超时,防止影响
-		defer cancel()                                                        // 确保在函数返回前取消上下文，防止资源泄漏
-
-		cookie, err := cluc.ccnu.GetCookie(timeoutCtx, stuID)
-		if err != nil {
-			//封装class
-			wc := model2.WrapClassInfo(classInfos)
-			classes, _ = wc.ConvertToClass(week)
-			cluc.log.Warnw(classLog.Msg, "get cookie failed",
-				classLog.Param, fmt.Sprintf("stu_id:%s,year:%s,semester:%s", stuID, year, semester))
-			return classes, nil
-		}
-
-		var stu Student
-		if tool.CheckIsUndergraduate(stuID) { //针对是否是本科生，进行分类
-			stu = &Undergraduate{}
-		} else {
-			stu = &GraduateStudent{}
-		}
-		classInfos, scs, err = stu.GetClass(ctx, stuID, year, semester, cookie, cluc.crawler)
-		if err != nil {
-			return nil, err
-		}
-
-		//存课程
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			cluc.classRepo.CheckAndSaveClass(context.Background(), stuID, year, semester, classInfos, scs)
-
-		}()
-	}
-	//封装class
 	wc := model2.WrapClassInfo(classInfos)
+
+	//封装class
 	classes, jxbIDs := wc.ConvertToClass(week)
-	wg.Wait()
-	if SearchFromCCNU { //如果是从CCNU那边查到的，就存下jxb_id
-		//开个协程来存取jxb
+
+	if SearchFromCCNU { //如果是从CCNU那边查到的，就存储
+		//开个协程来存取
 		go func() {
+			cluc.classRepo.SaveClass(context.Background(), stuID, year, semester, classInfos, scs)
+
 			//防止ctx因为return就被取消了，所以就改用background，因为这个存取没有精确的要求，所以可以后台完成，用户不需要感知
 			if err := cluc.jxbRepo.SaveJxb(context.Background(), stuID, jxbIDs); err != nil {
-				cluc.log.Warnw(classLog.Msg, "func:SaveClasses err",
+				cluc.log.Warnw(classLog.Msg, "SaveJxb err",
 					classLog.Param, fmt.Sprintf("%v,%v", stuID, jxbIDs),
 					classLog.Reason, err)
 			}
-
 		}()
 	}
 	return classes, nil
@@ -227,4 +212,30 @@ func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Cont
 }
 func (cluc *ClassUsercase) GetStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error) {
 	return cluc.jxbRepo.FindStuIdsByJxbId(ctx, jxbId)
+}
+
+func (cluc *ClassUsercase) getCourseFromCrawler(ctx context.Context, stuID string, year string, semester string) ([]*model2.ClassInfo, []*model2.StudentCourse, error) {
+	////测试用的
+	//cookie := "JSESSIONID=B3414E736467BF833BAA58CF866974A3"
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second) // 10秒超时,防止影响
+	defer cancel()                                                 // 确保在函数返回前取消上下文，防止资源泄漏
+
+	cookie, err := cluc.ccnu.GetCookie(timeoutCtx, stuID)
+	if err != nil {
+		////封装class
+		//wc := model2.WrapClassInfo(classInfos)
+		//classes, _ = wc.ConvertToClass(week)
+		//cluc.log.Warnw(classLog.Msg, "get cookie failed",
+		//	classLog.Param, fmt.Sprintf("stu_id:%s,year:%s,semester:%s", stuID, year, semester))
+		return nil, nil, err
+	}
+
+	var stu Student
+	if tool.CheckIsUndergraduate(stuID) { //针对是否是本科生，进行分类
+		stu = &Undergraduate{}
+	} else {
+		stu = &GraduateStudent{}
+	}
+	return stu.GetClass(ctx, stuID, year, semester, cookie, cluc.crawler)
 }

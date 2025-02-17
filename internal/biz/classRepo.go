@@ -2,7 +2,6 @@ package biz
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
@@ -27,25 +26,6 @@ func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl Transaction, Sac *StudentAndCou
 		log:     log.NewHelper(logger),
 		TxCtrl:  TxCtrl,
 	}
-}
-
-func (cla ClassRepo) SaveClasses(ctx context.Context, req model2.SaveClassReq) error {
-	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
-		err1 := cla.ClaRepo.DB.SaveClassInfosToDB(ctx, req.ClassInfos)
-		if err1 != nil {
-			return fmt.Errorf("error saving class In Transaction: %w", err1)
-		}
-		err2 := cla.Sac.DB.SaveManyStudentAndCourseToDB(ctx, req.Scs)
-		if err2 != nil {
-			return fmt.Errorf("error saving studentAndcourse In Transaction: %w", err2)
-		}
-		return nil
-	})
-	if errTx != nil {
-		cla.log.Errorf("Save Class %+v failed:%v", req, errTx)
-		return errTx
-	}
-	return nil
 }
 
 func (cla ClassRepo) GetAllClasses(ctx context.Context, req model2.GetAllClassesReq) (*model2.GetAllClassesResp, error) {
@@ -80,7 +60,7 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, req model2.GetAllClasses
 	//检查classInfos是否为空
 	//如果不为空，直接返回就好
 	//如果为空，则说明没有该数据，需要去查询
-	//如果不添加此条件，如果你redis中有值为NULL的话，该值就永远不会更新，所以需要该条件
+	//如果不添加此条件，即便你redis中有值为NULL的话，也不会返回错误，就导致不会去爬取更新，所以需要该条件
 	//添加该条件，能够让查询数据库的操作效率更高，同时也保证了数据的获取
 	if len(classInfos) == 0 {
 		return nil, errcode.ErrClassNotFound
@@ -209,49 +189,13 @@ func (cla ClassRepo) UpdateClass(ctx context.Context, req model2.UpdateClassReq)
 
 // 检查下原来的课程和要添加的课程是否一致
 // 并做出相应变化
-func (cla ClassRepo) CheckAndSaveClass(ctx context.Context, stuID, year, semester string, classInfos []*model2.ClassInfo, scs []*model2.StudentCourse) {
-	resp, err := cla.GetAllClasses(ctx, model2.GetAllClassesReq{
-		StuID:    stuID,
-		Year:     year,
-		Semester: semester,
-	})
-	if err != nil && !errors.Is(err, errcode.ErrClassNotFound) {
-		return
-	}
-	param := model2.SaveClassReq{
-		StuID:      stuID,
-		Year:       year,
-		Semester:   semester,
-		ClassInfos: classInfos,
-		Scs:        scs,
-	}
-	if errors.Is(err, errcode.ErrClassNotFound) {
-		//如果数据库中没有数据，则直接添加
-		_ = cla.SaveClasses(ctx, param)
-		return
-	}
+func (cla ClassRepo) SaveClass(ctx context.Context, stuID, year, semester string, classInfos []*model2.ClassInfo, scs []*model2.StudentCourse) {
+	key := GenerateClassInfosKey(stuID, year, semester)
 
-	delIDs := make([]string, 0, len(resp.ClassInfos))
-	mp := make(map[string]struct{}, len(resp.ClassInfos))
-	for _, v := range resp.ClassInfos {
-		delIDs = append(delIDs, v.ID)
-		mp[v.ID] = struct{}{}
-	}
-	if len(delIDs) == len(classInfos) {
-		var tag bool //是否需要删除原来的关系
-		for _, v := range classInfos {
-			if _, ok := mp[v.ID]; !ok {
-				tag = true
-				break
-			}
-		}
-		if !tag {
-			return
-		}
-		//接下来就要重置，再添加了
-	}
-	err = cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
-		err := cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, stuID, year, semester, delIDs)
+	_ = cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, key)
+
+	err := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
+		err := cla.Sac.DB.DeleteStudentAndCourseByTimeFromDB(ctx, stuID, year, semester)
 		if err != nil {
 			return err
 		}
@@ -266,8 +210,15 @@ func (cla ClassRepo) CheckAndSaveClass(ctx context.Context, stuID, year, semeste
 		return nil
 	})
 	if err != nil {
-		cla.log.Errorw(classLog.Msg, fmt.Sprintf("checkAndSaveClass err:%v", err))
+		cla.log.Errorw(classLog.Msg, fmt.Sprintf("save class[%v\n%v] in db err:%v", classInfos, scs, err))
 	}
+
+	go func() {
+		//延迟双删
+		time.AfterFunc(1*time.Second, func() {
+			_ = cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, key)
+		})
+	}()
 }
 
 func (cla ClassRepo) CheckSCIdsExist(ctx context.Context, req model2.CheckSCIdsExistReq) bool {

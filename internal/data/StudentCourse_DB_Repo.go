@@ -76,3 +76,12 @@ func (s StudentAndCourseDBRepo) GetClassNum(ctx context.Context, stuID, year, se
 	}
 	return num, nil
 }
+
+func (s StudentAndCourseDBRepo) DeleteStudentAndCourseByTimeFromDB(ctx context.Context, stuID, year, semester string) error {
+	db := s.data.DB(ctx).Table(model.StudentCourseTableName).WithContext(ctx)
+	err := db.Debug().Where("year = ? AND semester = ? AND stu_id = ?", year, semester, stuID).Delete(&model.StudentCourse{}).Error
+	if err != nil {
+		return errcode.ErrClassDelete
+	}
+	return nil
+}

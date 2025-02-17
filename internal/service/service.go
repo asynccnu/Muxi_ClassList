@@ -10,7 +10,7 @@ import (
 var ProviderSet = wire.NewSet(NewClasserService)
 
 type ClassCtrl interface {
-	GetClasses(ctx context.Context, stuID, year, semester string, week int64) ([]*model.Class, error)
+	GetClasses(ctx context.Context, stuID, year, semester string, week int64, refresh bool) ([]*model.Class, error)
 	AddClass(ctx context.Context, stuID string, info *model.ClassInfo) error
 	DeleteClass(ctx context.Context, stuID, year, semester, classId string) error
 	GetRecycledClassInfos(ctx context.Context, stuID, year, semester string) ([]*model.ClassInfo, error)

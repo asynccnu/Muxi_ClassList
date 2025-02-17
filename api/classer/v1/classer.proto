@@ -72,6 +72,9 @@ message GetClassRequest {
     string semester=3 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1},(google.api.field_behavior) = REQUIRED];
     //学年
     string year=4 [json_name = "year",(validate.rules).string = {min_len: 1},(google.api.field_behavior) = REQUIRED];
+
+    //是否直接从学校官网爬取
+    bool refresh = 5;
 }
 message GetClassResponse {
     //课表

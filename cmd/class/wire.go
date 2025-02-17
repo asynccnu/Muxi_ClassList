@@ -43,5 +43,6 @@ func wireApp(*conf.Server, *conf.Data, *conf.Registry, *conf.SchoolDay, *os.File
 		wire.Bind(new(biz.ClassRepoProxy), new(*biz.ClassRepo)),
 		wire.Bind(new(biz.JxbRepo), new(*data.JxbDBRepo)),
 		wire.Bind(new(classLog.Clogger), new(*log.Helper)),
+		wire.Bind(new(biz.Transaction), new(*data.Data)),
 	))
 }

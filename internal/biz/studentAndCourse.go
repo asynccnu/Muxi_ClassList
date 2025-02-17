@@ -9,6 +9,7 @@ type StudentAndCourseDBRepo interface {
 	SaveManyStudentAndCourseToDB(ctx context.Context, scs []*model.StudentCourse) error
 	SaveStudentAndCourseToDB(ctx context.Context, sc *model.StudentCourse) error
 	DeleteStudentAndCourseInDB(ctx context.Context, stuID, year, semester string, claID []string) error
+	DeleteStudentAndCourseByTimeFromDB(ctx context.Context, stuID, year, semester string) error
 	CheckExists(ctx context.Context, xnm, xqm, stuId, classId string) bool
 	GetClassNum(ctx context.Context, stuID, year, semester string, isManuallyAdded bool) (num int64, err error)
 }

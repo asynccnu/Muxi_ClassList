@@ -4,10 +4,13 @@ import "github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 
 type WrapClassInfo []*ClassInfo
 
-func (w *WrapClassInfo) ConvertToClass(week int64) ([]*Class, []string) {
+func (w WrapClassInfo) ConvertToClass(week int64) ([]*Class, []string) {
+	if len(w) == 0 {
+		return nil, nil
+	}
 	Jxbmp := make(map[string]struct{})
-	classes := make([]*Class, 0, len(*w))
-	for _, classInfo := range *w {
+	classes := make([]*Class, 0, len(w))
+	for _, classInfo := range w {
 		thisWeek := classInfo.SearchWeek(week)
 		class := &Class{
 			Info:     classInfo,
