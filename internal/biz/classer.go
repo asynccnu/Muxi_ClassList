@@ -63,11 +63,30 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 	} else {
 		crawClassInfos, crawScs, err := cluc.getCourseFromCrawler(ctx, stuID, year, semester)
 		if err == nil {
+			SearchFromCCNU = true
 			classInfos = crawClassInfos
 			scs = crawScs
+		}else {
+			
+			SearchFromCCNU  = false
+
+			//使用本地数据库做兜底
+			resp1, err := cluc.classRepo.GetAllClasses(ctx, model2.GetAllClassesReq{
+				StuID:    stuID,
+				Year:     year,
+				Semester: semester,
+			})
+
+			if resp1 != nil && len(resp1.ClassInfos) > 0 {
+				classInfos = resp1.ClassInfos
+			}
+			if err!=nil {
+				cluc.log.Errorf("get class[%v %v %v] from DB failed: %v",stuID,year,semester,err)
+			}
 		}
 	}
 
+	//如果所有获取途径均失效，则返回错误
 	if len(classInfos) == 0 {
 		return nil, errcode.ErrClassNotFound
 	}

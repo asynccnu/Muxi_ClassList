@@ -145,7 +145,7 @@ func IsNeedCraw() bool {
 		}
 	}
 	//其他时间默认有0.3的概率
-	return currentTime.Weekday() == time.Monday && RandomBool(0.3)
+	return  RandomBool(0.3)
 }
 func isLastOrFirstWeek(t time.Time, first bool) bool {
 	// 检查当前日期是否是周一
