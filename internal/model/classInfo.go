@@ -28,11 +28,6 @@ type ClassInfo struct {
 func (ci *ClassInfo) TableName() string {
 	return ClassInfoTableName
 }
-func (ci *ClassInfo) BeforeCreate(tx *gorm.DB) (err error) {
-	ci.CreatedAt = time.Now()
-	ci.UpdatedAt = time.Now()
-	return
-}
 func (ci *ClassInfo) BeforeUpdate(tx *gorm.DB) (err error) {
 	ci.UpdatedAt = time.Now()
 	return

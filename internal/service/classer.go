@@ -8,6 +8,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	pb "github.com/asynccnu/be-api/gen/proto/classlist/v1" //此处改成了be-api中的,方便其他服务调用.
 	"github.com/go-kratos/kratos/v2/log"
+	"time"
 )
 
 type ClasserService struct {
@@ -199,13 +200,24 @@ func (s *ClasserService) GetStuIdByJxbId(ctx context.Context, req *pb.GetStuIdBy
 	}, nil
 }
 func (s *ClasserService) GetAllClassInfo(ctx context.Context, req *pb.GetAllClassInfoRequest) (*pb.GetAllClassInfoResponse, error) {
-	classInfos := s.clu.GetAllSchoolClassInfosToOtherService(ctx, req.GetYear(), req.GetSemester())
+	cursor, err := time.Parse("2006-01-02T15:04:05.000000", req.Cursor)
+	if err != nil {
+		return &pb.GetAllClassInfoResponse{}, errcode.ErrParam
+	}
+	//// 转换为 UTC 时区
+	//cursorUTC := cursor.In(time.UTC)
+
+	classInfos := s.clu.GetAllSchoolClassInfosToOtherService(ctx, req.GetYear(), req.GetSemester(), cursor)
+	if len(classInfos) == 0 {
+		return &pb.GetAllClassInfoResponse{}, nil
+	}
 	pbClassInfos := make([]*pb.ClassInfo, 0)
 	for _, classInfo := range classInfos {
 		pbClassInfos = append(pbClassInfos, HandleClass(classInfo))
 	}
 	return &pb.GetAllClassInfoResponse{
 		ClassInfos: pbClassInfos,
+		LastTime:   tool.FormatTimeInUTC(classInfos[len(classInfos)-1].CreatedAt),
 	}, nil
 }
 

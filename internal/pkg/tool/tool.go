@@ -145,7 +145,7 @@ func IsNeedCraw() bool {
 		}
 	}
 	//其他时间默认有0.3的概率
-	return  RandomBool(0.3)
+	return RandomBool(0.3)
 }
 func isLastOrFirstWeek(t time.Time, first bool) bool {
 	// 检查当前日期是否是周一
@@ -197,4 +197,16 @@ func OpenFile(path string, name string) (*os.File, error) {
 		return nil, err
 	}
 	return logfile, nil
+}
+
+// FormatTimeInUTC 将 time.Time 转换为 UTC 时区的格式化时间字符串
+func FormatTimeInUTC(t time.Time) string {
+	// 获取 UTC 时区
+	location := time.UTC
+
+	// 将时间转换为 UTC 时区
+	utcTime := t.In(location)
+
+	// 格式化并返回，精确到微秒
+	return utcTime.Format("2006-01-02T15:04:05.000000")
 }

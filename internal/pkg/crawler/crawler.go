@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Notice: 爬虫相关
@@ -141,7 +142,7 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model2.Ge
 		return nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
-	fmt.Println(resp)
+	//fmt.Println(resp)
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
 		c.log.Errorw(classLog.Msg, "json decode err",
@@ -190,6 +191,11 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model2.ClassInfo, []*mo
 		info.Weeks, _ = strconv.ParseInt(v.Oldzc, 10, 64)
 		info.JxbId = v.JxbID //教学班ID
 		info.UpdateID()      //课程ID
+
+		//为防止其时间过于紧凑
+		//选择在这里直接给时间赋值
+		info.CreatedAt, info.UpdatedAt = time.Now(), time.Now()
+
 		//-----------------------------------------------------
 		//学生与课程的映射关系
 		Sc := &model2.StudentCourse{
@@ -227,6 +233,11 @@ func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*model2.ClassInfo, []*mo
 		//添加周数
 		info.Weeks, _ = strconv.ParseInt(v.Oldzc, 10, 64)
 		info.UpdateID() //课程ID
+
+		//为防止其时间过于紧凑
+		//选择在这里直接给时间赋值
+		info.CreatedAt, info.UpdatedAt = time.Now(), time.Now()
+
 		//-----------------------------------------------------
 		//学生与课程的映射关系
 		Sc := &model2.StudentCourse{

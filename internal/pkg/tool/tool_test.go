@@ -3,6 +3,7 @@ package tool
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestCheckSY(t *testing.T) {
@@ -196,4 +197,41 @@ func TestRandomBool(t *testing.T) {
 		t.Logf("happened:%d/%d", cnt, N)
 	}
 
+}
+
+func TestFormatTimeInUTC(t *testing.T) {
+	// 定义测试用例
+	tests := []struct {
+		input    time.Time
+		expected string
+	}{
+		{
+			// 测试当前时间
+			input:    time.Date(2025, 2, 21, 10, 30, 0, 123456000, time.Local),
+			expected: "2025-02-21T02:30:00.123456",
+		},
+		{
+			// 测试没有时间差的时间
+			input:    time.Date(2025, 2, 21, 10, 30, 0, 0, time.Local),
+			expected: "2025-02-21T02:30:00.000000",
+		},
+		{
+			// 测试时间与 UTC 有时间差
+			input:    time.Date(2025, 2, 21, 10, 30, 0, 123456000, time.UTC),
+			expected: "2025-02-21T10:30:00.123456",
+		},
+	}
+
+	// 遍历测试用例并执行每个测试
+	for _, tt := range tests {
+		t.Run(tt.input.String(), func(t *testing.T) {
+			// 调用要测试的函数
+			got := FormatTimeInUTC(tt.input)
+
+			// 验证返回的结果是否与预期相符
+			if got != tt.expected {
+				t.Errorf("FormatTimeInUTC(%v) = %v; want %v", tt.input, got, tt.expected)
+			}
+		})
+	}
 }

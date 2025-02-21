@@ -227,10 +227,11 @@ func (cluc *ClassUsercase) CheckSCIdsExist(ctx context.Context, stuID, year, sem
 		ClassId:  classId,
 	})
 }
-func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context, year, semester string) []*model2.ClassInfo {
+func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context, year, semester string, cursor time.Time) []*model2.ClassInfo {
 	return cluc.classRepo.GetAllSchoolClassInfos(ctx, model2.GetAllSchoolClassInfosReq{
 		Year:     year,
 		Semester: semester,
+		Cursor:   cursor,
 	}).ClassInfos
 }
 func (cluc *ClassUsercase) GetStuIdsByJxbId(ctx context.Context, jxbId string) ([]string, error) {

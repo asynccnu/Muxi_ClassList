@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"github.com/asynccnu/Muxi_ClassList/internal/model"
+	"time"
 )
 
 type ClassInfoDBRepo interface {
@@ -10,6 +11,7 @@ type ClassInfoDBRepo interface {
 	AddClassInfoToDB(ctx context.Context, classInfo *model.ClassInfo) error
 	GetClassInfoFromDB(ctx context.Context, ID string) (*model.ClassInfo, error)
 	GetClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*model.ClassInfo, error)
+	GetAllClassInfos(ctx context.Context, xnm, xqm string, cursor time.Time) ([]*model.ClassInfo, error)
 }
 
 type ClassInfoCacheRepo interface {

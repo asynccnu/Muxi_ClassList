@@ -225,8 +225,7 @@ func (cla ClassRepo) CheckSCIdsExist(ctx context.Context, req model2.CheckSCIdsE
 	return cla.Sac.DB.CheckExists(ctx, req.Year, req.Semester, req.StuID, req.ClassId)
 }
 func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context, req model2.GetAllSchoolClassInfosReq) *model2.GetAllSchoolClassInfosResp {
-
-	classInfos, err := cla.ClaRepo.DB.GetClassInfos(ctx, "", req.Year, req.Semester)
+	classInfos, err := cla.ClaRepo.DB.GetAllClassInfos(ctx, req.Year, req.Semester, req.Cursor)
 	if err != nil {
 		return nil
 	}

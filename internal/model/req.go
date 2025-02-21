@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 //const (
 //	COMMONINFO = "commoninfo"
 //)
@@ -90,6 +92,7 @@ type GetRecycledIdsReq struct {
 type GetAllSchoolClassInfosReq struct {
 	Year     string
 	Semester string
+	Cursor   time.Time
 }
 
 //func StoreCommonInfoInCtx(ctx context.Context, info CommonInfo) context.Context {

@@ -156,12 +156,21 @@ message UpdateClassResponse {
 }
 message GetAllClassInfoRequest {
     //学年  "2024" 代表"2024-2025学年"
-    string year=3 [json_name = "year",(validate.rules).string = {min_len: 1}];
+    string year=1 [json_name = "year",(validate.rules).string = {min_len: 1}];
     //学期 "1"代表第一学期，"2"代表第二学期，"3"代表第三学期
-    string semester=4 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1}];
+    string semester=2 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1}];
+
+    //避免一次性获取太多class[每次只获取100个]
+    //最后一个课程的时间戳，时区为UTC
+    // "2023-09-03T01:01:01"
+    string cursor =3;
+
 }
 message GetAllClassInfoResponse {
     repeated ClassInfo class_infos = 1[json_name = "class_infos"];
+    //最后一个课程的时间戳，时区为UTC
+    // "2023-09-03T01:01:01"
+    string lastTime = 2;
 }
 message GetRecycleBinClassRequest{
     //学号

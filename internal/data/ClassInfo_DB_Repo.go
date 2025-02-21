@@ -9,6 +9,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"time"
 )
 
 type ClassInfoDBRepo struct {
@@ -75,77 +76,66 @@ func (c ClassInfoDBRepo) GetClassInfos(ctx context.Context, stuId, xnm, xqm stri
 	var (
 		cla = make([]*model.ClassInfo, 0)
 	)
-	if stuId != "" {
-		err := db.Table(model.ClassInfoTableName).
-			Select(
-				fmt.Sprintf("%s.id", model.ClassInfoTableName),            // 明确指定 class_info 表的 id 列
-				fmt.Sprintf("%s.jxb_id", model.ClassInfoTableName),        // 明确指定 class_info 表的 jxb_id 列
-				fmt.Sprintf("%s.day", model.ClassInfoTableName),           // 明确指定 class_info 表的 day 列
-				fmt.Sprintf("%s.teacher", model.ClassInfoTableName),       // 明确指定 class_info 表的 teacher 列
-				fmt.Sprintf("%s.where", model.ClassInfoTableName),         // 明确指定 class_info 表的 where 列
-				fmt.Sprintf("%s.class_when", model.ClassInfoTableName),    // 明确指定 class_info 表的 class_when 列
-				fmt.Sprintf("%s.week_duration", model.ClassInfoTableName), // 明确指定 class_info 表的 week_duration 列
-				fmt.Sprintf("%s.class_name", model.ClassInfoTableName),    // 明确指定 class_info 表的 class_name 列
-				fmt.Sprintf("%s.credit", model.ClassInfoTableName),        // 明确指定 class_info 表的 credit 列
-				fmt.Sprintf("%s.weeks", model.ClassInfoTableName),         // 明确指定 class_info 表的 weeks 列
-				fmt.Sprintf("%s.year", model.ClassInfoTableName),          // 明确指定 class_info 表的 year 列
-				fmt.Sprintf("%s.semester", model.ClassInfoTableName),      // 明确指定 class_info 表的 semester 列
-			).
-			Joins(fmt.Sprintf(
-				`LEFT JOIN %s ON %s.id = %s.cla_id`, model.StudentCourseTableName, model.ClassInfoTableName, model.StudentCourseTableName,
-			)).
-			Where(fmt.Sprintf(
-				`%s.stu_id = ? AND %s.year = ? AND %s.semester = ?`, model.StudentCourseTableName, model.StudentCourseTableName, model.StudentCourseTableName),
-				stuId, xnm, xqm,
-			).
-			Order(fmt.Sprintf(
-				"%s.day ASC, %s.class_when ASC", model.ClassInfoTableName, model.ClassInfoTableName,
-			)).
-			Find(&cla).Error
-		if err != nil {
-			c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (stu_id = %s,year = %s,semester = %s)",
-				stuId, xnm, xqm),
-				classLog.Reason, err)
-			return nil, err
-		}
-	} else {
-		err := db.Table(model.ClassInfoTableName).
-			Select(
-				fmt.Sprintf("%s.id", model.ClassInfoTableName),            // 明确指定 class_info 表的 id 列
-				fmt.Sprintf("%s.jxb_id", model.ClassInfoTableName),        // 明确指定 class_info 表的 jxb_id 列
-				fmt.Sprintf("%s.day", model.ClassInfoTableName),           // 明确指定 class_info 表的 day 列
-				fmt.Sprintf("%s.teacher", model.ClassInfoTableName),       // 明确指定 class_info 表的 teacher 列
-				fmt.Sprintf("%s.where", model.ClassInfoTableName),         // 明确指定 class_info 表的 where 列
-				fmt.Sprintf("%s.class_when", model.ClassInfoTableName),    // 明确指定 class_info 表的 class_when 列
-				fmt.Sprintf("%s.week_duration", model.ClassInfoTableName), // 明确指定 class_info 表的 week_duration 列
-				fmt.Sprintf("%s.class_name", model.ClassInfoTableName),    // 明确指定 class_info 表的 class_name 列
-				fmt.Sprintf("%s.credit", model.ClassInfoTableName),        // 明确指定 class_info 表的 credit 列
-				fmt.Sprintf("%s.weeks", model.ClassInfoTableName),         // 明确指定 class_info 表的 weeks 列
-				fmt.Sprintf("%s.year", model.ClassInfoTableName),          // 明确指定 class_info 表的 year 列
-				fmt.Sprintf("%s.semester", model.ClassInfoTableName),      // 明确指定 class_info 表的 semester 列
-			).
-			Joins(fmt.Sprintf(
-				`LEFT JOIN %s ON %s.id = %s.cla_id`, model.StudentCourseTableName, model.ClassInfoTableName, model.StudentCourseTableName,
-			)).
-			Where(fmt.Sprintf(
-				`%s.year = ? AND %s.semester = ?`, model.StudentCourseTableName, model.StudentCourseTableName),
-				xnm, xqm,
-			).
-			Order(fmt.Sprintf(
-				"%s.day ASC, %s.class_when ASC", model.ClassInfoTableName, model.ClassInfoTableName,
-			)).
-			Find(&cla).Error
-
-		if err != nil {
-			c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (is_manually_added = %v,year = %s,semester = %s)",
-				false, xnm, xqm),
-				classLog.Reason, err)
-			return nil, err
-		}
+	err := db.Table(model.ClassInfoTableName).
+		Select(
+			fmt.Sprintf("%s.id", model.ClassInfoTableName),            // 明确指定 class_info 表的 id 列
+			fmt.Sprintf("%s.jxb_id", model.ClassInfoTableName),        // 明确指定 class_info 表的 jxb_id 列
+			fmt.Sprintf("%s.day", model.ClassInfoTableName),           // 明确指定 class_info 表的 day 列
+			fmt.Sprintf("%s.teacher", model.ClassInfoTableName),       // 明确指定 class_info 表的 teacher 列
+			fmt.Sprintf("%s.where", model.ClassInfoTableName),         // 明确指定 class_info 表的 where 列
+			fmt.Sprintf("%s.class_when", model.ClassInfoTableName),    // 明确指定 class_info 表的 class_when 列
+			fmt.Sprintf("%s.week_duration", model.ClassInfoTableName), // 明确指定 class_info 表的 week_duration 列
+			fmt.Sprintf("%s.class_name", model.ClassInfoTableName),    // 明确指定 class_info 表的 class_name 列
+			fmt.Sprintf("%s.credit", model.ClassInfoTableName),        // 明确指定 class_info 表的 credit 列
+			fmt.Sprintf("%s.weeks", model.ClassInfoTableName),         // 明确指定 class_info 表的 weeks 列
+			fmt.Sprintf("%s.year", model.ClassInfoTableName),          // 明确指定 class_info 表的 year 列
+			fmt.Sprintf("%s.semester", model.ClassInfoTableName),      // 明确指定 class_info 表的 semester 列
+		).
+		Joins(fmt.Sprintf(
+			`LEFT JOIN %s ON %s.id = %s.cla_id`, model.StudentCourseTableName, model.ClassInfoTableName, model.StudentCourseTableName,
+		)).
+		Where(fmt.Sprintf(
+			`%s.stu_id = ? AND %s.year = ? AND %s.semester = ?`, model.StudentCourseTableName, model.StudentCourseTableName, model.StudentCourseTableName),
+			stuId, xnm, xqm,
+		).
+		Order(fmt.Sprintf(
+			"%s.day ASC, %s.class_when ASC", model.ClassInfoTableName, model.ClassInfoTableName,
+		)).
+		Find(&cla).Error
+	if err != nil {
+		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (stu_id = %s,year = %s,semester = %s)",
+			stuId, xnm, xqm),
+			classLog.Reason, err)
+		return nil, err
 	}
 	if len(cla) == 0 {
 		c.log.Warnw(classLog.Msg, fmt.Sprintf("Mysql:no class has been found,stuID:%s,year:%s,semester:%s", stuId, xnm, xqm))
 		return nil, nil
+	}
+	return cla, nil
+}
+
+func (c ClassInfoDBRepo) GetAllClassInfos(ctx context.Context, xnm, xqm string, cursor time.Time) ([]*model.ClassInfo, error) {
+	db := c.data.Mysql.WithContext(ctx)
+	var (
+		cla = make([]*model.ClassInfo, 0)
+	)
+	err := db.Table(model.ClassInfoTableName).
+		Where(fmt.Sprintf(
+			`%s.year = ? AND %s.semester = ? AND %s.created_at > ?`, model.ClassInfoTableName, model.ClassInfoTableName, model.ClassInfoTableName),
+			xnm, xqm, cursor,
+		).
+		Order(fmt.Sprintf(
+			"%s.created_at ASC", model.ClassInfoTableName,
+		)).
+		Limit(100). //最多100个
+		Find(&cla).Error
+
+	if err != nil {
+		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (is_manually_added = %v,year = %s,semester = %s)",
+			false, xnm, xqm),
+			classLog.Reason, err)
+		return nil, err
 	}
 	return cla, nil
 }
