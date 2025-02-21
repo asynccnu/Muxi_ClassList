@@ -5,7 +5,7 @@ go 1.22.5
 toolchain go1.22.7
 
 require (
-	github.com/asynccnu/be-api v0.0.0-20250217113844-60da3c8dddbe
+	github.com/asynccnu/be-api v0.0.0-20250221082740-0135b430db2b
 	github.com/envoyproxy/protoc-gen-validate v1.1.0
 	github.com/go-kratos/kratos/contrib/log/zap/v2 v2.0.0-20241014124617-8b8dc4b0f8be
 	github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20240829015636-da7356560385

@@ -26,19 +26,18 @@ func NewClasserService(clu ClassCtrl, day *conf.SchoolDay, logger log.Logger) *C
 }
 
 func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) (*pb.GetClassResponse, error) {
-	if !tool.CheckSY(req.Semester, req.Year) || req.GetWeek() <= 0 {
+	if !tool.CheckSY(req.Semester, req.Year) {
 		return &pb.GetClassResponse{}, errcode.ErrParam
 	}
 	pclasses := make([]*pb.Class, 0)
-	classes, err := s.clu.GetClasses(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetWeek(), req.GetRefresh())
+	classes, err := s.clu.GetClasses(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetRefresh())
 	if err != nil {
 		return &pb.GetClassResponse{}, err
 	}
 	for _, class := range classes {
 		pinfo := HandleClass(class.Info)
 		var pclass = &pb.Class{
-			Info:     pinfo,
-			Thisweek: class.ThisWeek,
+			Info: pinfo,
 		}
 		pclasses = append(pclasses, pclass)
 	}

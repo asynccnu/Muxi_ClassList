@@ -1,20 +1,18 @@
 package model
 
-import "github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
-
 type WrapClassInfo []*ClassInfo
 
-func (w WrapClassInfo) ConvertToClass(week int64) ([]*Class, []string) {
+func (w WrapClassInfo) ConvertToClass() ([]*Class, []string) {
 	if len(w) == 0 {
 		return nil, nil
 	}
 	Jxbmp := make(map[string]struct{})
 	classes := make([]*Class, 0, len(w))
 	for _, classInfo := range w {
-		thisWeek := classInfo.SearchWeek(week)
+		//thisWeek := classInfo.SearchWeek(week)
 		class := &Class{
-			Info:     classInfo,
-			ThisWeek: thisWeek && tool.CheckIfThisYear(classInfo.Year, classInfo.Semester),
+			Info: classInfo,
+			//ThisWeek: thisWeek && tool.CheckIfThisYear(classInfo.Year, classInfo.Semester),
 		}
 		if classInfo.JxbId != "" {
 			Jxbmp[classInfo.JxbId] = struct{}{}

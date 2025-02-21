@@ -29,7 +29,7 @@ func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo Jx
 	}
 }
 
-func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester string, week int64, refresh bool) ([]*model2.Class, error) {
+func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester string, refresh bool) ([]*model2.Class, error) {
 	var (
 		scs            = make([]*model2.StudentCourse, 0)
 		classes        = make([]*model2.Class, 0)
@@ -66,9 +66,9 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			SearchFromCCNU = true
 			classInfos = crawClassInfos
 			scs = crawScs
-		}else {
-			
-			SearchFromCCNU  = false
+		} else {
+
+			SearchFromCCNU = false
 
 			//使用本地数据库做兜底
 			resp1, err := cluc.classRepo.GetAllClasses(ctx, model2.GetAllClassesReq{
@@ -80,8 +80,8 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			if resp1 != nil && len(resp1.ClassInfos) > 0 {
 				classInfos = resp1.ClassInfos
 			}
-			if err!=nil {
-				cluc.log.Errorf("get class[%v %v %v] from DB failed: %v",stuID,year,semester,err)
+			if err != nil {
+				cluc.log.Errorf("get class[%v %v %v] from DB failed: %v", stuID, year, semester, err)
 			}
 		}
 	}
@@ -94,7 +94,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 	wc := model2.WrapClassInfo(classInfos)
 
 	//封装class
-	classes, jxbIDs := wc.ConvertToClass(week)
+	classes, jxbIDs := wc.ConvertToClass()
 
 	if SearchFromCCNU { //如果是从CCNU那边查到的，就存储
 		//开个协程来存取

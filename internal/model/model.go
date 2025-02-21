@@ -11,8 +11,8 @@ const (
 )
 
 type Class struct {
-	Info     *ClassInfo //课程信息
-	ThisWeek bool       //是否是本周
+	Info *ClassInfo //课程信息
+	//ThisWeek bool       //是否是本周
 }
 
 func (c *Class) String() string {

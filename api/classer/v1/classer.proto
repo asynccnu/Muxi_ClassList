@@ -225,8 +225,8 @@ message  ClassInfo {
 message Class {
     //课程信息
     ClassInfo info =1 [json_name = "class_info"];
-    //是否是本周
-    bool thisweek=2 [json_name = "this_week"];
+//    //是否是本周
+//    bool thisweek=2 [json_name = "this_week"];
 }
 
 

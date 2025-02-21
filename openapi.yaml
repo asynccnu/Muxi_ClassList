@@ -249,9 +249,6 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/classer.v1.ClassInfo'
                     description: 课程信息
-                this_week:
-                    type: boolean
-                    description: 是否是本周
         classer.v1.ClassInfo:
             type: object
             properties:
