@@ -88,7 +88,8 @@ func (s StudentAndCourseDBRepo) GetClassNum(ctx context.Context, stuID, year, se
 
 func (s StudentAndCourseDBRepo) DeleteStudentAndCourseByTimeFromDB(ctx context.Context, stuID, year, semester string) error {
 	db := s.data.DB(ctx).Table(model.StudentCourseTableName).WithContext(ctx)
-	err := db.Debug().Where("year = ? AND semester = ? AND stu_id = ?", year, semester, stuID).Delete(&model.StudentCourse{}).Error
+	//注意:只删除非手动添加的课程，即官方课程
+	err := db.Debug().Where("year = ? AND semester = ? AND stu_id = ? AND is_manually_added = false", year, semester, stuID).Delete(&model.StudentCourse{}).Error
 	if err != nil {
 		return errcode.ErrClassDelete
 	}
