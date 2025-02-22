@@ -6,6 +6,7 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/service"
 	v1 "github.com/asynccnu/be-api/gen/proto/classlist/v1"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
+	"github.com/go-kratos/kratos/v2/middleware/ratelimit"
 	"github.com/go-kratos/kratos/v2/middleware/validate"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -22,6 +23,7 @@ func NewGRPCServer(c *conf.Server, greeter *service.ClasserService, logger log.L
 			metrics.DelayMiddleware(),
 			logging.Server(logger),
 			validate.Validator(),
+			ratelimit.Server(),
 		),
 	}
 	if c.Grpc.Network != "" {
