@@ -12,6 +12,7 @@ type ClassInfoDBRepo interface {
 	GetClassInfoFromDB(ctx context.Context, ID string) (*model.ClassInfo, error)
 	GetClassInfos(ctx context.Context, stuId, xnm, xqm string) ([]*model.ClassInfo, error)
 	GetAllClassInfos(ctx context.Context, xnm, xqm string, cursor time.Time) ([]*model.ClassInfo, error)
+	GetAddedClassInfos(ctx context.Context, stuID, xnm, xqm string) ([]*model.ClassInfo, error)
 }
 
 type ClassInfoCacheRepo interface {

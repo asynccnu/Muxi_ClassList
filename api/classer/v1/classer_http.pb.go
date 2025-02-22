@@ -45,7 +45,7 @@ type ClasserHTTPServer interface {
 
 func RegisterClasserHTTPServer(s *http.Server, srv ClasserHTTPServer) {
 	r := s.Route("/")
-	r.GET("/class/get/{stu_id}/{year}/{semester}/{week}", _Classer_GetClass0_HTTP_Handler(srv))
+	r.GET("/class/get/{stu_id}/{year}/{semester}", _Classer_GetClass0_HTTP_Handler(srv))
 	r.POST("/class/add", _Classer_AddClass0_HTTP_Handler(srv))
 	r.DELETE("/class/delete/{stuId}/{year}/{semester}/{id}", _Classer_DeleteClass0_HTTP_Handler(srv))
 	r.PUT("/class/update", _Classer_UpdateClass0_HTTP_Handler(srv))
@@ -251,7 +251,7 @@ func (c *ClasserHTTPClientImpl) DeleteClass(ctx context.Context, in *DeleteClass
 
 func (c *ClasserHTTPClientImpl) GetClass(ctx context.Context, in *GetClassRequest, opts ...http.CallOption) (*GetClassResponse, error) {
 	var out GetClassResponse
-	pattern := "/class/get/{stu_id}/{year}/{semester}/{week}"
+	pattern := "/class/get/{stu_id}/{year}/{semester}"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationClasserGetClass))
 	opts = append(opts, http.PathTemplate(pattern))

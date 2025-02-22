@@ -232,6 +232,14 @@ func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context, req model2.GetA
 	return &model2.GetAllSchoolClassInfosResp{ClassInfos: classInfos}
 }
 
+func (cla ClassRepo) GetAddedClasses(ctx context.Context, req model2.GetAddedClassesReq) (*model2.GetAddedClassesResp, error) {
+	classInfos, err := cla.ClaRepo.DB.GetAddedClassInfos(ctx, req.StudID, req.Year, req.Semester)
+	if err != nil {
+		return nil, err
+	}
+	return &model2.GetAddedClassesResp{ClassInfos: classInfos}, nil
+}
+
 func GenerateRecycleSetName(stuId, xnm, xqm string) string {
 	return fmt.Sprintf("Recycle:%s:%s:%s", stuId, xnm, xqm)
 }

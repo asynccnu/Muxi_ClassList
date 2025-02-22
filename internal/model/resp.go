@@ -20,3 +20,6 @@ type GetRecycledIdsResp struct {
 type GetAllSchoolClassInfosResp struct {
 	ClassInfos []*ClassInfo
 }
+type GetAddedClassesResp struct {
+	ClassInfos []*ClassInfo
+}

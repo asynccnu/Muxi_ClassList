@@ -80,6 +80,9 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 	}, nil
 }
 func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassRequest) (*pb.DeleteClassResponse, error) {
+	if !tool.CheckSY(req.Semester, req.Year) {
+		return &pb.DeleteClassResponse{}, errcode.ErrParam
+	}
 	exist := s.clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetId())
 	if !exist {
 		return &pb.DeleteClassResponse{
@@ -96,6 +99,9 @@ func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassReq
 	}, nil
 }
 func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassRequest) (*pb.UpdateClassResponse, error) {
+	if !tool.CheckSY(req.Semester, req.Year) {
+		return &pb.UpdateClassResponse{}, errcode.ErrParam
+	}
 	exist := s.clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
 	if !exist {
 		return &pb.UpdateClassResponse{
@@ -158,7 +164,9 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 	}, nil
 }
 func (s *ClasserService) GetRecycleBinClassInfos(ctx context.Context, req *pb.GetRecycleBinClassRequest) (*pb.GetRecycleBinClassResponse, error) {
-
+	if !tool.CheckSY(req.Semester, req.Year) {
+		return &pb.GetRecycleBinClassResponse{}, errcode.ErrParam
+	}
 	classInfos, err := s.clu.GetRecycledClassInfos(ctx, req.GetStuId(), req.GetYear(), req.GetSemester())
 	if err != nil {
 		return &pb.GetRecycleBinClassResponse{}, err

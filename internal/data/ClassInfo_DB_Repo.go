@@ -55,11 +55,7 @@ func (c ClassInfoDBRepo) AddClassInfoToDB(ctx context.Context, classInfo *model.
 func (c ClassInfoDBRepo) GetClassInfoFromDB(ctx context.Context, ID string) (*model.ClassInfo, error) {
 	db := c.data.Mysql.Table(model.ClassInfoTableName).WithContext(ctx)
 	cla := &model.ClassInfo{}
-	err := db.Select([]string{
-		"id", "jxb_id", "day", "teacher", "where", "class_when",
-		"week_duration", "class_name", "credit", "weeks",
-		"semester", "year",
-	}).Where("id =?", ID).First(cla).Error
+	err := db.Where("id =?", ID).First(cla).Error
 	if err != nil {
 		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfo in %s where (id = %s)", model.ClassInfoTableName, ID),
 			classLog.Reason, err)
@@ -77,20 +73,6 @@ func (c ClassInfoDBRepo) GetClassInfos(ctx context.Context, stuId, xnm, xqm stri
 		cla = make([]*model.ClassInfo, 0)
 	)
 	err := db.Table(model.ClassInfoTableName).
-		Select(
-			fmt.Sprintf("%s.id", model.ClassInfoTableName),            // 明确指定 class_info 表的 id 列
-			fmt.Sprintf("%s.jxb_id", model.ClassInfoTableName),        // 明确指定 class_info 表的 jxb_id 列
-			fmt.Sprintf("%s.day", model.ClassInfoTableName),           // 明确指定 class_info 表的 day 列
-			fmt.Sprintf("%s.teacher", model.ClassInfoTableName),       // 明确指定 class_info 表的 teacher 列
-			fmt.Sprintf("%s.where", model.ClassInfoTableName),         // 明确指定 class_info 表的 where 列
-			fmt.Sprintf("%s.class_when", model.ClassInfoTableName),    // 明确指定 class_info 表的 class_when 列
-			fmt.Sprintf("%s.week_duration", model.ClassInfoTableName), // 明确指定 class_info 表的 week_duration 列
-			fmt.Sprintf("%s.class_name", model.ClassInfoTableName),    // 明确指定 class_info 表的 class_name 列
-			fmt.Sprintf("%s.credit", model.ClassInfoTableName),        // 明确指定 class_info 表的 credit 列
-			fmt.Sprintf("%s.weeks", model.ClassInfoTableName),         // 明确指定 class_info 表的 weeks 列
-			fmt.Sprintf("%s.year", model.ClassInfoTableName),          // 明确指定 class_info 表的 year 列
-			fmt.Sprintf("%s.semester", model.ClassInfoTableName),      // 明确指定 class_info 表的 semester 列
-		).
 		Joins(fmt.Sprintf(
 			`LEFT JOIN %s ON %s.id = %s.cla_id`, model.StudentCourseTableName, model.ClassInfoTableName, model.StudentCourseTableName,
 		)).
@@ -98,9 +80,6 @@ func (c ClassInfoDBRepo) GetClassInfos(ctx context.Context, stuId, xnm, xqm stri
 			`%s.stu_id = ? AND %s.year = ? AND %s.semester = ?`, model.StudentCourseTableName, model.StudentCourseTableName, model.StudentCourseTableName),
 			stuId, xnm, xqm,
 		).
-		Order(fmt.Sprintf(
-			"%s.day ASC, %s.class_when ASC", model.ClassInfoTableName, model.ClassInfoTableName,
-		)).
 		Find(&cla).Error
 	if err != nil {
 		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (stu_id = %s,year = %s,semester = %s)",
@@ -135,6 +114,26 @@ func (c ClassInfoDBRepo) GetAllClassInfos(ctx context.Context, xnm, xqm string, 
 		c.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:find classinfos  where (is_manually_added = %v,year = %s,semester = %s)",
 			false, xnm, xqm),
 			classLog.Reason, err)
+		return nil, err
+	}
+	return cla, nil
+}
+
+func (c ClassInfoDBRepo) GetAddedClassInfos(ctx context.Context, stuID, xnm, xqm string) ([]*model.ClassInfo, error) {
+	db := c.data.Mysql.WithContext(ctx)
+	var (
+		cla = make([]*model.ClassInfo, 0)
+	)
+	err := db.Table(model.ClassInfoTableName).
+		Joins(fmt.Sprintf(
+			`LEFT JOIN %s ON %s.id = %s.cla_id`, model.StudentCourseTableName, model.ClassInfoTableName, model.StudentCourseTableName,
+		)).
+		Where(fmt.Sprintf(
+			`%s.stu_id = ? AND %s.year = ? AND %s.semester = ? AND %s.is_manually_added =?`, model.StudentCourseTableName, model.StudentCourseTableName, model.StudentCourseTableName, model.StudentCourseTableName),
+			stuID, xnm, xqm, true,
+		).Find(&cla).Error
+	if err != nil {
+		c.log.Errorw(classLog.Msg, fmt.Sprintf("mysql failed to find added class_infos[%v,%v,%v]: %v", stuID, xnm, xqm, err))
 		return nil, err
 	}
 	return cla, nil

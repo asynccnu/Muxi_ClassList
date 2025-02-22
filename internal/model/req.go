@@ -95,6 +95,12 @@ type GetAllSchoolClassInfosReq struct {
 	Cursor   time.Time
 }
 
+type GetAddedClassesReq struct {
+	StudID   string
+	Year     string
+	Semester string
+}
+
 //func StoreCommonInfoInCtx(ctx context.Context, info CommonInfo) context.Context {
 //	return context.WithValue(ctx, COMMONINFO, info)
 //}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
+	"github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	"github.com/go-kratos/kratos/v2/log"
 	"time"
@@ -29,17 +29,17 @@ func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo Jx
 	}
 }
 
-func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester string, refresh bool) ([]*model2.Class, error) {
+func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester string, refresh bool) ([]*model.Class, error) {
 	var (
-		scs            = make([]*model2.StudentCourse, 0)
-		classes        = make([]*model2.Class, 0)
-		classInfos     = make([]*model2.ClassInfo, 0)
+		scs            = make([]*model.StudentCourse, 0)
+		classes        = make([]*model.Class, 0)
+		classInfos     = make([]*model.ClassInfo, 0)
 		SearchFromCCNU = refresh
 	)
 
 	if !refresh {
 		//直接从数据库中获取课表
-		resp1, err := cluc.classRepo.GetAllClasses(ctx, model2.GetAllClassesReq{
+		resp1, err := cluc.classRepo.GetAllClasses(ctx, model.GetAllClassesReq{
 			StuID:    stuID,
 			Year:     year,
 			Semester: semester,
@@ -66,12 +66,22 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			SearchFromCCNU = true
 			classInfos = crawClassInfos
 			scs = crawScs
-		} else {
 
+			//从数据库中获取手动添加的课程
+			resp2, err1 := cluc.classRepo.GetAddedClasses(ctx, model.GetAddedClassesReq{
+				StudID:   stuID,
+				Year:     year,
+				Semester: semester,
+			})
+			if err1 == nil && len(resp2.ClassInfos) > 0 {
+				classInfos = append(classInfos, resp2.ClassInfos...)
+			}
+		} else {
+			//如果爬取失败
 			SearchFromCCNU = false
 
 			//使用本地数据库做兜底
-			resp1, err := cluc.classRepo.GetAllClasses(ctx, model2.GetAllClassesReq{
+			resp1, err := cluc.classRepo.GetAllClasses(ctx, model.GetAllClassesReq{
 				StuID:    stuID,
 				Year:     year,
 				Semester: semester,
@@ -91,9 +101,9 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 		return nil, errcode.ErrClassNotFound
 	}
 
-	wc := model2.WrapClassInfo(classInfos)
+	wc := model.WrapClassInfo(classInfos)
 
-	//封装class
+	//封装class,并获取jxbID
 	classes, jxbIDs := wc.ConvertToClass()
 
 	if SearchFromCCNU { //如果是从CCNU那边查到的，就存储
@@ -112,19 +122,19 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 	return classes, nil
 }
 
-func (cluc *ClassUsercase) AddClass(ctx context.Context, stuID string, info *model2.ClassInfo) error {
-	sc := &model2.StudentCourse{
+func (cluc *ClassUsercase) AddClass(ctx context.Context, stuID string, info *model.ClassInfo) error {
+	sc := &model.StudentCourse{
 		StuID:           stuID,
 		ClaID:           info.ID,
 		Year:            info.Year,
 		Semester:        info.Semester,
 		IsManuallyAdded: true,
 	}
-	if cluc.classRepo.CheckSCIdsExist(ctx, model2.CheckSCIdsExistReq{StuID: stuID, Year: info.Year, Semester: info.Semester, ClassId: info.ID}) {
+	if cluc.classRepo.CheckSCIdsExist(ctx, model.CheckSCIdsExistReq{StuID: stuID, Year: info.Year, Semester: info.Semester, ClassId: info.ID}) {
 		cluc.log.Errorf("[%v] already exists", info)
 		return errcode.ErrClassIsExist
 	}
-	err := cluc.classRepo.AddClass(ctx, model2.AddClassReq{
+	err := cluc.classRepo.AddClass(ctx, model.AddClassReq{
 		StuID:     stuID,
 		Year:      info.Year,
 		Semester:  info.Semester,
@@ -137,7 +147,7 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuID string, info *mod
 	return nil
 }
 func (cluc *ClassUsercase) DeleteClass(ctx context.Context, stuID, year, semester, classId string) error {
-	err := cluc.classRepo.DeleteClass(ctx, model2.DeleteClassReq{
+	err := cluc.classRepo.DeleteClass(ctx, model.DeleteClassReq{
 		StuID:    stuID,
 		Year:     year,
 		Semester: semester,
@@ -149,8 +159,8 @@ func (cluc *ClassUsercase) DeleteClass(ctx context.Context, stuID, year, semeste
 	}
 	return nil
 }
-func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, year, semester string) ([]*model2.ClassInfo, error) {
-	RecycledClassIds, err := cluc.classRepo.GetRecycledIds(ctx, model2.GetRecycledIdsReq{
+func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, year, semester string) ([]*model.ClassInfo, error) {
+	RecycledClassIds, err := cluc.classRepo.GetRecycledIds(ctx, model.GetRecycledIdsReq{
 		StuID:    stuID,
 		Year:     year,
 		Semester: semester,
@@ -158,9 +168,9 @@ func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, yea
 	if err != nil {
 		return nil, err
 	}
-	classInfos := make([]*model2.ClassInfo, 0)
+	classInfos := make([]*model.ClassInfo, 0)
 	for _, classId := range RecycledClassIds.Ids {
-		resp, err := cluc.classRepo.GetSpecificClassInfo(ctx, model2.GetSpecificClassInfoReq{
+		resp, err := cluc.classRepo.GetSpecificClassInfo(ctx, model.GetSpecificClassInfoReq{
 			StuID:    stuID,
 			Year:     year,
 			Semester: semester,
@@ -173,7 +183,7 @@ func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, yea
 	return classInfos, nil
 }
 func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuID, year, semester, classId string) error {
-	exist := cluc.classRepo.CheckClassIdIsInRecycledBin(ctx, model2.CheckClassIdIsInRecycledBinReq{
+	exist := cluc.classRepo.CheckClassIdIsInRecycledBin(ctx, model.CheckClassIdIsInRecycledBinReq{
 		StuID:    stuID,
 		Year:     year,
 		Semester: semester,
@@ -190,7 +200,7 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuID, year, se
 	if err != nil {
 		return errcode.ErrRecover
 	}
-	err = cluc.classRepo.RecoverClassFromRecycledBin(ctx, model2.RecoverClassFromRecycleBinReq{
+	err = cluc.classRepo.RecoverClassFromRecycledBin(ctx, model.RecoverClassFromRecycleBinReq{
 		ClassId: classId,
 	})
 	if err != nil {
@@ -198,15 +208,15 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuID, year, se
 	}
 	return nil
 }
-func (cluc *ClassUsercase) SearchClass(ctx context.Context, classId string) (*model2.ClassInfo, error) {
-	resp, err := cluc.classRepo.GetSpecificClassInfo(ctx, model2.GetSpecificClassInfoReq{ClassId: classId})
+func (cluc *ClassUsercase) SearchClass(ctx context.Context, classId string) (*model.ClassInfo, error) {
+	resp, err := cluc.classRepo.GetSpecificClassInfo(ctx, model.GetSpecificClassInfoReq{ClassId: classId})
 	if err != nil {
 		return nil, err
 	}
 	return resp.ClassInfo, nil
 }
-func (cluc *ClassUsercase) UpdateClass(ctx context.Context, stuID, year, semester string, newClassInfo *model2.ClassInfo, newSc *model2.StudentCourse, oldClassId string) error {
-	err := cluc.classRepo.UpdateClass(ctx, model2.UpdateClassReq{
+func (cluc *ClassUsercase) UpdateClass(ctx context.Context, stuID, year, semester string, newClassInfo *model.ClassInfo, newSc *model.StudentCourse, oldClassId string) error {
+	err := cluc.classRepo.UpdateClass(ctx, model.UpdateClassReq{
 		StuID:        stuID,
 		Year:         year,
 		Semester:     semester,
@@ -220,15 +230,15 @@ func (cluc *ClassUsercase) UpdateClass(ctx context.Context, stuID, year, semeste
 	return nil
 }
 func (cluc *ClassUsercase) CheckSCIdsExist(ctx context.Context, stuID, year, semester, classId string) bool {
-	return cluc.classRepo.CheckSCIdsExist(ctx, model2.CheckSCIdsExistReq{
+	return cluc.classRepo.CheckSCIdsExist(ctx, model.CheckSCIdsExistReq{
 		StuID:    stuID,
 		Year:     year,
 		Semester: semester,
 		ClassId:  classId,
 	})
 }
-func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context, year, semester string, cursor time.Time) []*model2.ClassInfo {
-	return cluc.classRepo.GetAllSchoolClassInfos(ctx, model2.GetAllSchoolClassInfosReq{
+func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context, year, semester string, cursor time.Time) []*model.ClassInfo {
+	return cluc.classRepo.GetAllSchoolClassInfos(ctx, model.GetAllSchoolClassInfosReq{
 		Year:     year,
 		Semester: semester,
 		Cursor:   cursor,
@@ -238,9 +248,9 @@ func (cluc *ClassUsercase) GetStuIdsByJxbId(ctx context.Context, jxbId string) (
 	return cluc.jxbRepo.FindStuIdsByJxbId(ctx, jxbId)
 }
 
-func (cluc *ClassUsercase) getCourseFromCrawler(ctx context.Context, stuID string, year string, semester string) ([]*model2.ClassInfo, []*model2.StudentCourse, error) {
+func (cluc *ClassUsercase) getCourseFromCrawler(ctx context.Context, stuID string, year string, semester string) ([]*model.ClassInfo, []*model.StudentCourse, error) {
 	////测试用的
-	//cookie := "JSESSIONID=B3414E736467BF833BAA58CF866974A3"
+	//cookie := "JSESSIONID=77CCA81367438A56D3AFF46797E674A4"
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second) // 10秒超时,防止影响
 	defer cancel()                                                 // 确保在函数返回前取消上下文，防止资源泄漏

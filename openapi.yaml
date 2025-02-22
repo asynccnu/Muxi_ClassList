@@ -75,7 +75,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/classer.v1.DeleteClassResponse'
-    /class/get/{stu_id}/{year}/{semester}/{week}:
+    /class/get/{stu_id}/{year}/{semester}:
         get:
             tags:
                 - Classer
@@ -84,7 +84,10 @@ paths:
             parameters:
                 - name: stu_id
                   in: path
-                  description: 学号
+                  description: |-
+                    //周几的课表
+                        int64 week=1 [json_name = "week",(validate.rules).int64 = {gt: 0},(google.api.field_behavior) = REQUIRED];
+                    学号
                   required: true
                   schema:
                     type: string
@@ -97,12 +100,6 @@ paths:
                 - name: semester
                   in: path
                   description: 学期
-                  required: true
-                  schema:
-                    type: string
-                - name: week
-                  in: path
-                  description: 周几的课表
                   required: true
                   schema:
                     type: string

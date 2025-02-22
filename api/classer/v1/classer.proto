@@ -13,7 +13,7 @@ service Classer {
     //获取课表
     rpc GetClass (GetClassRequest) returns (GetClassResponse) {
         option (google.api.http) = {
-            get: "/class/get/{stu_id}/{year}/{semester}/{week}"
+            get: "/class/get/{stu_id}/{year}/{semester}"
         };
     }
     //添加课程
@@ -64,17 +64,17 @@ service Classer {
 }
 
 message GetClassRequest {
-    //周几的课表
-    int64 week=1 [json_name = "week",(validate.rules).int64 = {gt: 0},(google.api.field_behavior) = REQUIRED];
+//    //周几的课表
+//    int64 week=1 [json_name = "week",(validate.rules).int64 = {gt: 0},(google.api.field_behavior) = REQUIRED];
     //学号
-    string stu_id=2 [json_name = "stu_id",(validate.rules).string = {min_len: 10, max_len: 10},(google.api.field_behavior) = REQUIRED];
+    string stu_id=1 [json_name = "stu_id",(validate.rules).string = {min_len: 10, max_len: 10},(google.api.field_behavior) = REQUIRED];
     // 学期
-    string semester=3 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1},(google.api.field_behavior) = REQUIRED];
+    string semester=2 [json_name = "semester",(validate.rules).string = {min_len: 1,max_len: 1},(google.api.field_behavior) = REQUIRED];
     //学年
-    string year=4 [json_name = "year",(validate.rules).string = {min_len: 1},(google.api.field_behavior) = REQUIRED];
+    string year=3 [json_name = "year",(validate.rules).string = {min_len: 1},(google.api.field_behavior) = REQUIRED];
 
     //是否直接从学校官网爬取
-    bool refresh = 5;
+    bool refresh = 4;
 }
 message GetClassResponse {
     //课表
