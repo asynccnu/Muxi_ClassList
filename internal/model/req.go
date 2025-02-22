@@ -31,7 +31,7 @@ type SaveClassReq struct {
 	ClassInfos []*ClassInfo
 	Scs        []*StudentCourse
 }
-type GetAllClassesReq struct {
+type GetClassesFromLocalReq struct {
 	StuID    string
 	Year     string
 	Semester string

@@ -8,7 +8,7 @@ type GetClassInfoForGraduateStudentResp struct {
 	ClassInfos     []*ClassInfo
 	StudentCourses []*StudentCourse
 }
-type GetAllClassesResp struct {
+type GetClassesFromLocalResp struct {
 	ClassInfos []*ClassInfo
 }
 type GetSpecificClassInfoResp struct {

@@ -39,7 +39,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 
 	if !refresh {
 		//直接从数据库中获取课表
-		resp1, err := cluc.classRepo.GetAllClasses(ctx, model.GetAllClassesReq{
+		resp1, err := cluc.classRepo.GetClassesFromLocal(ctx, model.GetClassesFromLocalReq{
 			StuID:    stuID,
 			Year:     year,
 			Semester: semester,
@@ -81,7 +81,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			SearchFromCCNU = false
 
 			//使用本地数据库做兜底
-			resp1, err := cluc.classRepo.GetAllClasses(ctx, model.GetAllClassesReq{
+			resp1, err := cluc.classRepo.GetClassesFromLocal(ctx, model.GetClassesFromLocalReq{
 				StuID:    stuID,
 				Year:     year,
 				Semester: semester,
@@ -128,12 +128,14 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuID string, info *mod
 		ClaID:           info.ID,
 		Year:            info.Year,
 		Semester:        info.Semester,
-		IsManuallyAdded: true,
+		IsManuallyAdded: true, //手动添加课程
 	}
+	//检查是否添加的课程是否已经存在
 	if cluc.classRepo.CheckSCIdsExist(ctx, model.CheckSCIdsExistReq{StuID: stuID, Year: info.Year, Semester: info.Semester, ClassId: info.ID}) {
 		cluc.log.Errorf("[%v] already exists", info)
 		return errcode.ErrClassIsExist
 	}
+	//添加课程
 	err := cluc.classRepo.AddClass(ctx, model.AddClassReq{
 		StuID:     stuID,
 		Year:      info.Year,
@@ -147,6 +149,7 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuID string, info *mod
 	return nil
 }
 func (cluc *ClassUsercase) DeleteClass(ctx context.Context, stuID, year, semester, classId string) error {
+	//删除课程
 	err := cluc.classRepo.DeleteClass(ctx, model.DeleteClassReq{
 		StuID:    stuID,
 		Year:     year,
@@ -160,6 +163,7 @@ func (cluc *ClassUsercase) DeleteClass(ctx context.Context, stuID, year, semeste
 	return nil
 }
 func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, year, semester string) ([]*model.ClassInfo, error) {
+	//获取回收站的课程ID
 	RecycledClassIds, err := cluc.classRepo.GetRecycledIds(ctx, model.GetRecycledIdsReq{
 		StuID:    stuID,
 		Year:     year,
@@ -169,6 +173,7 @@ func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, yea
 		return nil, err
 	}
 	classInfos := make([]*model.ClassInfo, 0)
+	//从数据库中查询课程
 	for _, classId := range RecycledClassIds.Ids {
 		resp, err := cluc.classRepo.GetSpecificClassInfo(ctx, model.GetSpecificClassInfoReq{
 			StuID:    stuID,
@@ -183,6 +188,7 @@ func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, yea
 	return classInfos, nil
 }
 func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuID, year, semester, classId string) error {
+	//先检查要回复的课程ID是否存在于回收站中
 	exist := cluc.classRepo.CheckClassIdIsInRecycledBin(ctx, model.CheckClassIdIsInRecycledBinReq{
 		StuID:    stuID,
 		Year:     year,
@@ -192,6 +198,7 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuID, year, se
 	if !exist {
 		return errcode.ErrRecycleBinDoNotHaveIt
 	}
+	//获取该ID的课程信息
 	RecycledClassInfo, err := cluc.SearchClass(ctx, classId)
 	if err != nil {
 		return errcode.ErrRecover
@@ -200,6 +207,7 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuID, year, se
 	if err != nil {
 		return errcode.ErrRecover
 	}
+	//恢复对应的关系
 	err = cluc.classRepo.RecoverClassFromRecycledBin(ctx, model.RecoverClassFromRecycleBinReq{
 		ClassId: classId,
 	})

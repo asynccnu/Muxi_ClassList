@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
+	"github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/go-kratos/kratos/v2/log"
 	"time"
 )
@@ -28,7 +28,8 @@ func NewClassRepo(ClaRepo *ClassInfoRepo, TxCtrl Transaction, Sac *StudentAndCou
 	}
 }
 
-func (cla ClassRepo) GetAllClasses(ctx context.Context, req model2.GetAllClassesReq) (*model2.GetAllClassesResp, error) {
+// 从本地获取课程
+func (cla ClassRepo) GetClassesFromLocal(ctx context.Context, req model.GetClassesFromLocalReq) (*model.GetClassesFromLocalResp, error) {
 	var (
 		cacheGet = true
 		key      = GenerateClassInfosKey(req.StuID, req.Year, req.Semester)
@@ -65,16 +66,17 @@ func (cla ClassRepo) GetAllClasses(ctx context.Context, req model2.GetAllClasses
 	if len(classInfos) == 0 {
 		return nil, errcode.ErrClassNotFound
 	}
-	return &model2.GetAllClassesResp{ClassInfos: classInfos}, nil
+	return &model.GetClassesFromLocalResp{ClassInfos: classInfos}, nil
 }
-func (cla ClassRepo) GetSpecificClassInfo(ctx context.Context, req model2.GetSpecificClassInfoReq) (*model2.GetSpecificClassInfoResp, error) {
+
+func (cla ClassRepo) GetSpecificClassInfo(ctx context.Context, req model.GetSpecificClassInfoReq) (*model.GetSpecificClassInfoResp, error) {
 	classInfo, err := cla.ClaRepo.DB.GetClassInfoFromDB(ctx, req.ClassId)
 	if err != nil || classInfo == nil {
 		return nil, errcode.ErrClassNotFound
 	}
-	return &model2.GetSpecificClassInfoResp{ClassInfo: classInfo}, nil
+	return &model.GetSpecificClassInfoResp{ClassInfo: classInfo}, nil
 }
-func (cla ClassRepo) AddClass(ctx context.Context, req model2.AddClassReq) error {
+func (cla ClassRepo) AddClass(ctx context.Context, req model.AddClassReq) error {
 	err := cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, GenerateClassInfosKey(req.StuID, req.Year, req.Semester))
 	if err != nil {
 		return err
@@ -105,8 +107,8 @@ func (cla ClassRepo) AddClass(ctx context.Context, req model2.AddClassReq) error
 	}()
 	return nil
 }
-func (cla ClassRepo) DeleteClass(ctx context.Context, req model2.DeleteClassReq) error {
-
+func (cla ClassRepo) DeleteClass(ctx context.Context, req model.DeleteClassReq) error {
+	//先删除缓存信息
 	err := cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, GenerateClassInfosKey(req.StuID, req.Year, req.Semester))
 	if err != nil {
 		cla.log.Errorf("Delete Class [%+v] from Cache failed:%v", req, err)
@@ -119,6 +121,7 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, req model2.DeleteClassReq)
 		cla.log.Errorf("Add Class [%+v] To RecycleBin failed:%v", req, err)
 		return err
 	}
+	//从数据库中删除对应的关系
 	errTx := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
 		err := cla.Sac.DB.DeleteStudentAndCourseInDB(ctx, req.StuID, req.Year, req.Semester, req.ClassId)
 		if err != nil {
@@ -132,24 +135,24 @@ func (cla ClassRepo) DeleteClass(ctx context.Context, req model2.DeleteClassReq)
 	}
 	return nil
 }
-func (cla ClassRepo) GetRecycledIds(ctx context.Context, req model2.GetRecycledIdsReq) (*model2.GetRecycledIdsResp, error) {
+func (cla ClassRepo) GetRecycledIds(ctx context.Context, req model.GetRecycledIdsReq) (*model.GetRecycledIdsResp, error) {
 	recycleKey := GenerateRecycleSetName(req.StuID, req.Year, req.Semester)
 	classIds, err := cla.Sac.Cache.GetRecycledClassIds(ctx, recycleKey)
 	if err != nil {
 		return nil, err
 	}
-	return &model2.GetRecycledIdsResp{Ids: classIds}, nil
+	return &model.GetRecycledIdsResp{Ids: classIds}, nil
 }
-func (cla ClassRepo) CheckClassIdIsInRecycledBin(ctx context.Context, req model2.CheckClassIdIsInRecycledBinReq) bool {
+func (cla ClassRepo) CheckClassIdIsInRecycledBin(ctx context.Context, req model.CheckClassIdIsInRecycledBinReq) bool {
 
 	RecycledBinKey := GenerateRecycleSetName(req.StuID, req.Year, req.Semester)
 	return cla.Sac.Cache.CheckRecycleIdIsExist(ctx, RecycledBinKey, req.ClassId)
 }
-func (cla ClassRepo) RecoverClassFromRecycledBin(ctx context.Context, req model2.RecoverClassFromRecycleBinReq) error {
+func (cla ClassRepo) RecoverClassFromRecycledBin(ctx context.Context, req model.RecoverClassFromRecycleBinReq) error {
 	RecycledBinKey := GenerateRecycleSetName(req.StuID, req.Year, req.Semester)
 	return cla.Sac.Cache.RemoveClassFromRecycledBin(ctx, RecycledBinKey, req.ClassId)
 }
-func (cla ClassRepo) UpdateClass(ctx context.Context, req model2.UpdateClassReq) error {
+func (cla ClassRepo) UpdateClass(ctx context.Context, req model.UpdateClassReq) error {
 	err := cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, GenerateClassInfosKey(req.StuID, req.Year, req.Semester))
 	if err != nil {
 		return err
@@ -187,22 +190,24 @@ func (cla ClassRepo) UpdateClass(ctx context.Context, req model2.UpdateClassReq)
 	return nil
 }
 
-// 检查下原来的课程和要添加的课程是否一致
-// 并做出相应变化
-func (cla ClassRepo) SaveClass(ctx context.Context, stuID, year, semester string, classInfos []*model2.ClassInfo, scs []*model2.StudentCourse) {
+// 保存课程[删除原本的，添加新的，主要是为了防止感知不到原本的和新增的之间有差异]
+func (cla ClassRepo) SaveClass(ctx context.Context, stuID, year, semester string, classInfos []*model.ClassInfo, scs []*model.StudentCourse) {
 	key := GenerateClassInfosKey(stuID, year, semester)
 
 	_ = cla.ClaRepo.Cache.DeleteClassInfoFromCache(ctx, key)
 
 	err := cla.TxCtrl.InTx(ctx, func(ctx context.Context) error {
+		//删除对应的所有关系[只删除非手动添加的]
 		err := cla.Sac.DB.DeleteStudentAndCourseByTimeFromDB(ctx, stuID, year, semester)
 		if err != nil {
 			return err
 		}
+		//保存课程信息到db
 		err = cla.ClaRepo.DB.SaveClassInfosToDB(ctx, classInfos)
 		if err != nil {
 			return err
 		}
+		//保存新的关系
 		err = cla.Sac.DB.SaveManyStudentAndCourseToDB(ctx, scs)
 		if err != nil {
 			return err
@@ -221,23 +226,23 @@ func (cla ClassRepo) SaveClass(ctx context.Context, stuID, year, semester string
 	}()
 }
 
-func (cla ClassRepo) CheckSCIdsExist(ctx context.Context, req model2.CheckSCIdsExistReq) bool {
+func (cla ClassRepo) CheckSCIdsExist(ctx context.Context, req model.CheckSCIdsExistReq) bool {
 	return cla.Sac.DB.CheckExists(ctx, req.Year, req.Semester, req.StuID, req.ClassId)
 }
-func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context, req model2.GetAllSchoolClassInfosReq) *model2.GetAllSchoolClassInfosResp {
+func (cla ClassRepo) GetAllSchoolClassInfos(ctx context.Context, req model.GetAllSchoolClassInfosReq) *model.GetAllSchoolClassInfosResp {
 	classInfos, err := cla.ClaRepo.DB.GetAllClassInfos(ctx, req.Year, req.Semester, req.Cursor)
 	if err != nil {
 		return nil
 	}
-	return &model2.GetAllSchoolClassInfosResp{ClassInfos: classInfos}
+	return &model.GetAllSchoolClassInfosResp{ClassInfos: classInfos}
 }
 
-func (cla ClassRepo) GetAddedClasses(ctx context.Context, req model2.GetAddedClassesReq) (*model2.GetAddedClassesResp, error) {
+func (cla ClassRepo) GetAddedClasses(ctx context.Context, req model.GetAddedClassesReq) (*model.GetAddedClassesResp, error) {
 	classInfos, err := cla.ClaRepo.DB.GetAddedClassInfos(ctx, req.StudID, req.Year, req.Semester)
 	if err != nil {
 		return nil, err
 	}
-	return &model2.GetAddedClassesResp{ClassInfos: classInfos}, nil
+	return &model.GetAddedClassesResp{ClassInfos: classInfos}, nil
 }
 
 func GenerateRecycleSetName(stuId, xnm, xqm string) string {
