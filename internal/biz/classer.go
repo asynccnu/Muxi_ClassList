@@ -12,20 +12,37 @@ import (
 )
 
 type ClassUsercase struct {
-	classRepo ClassRepoProxy
-	crawler   ClassCrawler
-	ccnu      CCNUServiceProxy
-	jxbRepo   JxbRepo
-	log       *log.Helper
+	classStore           ClassStorage
+	recycleBinManager    ClassRecycleBinManager
+	manualClassManager   ManualClassManager
+	schoolClassExplorer  SchoolClassExplorer
+	associationValidator ClassAssociationValidator
+	crawler              ClassCrawler
+	ccnu                 CCNUServiceProxy
+	jxbRepo              JxbRepo
+	log                  *log.Helper
 }
 
-func NewClassUsercase(classRepo ClassRepoProxy, crawler ClassCrawler, JxbRepo JxbRepo, Cs CCNUServiceProxy, logger log.Logger) *ClassUsercase {
+func NewClassUsercase(classStore ClassStorage,
+	recycleBinManager ClassRecycleBinManager,
+	manualClassManager ManualClassManager,
+	schoolClassExplorer SchoolClassExplorer,
+	associationValidator ClassAssociationValidator,
+	crawler ClassCrawler,
+	JxbRepo JxbRepo,
+	Cs CCNUServiceProxy,
+	logger log.Logger) *ClassUsercase {
+
 	return &ClassUsercase{
-		classRepo: classRepo,
-		crawler:   crawler,
-		jxbRepo:   JxbRepo,
-		ccnu:      Cs,
-		log:       log.NewHelper(logger),
+		classStore:           classStore,
+		recycleBinManager:    recycleBinManager,
+		manualClassManager:   manualClassManager,
+		schoolClassExplorer:  schoolClassExplorer,
+		associationValidator: associationValidator,
+		crawler:              crawler,
+		jxbRepo:              JxbRepo,
+		ccnu:                 Cs,
+		log:                  log.NewHelper(logger),
 	}
 }
 
@@ -39,7 +56,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 
 	if !refresh {
 		//直接从数据库中获取课表
-		resp1, err := cluc.classRepo.GetClassesFromLocal(ctx, model.GetClassesFromLocalReq{
+		resp1, err := cluc.classStore.GetClassesFromLocal(ctx, model.GetClassesFromLocalReq{
 			StuID:    stuID,
 			Year:     year,
 			Semester: semester,
@@ -55,6 +72,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			SearchFromCCNU = true
 
 			crawClassInfos, crawScs, err := cluc.getCourseFromCrawler(ctx, stuID, year, semester)
+
 			if err == nil {
 				classInfos = crawClassInfos
 				scs = crawScs
@@ -68,7 +86,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			scs = crawScs
 
 			//从数据库中获取手动添加的课程
-			resp2, err1 := cluc.classRepo.GetAddedClasses(ctx, model.GetAddedClassesReq{
+			resp2, err1 := cluc.manualClassManager.GetAddedClasses(ctx, model.GetAddedClassesReq{
 				StudID:   stuID,
 				Year:     year,
 				Semester: semester,
@@ -81,7 +99,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			SearchFromCCNU = false
 
 			//使用本地数据库做兜底
-			resp1, err := cluc.classRepo.GetClassesFromLocal(ctx, model.GetClassesFromLocalReq{
+			resp1, err := cluc.classStore.GetClassesFromLocal(ctx, model.GetClassesFromLocalReq{
 				StuID:    stuID,
 				Year:     year,
 				Semester: semester,
@@ -109,7 +127,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 	if SearchFromCCNU { //如果是从CCNU那边查到的，就存储
 		//开个协程来存取
 		go func() {
-			cluc.classRepo.SaveClass(context.Background(), stuID, year, semester, classInfos, scs)
+			cluc.classStore.SaveClass(context.Background(), stuID, year, semester, classInfos, scs)
 
 			//防止ctx因为return就被取消了，所以就改用background，因为这个存取没有精确的要求，所以可以后台完成，用户不需要感知
 			if err := cluc.jxbRepo.SaveJxb(context.Background(), stuID, jxbIDs); err != nil {
@@ -131,12 +149,12 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuID string, info *mod
 		IsManuallyAdded: true, //手动添加课程
 	}
 	//检查是否添加的课程是否已经存在
-	if cluc.classRepo.CheckSCIdsExist(ctx, model.CheckSCIdsExistReq{StuID: stuID, Year: info.Year, Semester: info.Semester, ClassId: info.ID}) {
+	if cluc.associationValidator.CheckSCIdsExist(ctx, model.CheckSCIdsExistReq{StuID: stuID, Year: info.Year, Semester: info.Semester, ClassId: info.ID}) {
 		cluc.log.Errorf("[%v] already exists", info)
 		return errcode.ErrClassIsExist
 	}
 	//添加课程
-	err := cluc.classRepo.AddClass(ctx, model.AddClassReq{
+	err := cluc.manualClassManager.AddClass(ctx, model.AddClassReq{
 		StuID:     stuID,
 		Year:      info.Year,
 		Semester:  info.Semester,
@@ -150,7 +168,7 @@ func (cluc *ClassUsercase) AddClass(ctx context.Context, stuID string, info *mod
 }
 func (cluc *ClassUsercase) DeleteClass(ctx context.Context, stuID, year, semester, classId string) error {
 	//删除课程
-	err := cluc.classRepo.DeleteClass(ctx, model.DeleteClassReq{
+	err := cluc.classStore.DeleteClass(ctx, model.DeleteClassReq{
 		StuID:    stuID,
 		Year:     year,
 		Semester: semester,
@@ -164,7 +182,7 @@ func (cluc *ClassUsercase) DeleteClass(ctx context.Context, stuID, year, semeste
 }
 func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, year, semester string) ([]*model.ClassInfo, error) {
 	//获取回收站的课程ID
-	RecycledClassIds, err := cluc.classRepo.GetRecycledIds(ctx, model.GetRecycledIdsReq{
+	RecycledClassIds, err := cluc.recycleBinManager.GetRecycledIds(ctx, model.GetRecycledIdsReq{
 		StuID:    stuID,
 		Year:     year,
 		Semester: semester,
@@ -175,7 +193,7 @@ func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, yea
 	classInfos := make([]*model.ClassInfo, 0)
 	//从数据库中查询课程
 	for _, classId := range RecycledClassIds.Ids {
-		resp, err := cluc.classRepo.GetSpecificClassInfo(ctx, model.GetSpecificClassInfoReq{
+		resp, err := cluc.classStore.GetSpecificClassInfo(ctx, model.GetSpecificClassInfoReq{
 			StuID:    stuID,
 			Year:     year,
 			Semester: semester,
@@ -189,7 +207,7 @@ func (cluc *ClassUsercase) GetRecycledClassInfos(ctx context.Context, stuID, yea
 }
 func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuID, year, semester, classId string) error {
 	//先检查要回复的课程ID是否存在于回收站中
-	exist := cluc.classRepo.CheckClassIdIsInRecycledBin(ctx, model.CheckClassIdIsInRecycledBinReq{
+	exist := cluc.recycleBinManager.CheckClassIdIsInRecycledBin(ctx, model.CheckClassIdIsInRecycledBinReq{
 		StuID:    stuID,
 		Year:     year,
 		Semester: semester,
@@ -208,7 +226,7 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuID, year, se
 		return errcode.ErrRecover
 	}
 	//恢复对应的关系
-	err = cluc.classRepo.RecoverClassFromRecycledBin(ctx, model.RecoverClassFromRecycleBinReq{
+	err = cluc.recycleBinManager.RecoverClassFromRecycledBin(ctx, model.RecoverClassFromRecycleBinReq{
 		ClassId: classId,
 	})
 	if err != nil {
@@ -217,14 +235,14 @@ func (cluc *ClassUsercase) RecoverClassInfo(ctx context.Context, stuID, year, se
 	return nil
 }
 func (cluc *ClassUsercase) SearchClass(ctx context.Context, classId string) (*model.ClassInfo, error) {
-	resp, err := cluc.classRepo.GetSpecificClassInfo(ctx, model.GetSpecificClassInfoReq{ClassId: classId})
+	resp, err := cluc.classStore.GetSpecificClassInfo(ctx, model.GetSpecificClassInfoReq{ClassId: classId})
 	if err != nil {
 		return nil, err
 	}
 	return resp.ClassInfo, nil
 }
 func (cluc *ClassUsercase) UpdateClass(ctx context.Context, stuID, year, semester string, newClassInfo *model.ClassInfo, newSc *model.StudentCourse, oldClassId string) error {
-	err := cluc.classRepo.UpdateClass(ctx, model.UpdateClassReq{
+	err := cluc.classStore.UpdateClass(ctx, model.UpdateClassReq{
 		StuID:        stuID,
 		Year:         year,
 		Semester:     semester,
@@ -238,7 +256,7 @@ func (cluc *ClassUsercase) UpdateClass(ctx context.Context, stuID, year, semeste
 	return nil
 }
 func (cluc *ClassUsercase) CheckSCIdsExist(ctx context.Context, stuID, year, semester, classId string) bool {
-	return cluc.classRepo.CheckSCIdsExist(ctx, model.CheckSCIdsExistReq{
+	return cluc.associationValidator.CheckSCIdsExist(ctx, model.CheckSCIdsExistReq{
 		StuID:    stuID,
 		Year:     year,
 		Semester: semester,
@@ -246,7 +264,7 @@ func (cluc *ClassUsercase) CheckSCIdsExist(ctx context.Context, stuID, year, sem
 	})
 }
 func (cluc *ClassUsercase) GetAllSchoolClassInfosToOtherService(ctx context.Context, year, semester string, cursor time.Time) []*model.ClassInfo {
-	return cluc.classRepo.GetAllSchoolClassInfos(ctx, model.GetAllSchoolClassInfosReq{
+	return cluc.schoolClassExplorer.GetAllSchoolClassInfos(ctx, model.GetAllSchoolClassInfosReq{
 		Year:     year,
 		Semester: semester,
 		Cursor:   cursor,
@@ -275,6 +293,7 @@ func (cluc *ClassUsercase) getCourseFromCrawler(ctx context.Context, stuID strin
 	} else {
 		stu = &GraduateStudent{}
 	}
+
 	classinfos, scs, err := stu.GetClass(ctx, stuID, year, semester, cookie, cluc.crawler)
 	if err != nil {
 		cluc.log.Errorf("craw class(stu_id:%v year:%v semester:%v cookie:%v) failed: %v", stuID, year, semester, cookie, err)
