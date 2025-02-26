@@ -36,9 +36,9 @@ func (ci *ClassDO) TableName() string {
 	return ClassDOTableName
 }
 
-func NewClass(classBiz bizmodel.ClassBiz) ClassDO {
+func NewClass(classBiz *bizmodel.ClassBiz) *ClassDO {
 	createdTime := time.Now()
-	classdo := ClassDO{
+	classdo := &ClassDO{
 		Day:          classBiz.Day,
 		Teacher:      classBiz.Teacher,
 		Where:        classBiz.Where,
@@ -56,9 +56,12 @@ func NewClass(classBiz bizmodel.ClassBiz) ClassDO {
 	return classdo
 }
 
-func BatchNewClasses(classBiz []bizmodel.ClassBiz) []ClassDO {
-	classdos := make([]ClassDO, 0, len(classBiz))
+func BatchNewClasses(classBiz []*bizmodel.ClassBiz) []*ClassDO {
+	classdos := make([]*ClassDO, 0, len(classBiz))
 	for _, class := range classBiz {
+		if class == nil {
+			continue
+		}
 		classdos = append(classdos, NewClass(class))
 	}
 	return classdos

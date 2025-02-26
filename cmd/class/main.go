@@ -2,12 +2,11 @@ package main
 
 import (
 	"flag"
-	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/metrics"
-	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/prometheus/client_golang/prometheus"
 	"os"
 
@@ -51,15 +50,15 @@ func newApp(logger log.Logger, gs *grpc.Server, r *etcd.Registry) *kratos.App {
 
 func main() {
 	flag.Parse()
-	//logger := log.With(log.NewStdLogger(os.Stdout),
-	//	"ts", log.DefaultTimestamp,
-	//	"caller", log.DefaultCaller,
-	//	"service.id", id,
-	//	"service.name", Name,
-	//	"service.version", Version,
-	//	"trace.id", tracing.TraceID(),
-	//	"span.id", tracing.SpanID(),
-	//)
+	logger := log.With(log.NewStdLogger(os.Stdout),
+		"ts", log.DefaultTimestamp,
+		"caller", log.DefaultCaller,
+		"service.id", id,
+		"service.name", Name,
+		"service.version", Version,
+		"trace.id", tracing.TraceID(),
+		"span.id", tracing.SpanID(),
+	)
 	c := config.New(
 		config.WithSource(
 			file.NewSource(flagconf),
@@ -76,41 +75,7 @@ func main() {
 		panic(err)
 	}
 
-	//if err := c.Watch("schoolday.holidayTime", func(key string, value config.Value) {
-	//	res, err1 := value.String()
-	//	if err1 != nil {
-	//		log.Info("config change failed: %s\n", key)
-	//	}
-	//	bc.Schoolday.HolidayTime = res
-	//	fmt.Printf("config changed: %s = %v\n", key, value)
-	//}); err != nil {
-	//	log.Error(err)
-	//}
-	//if err := c.Watch("schoolday.schoolTime", func(key string, value config.Value) {
-	//	res, err1 := value.String()
-	//	if err1 != nil {
-	//		log.Info("config change failed: %s\n", key)
-	//	}
-	//	bc.Schoolday.SchoolTime = res
-	//	fmt.Printf("config changed: %s = %v\n", key, value)
-	//}); err != nil {
-	//	log.Error(err)
-	//}
-
-	logger := classLog.Logger(bc.Zaplog)
-	logger = log.With(logger,
-		"service.id", id,
-		"service.name", Name,
-	)
-	//gorm的日志文件
-	//在main函数中声明,程序结束执行Close
-	//防止只有连接数据库的时候，才会将sql语句写入
-	logfile, err := tool.OpenFile(bc.Data.Database.LogPath, bc.Data.Database.LogFileName)
-	if err != nil {
-		panic(err)
-	}
-	defer logfile.Close()
-	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Registry, bc.Schoolday, logfile, logger)
+	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Registry, bc.Schoolday, logger)
 	if err != nil {
 		panic(err)
 	}

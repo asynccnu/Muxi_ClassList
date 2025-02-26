@@ -2,26 +2,24 @@ package service
 
 import (
 	"context"
+	"github.com/asynccnu/Muxi_ClassList/internal/biz"
+	bizmodel "github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
-	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	pb "github.com/asynccnu/be-api/gen/proto/classlist/v1" //此处改成了be-api中的,方便其他服务调用.
-	"github.com/go-kratos/kratos/v2/log"
 	"time"
 )
 
 type ClasserService struct {
 	pb.UnimplementedClasserServer
-	clu       ClassCtrl
+	clu       *biz.ClassUsecase
 	schoolday *conf.SchoolDay
-	log       *log.Helper
 }
 
-func NewClasserService(clu ClassCtrl, day *conf.SchoolDay, logger log.Logger) *ClasserService {
+func NewClasserService(clu *biz.ClassUsecase, day *conf.SchoolDay) *ClasserService {
 	return &ClasserService{
 		clu:       clu,
-		log:       log.NewHelper(logger),
 		schoolday: day,
 	}
 }
@@ -36,7 +34,7 @@ func (s *ClasserService) GetClass(ctx context.Context, req *pb.GetClassRequest) 
 		return &pb.GetClassResponse{}, err
 	}
 	for _, class := range classes {
-		pinfo := HandleClass(class.Info)
+		pinfo := HandleClass(class)
 		var pclass = &pb.Class{
 			Info: pinfo,
 		}
@@ -51,7 +49,7 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 		return &pb.AddClassResponse{}, errcode.ErrParam
 	}
 	weekDur := tool.FormatWeeks(tool.ParseWeeks(req.Weeks))
-	var classInfo = &model2.ClassInfo{
+	var classInfo = &bizmodel.ClassBiz{
 		Day:          req.GetDay(),
 		Teacher:      req.GetTeacher(),
 		Where:        req.GetWhere(),
@@ -62,13 +60,11 @@ func (s *ClasserService) AddClass(ctx context.Context, req *pb.AddClassRequest) 
 		Weeks:        req.GetWeeks(),
 		Semester:     req.GetSemester(),
 		Year:         req.GetYear(),
-		JxbId:        "unavailable",
 	}
 	if req.Credit != nil {
 		classInfo.Credit = req.GetCredit()
 	}
-	classInfo.UpdateID()
-	err := s.clu.AddClass(ctx, req.GetStuId(), classInfo)
+	err := s.clu.AddClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), classInfo)
 	if err != nil {
 
 		return &pb.AddClassResponse{}, err
@@ -83,12 +79,6 @@ func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassReq
 	if !tool.CheckSY(req.Semester, req.Year) {
 		return &pb.DeleteClassResponse{}, errcode.ErrParam
 	}
-	exist := s.clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetId())
-	if !exist {
-		return &pb.DeleteClassResponse{
-			Msg: "该课程不存在",
-		}, errcode.ErrSCIDNOTEXIST
-	}
 	err := s.clu.DeleteClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetId())
 	if err != nil {
 
@@ -99,61 +89,45 @@ func (s *ClasserService) DeleteClass(ctx context.Context, req *pb.DeleteClassReq
 	}, nil
 }
 func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassRequest) (*pb.UpdateClassResponse, error) {
-	if !tool.CheckSY(req.Semester, req.Year) {
-		return &pb.UpdateClassResponse{}, errcode.ErrParam
-	}
-	exist := s.clu.CheckSCIdsExist(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId())
-	if !exist {
-		return &pb.UpdateClassResponse{
-			Msg: "该课程不存在",
-		}, errcode.ErrSCIDNOTEXIST
-	}
 	if !tool.CheckSY(req.Semester, req.GetYear()) {
 		return &pb.UpdateClassResponse{}, errcode.ErrParam
 	}
 
 	oldclassInfo, err := s.clu.SearchClass(ctx, req.GetClassId())
 	if err != nil {
-
 		return &pb.UpdateClassResponse{
 			Msg: "修改失败",
 		}, err
 	}
+
+	newClassInfo := oldclassInfo
+
 	if req.Day != nil {
-		oldclassInfo.Day = req.GetDay()
+		newClassInfo.Day = req.GetDay()
 	}
 	if req.Teacher != nil {
-		oldclassInfo.Teacher = req.GetTeacher()
+		newClassInfo.Teacher = req.GetTeacher()
 	}
 	if req.Where != nil {
-		oldclassInfo.Where = req.GetWhere()
+		newClassInfo.Where = req.GetWhere()
 	}
 	if req.DurClass != nil {
-		oldclassInfo.ClassWhen = req.GetDurClass()
+		newClassInfo.ClassWhen = req.GetDurClass()
 	}
 	if req.Name != nil {
-		oldclassInfo.Classname = req.GetName()
+		newClassInfo.Classname = req.GetName()
 	}
 	if req.Weeks != nil {
-		oldclassInfo.Weeks = req.GetWeeks()
+		newClassInfo.Weeks = req.GetWeeks()
 		weekDur := tool.FormatWeeks(tool.ParseWeeks(req.GetWeeks()))
-		oldclassInfo.WeekDuration = weekDur
+		newClassInfo.WeekDuration = weekDur
 	}
 	if req.Credit != nil {
-		oldclassInfo.Credit = req.GetCredit()
+		newClassInfo.Credit = req.GetCredit()
 	}
 
-	oldclassInfo.UpdateID()
-	newSc := &model2.StudentCourse{
-		StuID:           req.GetStuId(),
-		ClaID:           oldclassInfo.ID,
-		Year:            oldclassInfo.Year,
-		Semester:        oldclassInfo.Semester,
-		IsManuallyAdded: false,
-	}
-	err = s.clu.UpdateClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), oldclassInfo, newSc, req.GetClassId())
+	err = s.clu.UpdateClass(ctx, req.GetStuId(), req.GetYear(), req.GetSemester(), req.GetClassId(), newClassInfo)
 	if err != nil {
-
 		return &pb.UpdateClassResponse{
 			Msg: "修改失败",
 		}, err
@@ -236,7 +210,7 @@ func (s *ClasserService) GetSchoolDay(ctx context.Context, req *pb.GetSchoolDayR
 	}, nil
 }
 
-func HandleClass(info *model2.ClassInfo) *pb.ClassInfo {
+func HandleClass(info *bizmodel.ClassBiz) *pb.ClassInfo {
 	return &pb.ClassInfo{
 		Day:          info.Day,
 		Teacher:      info.Teacher,

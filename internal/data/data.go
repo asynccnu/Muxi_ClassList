@@ -2,8 +2,13 @@ package data
 
 import (
 	"fmt"
+	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
-	"github.com/asynccnu/Muxi_ClassList/internal/model"
+	"github.com/asynccnu/Muxi_ClassList/internal/data/class/cache"
+	cmodel "github.com/asynccnu/Muxi_ClassList/internal/data/class/model"
+	"github.com/asynccnu/Muxi_ClassList/internal/data/class/repo"
+	"github.com/asynccnu/Muxi_ClassList/internal/data/jxb"
+	jmodel "github.com/asynccnu/Muxi_ClassList/internal/data/jxb/model"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis"
 	"github.com/google/wire"
@@ -15,22 +20,14 @@ import (
 	"time"
 )
 
-const (
-	Expiration          = 5 * 24 * time.Hour
-	RecycleExpiration   = 2 * 30 * 24 * time.Hour
-	BlackListExpiration = 1 * time.Minute
-)
-
 // ProviderSet is data providers.
 var ProviderSet = wire.NewSet(
 	NewData,
 	NewDB,
 	NewRedisDB,
-	NewStudentAndCourseDBRepo,
-	NewStudentAndCourseCacheRepo,
-	NewClassInfoDBRepo,
-	NewClassInfoCacheRepo,
-	NewJxbDBRepo,
+	repo.NewClassRepo,
+	cache.NewCache,
+	jxb.NewJxbDBRepo,
 )
 
 // Data .
@@ -49,13 +46,13 @@ func NewData(c *conf.Data, mysqlDB *gorm.DB, logger log.Logger) (*Data, func(), 
 }
 
 // NewDB 连接mysql数据库
-func NewDB(c *conf.Data, logfile *os.File) *gorm.DB {
+func NewDB(c *conf.Data) *gorm.DB {
 	//注意:
 	//这个logfile 最好别在此处声明,最好在main函数中声明,在程序结束时关闭
 	//否则你只能在下面的db.AutoMigrate得到相关日志
 	newlogger := logger2.New(
 		//日志写入文件
-		logger3.New(logfile, "\r\n", logger3.LstdFlags),
+		logger3.New(os.Stdout, "\r\n", logger3.LstdFlags),
 		logger2.Config{
 			SlowThreshold: time.Second,
 			LogLevel:      logger2.Warn,
@@ -66,10 +63,10 @@ func NewDB(c *conf.Data, logfile *os.File) *gorm.DB {
 	if err != nil {
 		panic(fmt.Sprintf("connect mysql failed:%v", err))
 	}
-	if err := db.AutoMigrate(&model.ClassInfo{}, &model.StudentCourse{}, &model.Jxb{}); err != nil {
+	if err := db.AutoMigrate(&cmodel.ClassDO{}, &cmodel.StudentClassRelationDO{}, &jmodel.Jxb{}); err != nil {
 		panic(fmt.Sprintf("mysql auto migrate failed:%v", err))
 	}
-	log.Info("connect mysql successfully")
+	classLog.LogPrinter.Info("connect mysql successfully")
 	return db
 }
 
@@ -86,6 +83,6 @@ func NewRedisDB(c *conf.Data) *redis.Client {
 	if err != nil {
 		panic(fmt.Sprintf("connect redis err:%v", err))
 	}
-	log.Info("connect redis successfully")
+	classLog.LogPrinter.Info("connect redis successfully")
 	return rdb
 }

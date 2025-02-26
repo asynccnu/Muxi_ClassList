@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type ClassBiz struct {
 	ID           string
 	Day          int64   //星期几
@@ -12,4 +14,6 @@ type ClassBiz struct {
 	Weeks        int64   //哪些周
 	Semester     string  //学期
 	Year         string  //学年
+
+	CreatedAt time.Time
 }

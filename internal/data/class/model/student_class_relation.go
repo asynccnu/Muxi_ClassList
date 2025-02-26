@@ -23,9 +23,9 @@ func (sc *StudentClassRelationDO) TableName() string {
 	return StudentClassRelationDOTableName
 }
 
-func NewStudentClassRelationDO(stuID, year, semester string, claID string, isManuallyAdded bool) StudentClassRelationDO {
+func NewStudentClassRelationDO(stuID, year, semester string, claID string, isManuallyAdded bool) *StudentClassRelationDO {
 	createdTime := time.Now()
-	return StudentClassRelationDO{
+	return &StudentClassRelationDO{
 		StuID:           stuID,
 		ClaID:           claID,
 		Year:            year,
@@ -36,8 +36,8 @@ func NewStudentClassRelationDO(stuID, year, semester string, claID string, isMan
 	}
 }
 
-func BatchNewStudentClassRelationsDO(stuID, year, semester string, classes []bizmodel.ClassBiz, isManuallyAdded bool) []StudentClassRelationDO {
-	batch := make([]StudentClassRelationDO, 0, len(classes))
+func BatchNewStudentClassRelationsDO(stuID, year, semester string, classes []*bizmodel.ClassBiz, isManuallyAdded bool) []*StudentClassRelationDO {
+	batch := make([]*StudentClassRelationDO, 0, len(classes))
 	for _, class := range classes {
 		batch = append(batch, NewStudentClassRelationDO(stuID, year, semester, class.ID, isManuallyAdded))
 	}

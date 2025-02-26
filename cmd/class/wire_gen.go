@@ -8,17 +8,18 @@ package main
 
 import (
 	"github.com/asynccnu/Muxi_ClassList/internal/biz"
-	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/client"
 	"github.com/asynccnu/Muxi_ClassList/internal/conf"
 	"github.com/asynccnu/Muxi_ClassList/internal/data"
+	"github.com/asynccnu/Muxi_ClassList/internal/data/class/cache"
+	"github.com/asynccnu/Muxi_ClassList/internal/data/class/repo"
+	"github.com/asynccnu/Muxi_ClassList/internal/data/jxb"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/crawler"
 	"github.com/asynccnu/Muxi_ClassList/internal/registry"
 	"github.com/asynccnu/Muxi_ClassList/internal/server"
 	"github.com/asynccnu/Muxi_ClassList/internal/service"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
-	"os"
 )
 
 import (
@@ -28,35 +29,23 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Registry, schoolDay *conf.SchoolDay, file *os.File, logger log.Logger) (*kratos.App, func(), error) {
-	db := data.NewDB(confData, file)
-	dataData, cleanup, err := data.NewData(confData, db, logger)
-	if err != nil {
-		return nil, nil, err
-	}
-	helper := classLog.NewClogger(logger)
-	classInfoDBRepo := data.NewClassInfoDBRepo(dataData, helper)
+func wireApp(confServer *conf.Server, confData *conf.Data, confRegistry *conf.Registry, schoolDay *conf.SchoolDay, logger log.Logger) (*kratos.App, func(), error) {
 	redisClient := data.NewRedisDB(confData)
-	classInfoCacheRepo := data.NewClassInfoCacheRepo(redisClient, helper)
-	classInfoRepo := biz.NewClassInfoRepo(classInfoDBRepo, classInfoCacheRepo)
-	studentAndCourseDBRepo := data.NewStudentAndCourseDBRepo(dataData, helper)
-	studentAndCourseCacheRepo := data.NewStudentAndCourseCacheRepo(redisClient, helper)
-	studentAndCourseRepo := biz.NewStudentAndCourseRepo(studentAndCourseDBRepo, studentAndCourseCacheRepo)
-	classRepo := biz.NewClassRepo(classInfoRepo, dataData, studentAndCourseRepo, logger)
-	crawlerCrawler := crawler.NewClassCrawler(helper)
-	jxbDBRepo := data.NewJxbDBRepo(dataData, helper)
+	cacheCache := cache.NewCache(redisClient)
+	db := data.NewDB(confData)
+	classRepo := repo.NewClassRepo(cacheCache, cacheCache, db)
+	crawlerCrawler := crawler.NewClassCrawler()
+	jxbDBRepo := jxb.NewJxbDBRepo(db)
 	etcdRegistry := registry.NewRegistrarServer(confRegistry, logger)
 	userServiceClient, err := client.NewClient(etcdRegistry, logger)
 	if err != nil {
-		cleanup()
 		return nil, nil, err
 	}
 	ccnuService := client.NewCCNUService(userServiceClient)
-	classUsercase := biz.NewClassUsercase(classRepo, crawlerCrawler, jxbDBRepo, ccnuService, logger)
-	classerService := service.NewClasserService(classUsercase, schoolDay, logger)
+	classUsecase := biz.NewClassUsecase(classRepo, classRepo, classRepo, classRepo, classRepo, crawlerCrawler, jxbDBRepo, ccnuService)
+	classerService := service.NewClasserService(classUsecase, schoolDay)
 	grpcServer := server.NewGRPCServer(confServer, classerService, logger)
 	app := newApp(logger, grpcServer, etcdRegistry)
 	return app, func() {
-		cleanup()
 	}, nil
 }
