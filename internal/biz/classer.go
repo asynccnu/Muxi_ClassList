@@ -101,17 +101,10 @@ func (cluc *ClassUsecase) GetClasses(ctx context.Context, stuID, year, semester 
 	if SearchFromCCNU { //如果是从CCNU那边查到的，就存储
 		//开个协程来存取
 		go func() {
-			err := cluc.classStore.SaveClass(context.Background(), stuID, year, semester, classes)
-			if err != nil {
-				//TODO:log
-			}
+			_ = cluc.classStore.SaveClass(context.Background(), stuID, year, semester, classes)
 
 			//防止ctx因为return就被取消了，所以就改用background，因为这个存取没有精确的要求，所以可以后台完成，用户不需要感知
-			if err := cluc.jxbRepo.SaveJxb(context.Background(), stuID, jxbIDs); err != nil {
-				//cluc.log.Warnw(classLog.Msg, "SaveJxb err",
-				//	classLog.Param, fmt.Sprintf("%v,%v", stuID, jxbIDs),
-				//	classLog.Reason, err)
-			}
+			_ = cluc.jxbRepo.SaveJxb(context.Background(), stuID, jxbIDs)
 		}()
 	}
 	return classes, nil

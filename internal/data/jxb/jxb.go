@@ -2,6 +2,7 @@ package jxb
 
 import (
 	"context"
+	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/data/jxb/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -33,7 +34,7 @@ func (j *JxbDBRepo) SaveJxb(ctx context.Context, stuID string, jxbID []string) e
 
 	err := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&jxb).Error
 	if err != nil {
-		//TODO:log
+		classLog.LogPrinter.Errorf("Error saving Jxb[%v] in db: %v", jxb, err)
 		return err
 	}
 	return nil

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 	bizmodel "github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"time"
@@ -26,6 +27,11 @@ type ClassDO struct {
 	Weeks        int64   `gorm:"column:weeks;not null" json:"weeks"`                                  //哪些周
 	Semester     string  `gorm:"type:varchar(1);column:semester;not null" json:"semester"`            //学期
 	Year         string  `gorm:"type:varchar(5);column:year;not null" json:"year"`                    //学年
+}
+
+func (ci *ClassDO) String() string {
+	data, _ := json.Marshal(ci)
+	return string(data)
 }
 
 func (ci *ClassDO) UpdateID() {

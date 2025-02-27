@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	bizmodel "github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"time"
 )
@@ -17,6 +18,11 @@ type StudentClassRelationDO struct {
 	IsManuallyAdded bool      `gorm:"column:is_manually_added;default:false" json:"is_manually_added"`                        //是否为手动添加
 	CreatedAt       time.Time `json:"-"`
 	UpdatedAt       time.Time `json:"-"`
+}
+
+func (sc *StudentClassRelationDO) String() string {
+	val, _ := json.Marshal(sc)
+	return string(val)
 }
 
 func (sc *StudentClassRelationDO) TableName() string {
