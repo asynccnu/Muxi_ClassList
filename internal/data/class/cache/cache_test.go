@@ -529,6 +529,32 @@ func TestCache_GetClassIDList(t *testing.T) {
 			},
 		},
 		{
+			name: "key is exist but is logically empty",
+			args: args{
+				stuID:    "123",
+				year:     "2023",
+				semester: "1",
+				classIDs: []string{},
+			},
+			prepare: func(tt *testing.T, miniredis2 *miniredis.Miniredis, args args) {
+				key := cache.generateSCKey(args.stuID, args.year, args.semester)
+				_, err := miniredis2.SAdd(key, RedisNULL)
+				assert.NoError(tt, err)
+
+				exist := miniredis2.Exists(key)
+				assert.True(tt, exist)
+
+				members, err := miniredis2.SMembers(key)
+				assert.NoError(tt, err)
+				assert.Contains(tt, members, RedisNULL)
+				//assert.ElementsMatch(tt, members, args.classIDs)
+			},
+			check: func(tt *testing.T, arg args, res []string, err error) {
+				assert.Nil(tt, res)
+				assert.Nil(tt, err)
+			},
+		},
+		{
 			name: "key is exist but is not empty",
 			args: args{
 				stuID:    "123",
@@ -689,6 +715,29 @@ func TestCache_SetClassIDList(t *testing.T) {
 				assert.NoError(t, err)
 
 				assert.ElementsMatch(t, args2.classids, members)
+				// 验证 TTL 是否正确（允许1秒误差）
+				expectedTTL := 7 * 24 * time.Hour
+				actualTTL := s.TTL(key)
+				assert.True(t, actualTTL <= expectedTTL && actualTTL >= expectedTTL-time.Second,
+					"Expected TTL ~7 days, got %v", actualTTL)
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "length is 0",
+			args: args{
+				stuID:    "123",
+				year:     "2023",
+				semester: "1",
+				classids: nil,
+			},
+			check: func(t *testing.T, s *miniredis.Miniredis, args2 args) {
+				key := cache.generateSCKey(args2.stuID, args2.year, args2.semester)
+
+				members, err := s.SMembers(key)
+				assert.NoError(t, err)
+
+				assert.Contains(t, members, RedisNULL)
 				// 验证 TTL 是否正确（允许1秒误差）
 				expectedTTL := 7 * 24 * time.Hour
 				actualTTL := s.TTL(key)

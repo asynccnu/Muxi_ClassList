@@ -8,8 +8,11 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
 	pb "github.com/asynccnu/be-api/gen/proto/classlist/v1" //此处改成了be-api中的,方便其他服务调用.
+	"github.com/google/wire"
 	"time"
 )
+
+var ProviderSet = wire.NewSet(NewClasserService)
 
 type ClasserService struct {
 	pb.UnimplementedClasserServer
@@ -133,7 +136,7 @@ func (s *ClasserService) UpdateClass(ctx context.Context, req *pb.UpdateClassReq
 		}, err
 	}
 	return &pb.UpdateClassResponse{
-		ClassId: oldclassInfo.ID,
+		ClassId: newClassInfo.ID,
 		Msg:     "成功修改",
 	}, nil
 }

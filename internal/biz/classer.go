@@ -10,34 +10,31 @@ import (
 )
 
 type ClassUsecase struct {
-	classStore           ClassStorage
-	recycleBinManager    ClassRecycleBinManager
-	manualClassManager   ManualClassManager
-	schoolClassExplorer  SchoolClassExplorer
-	associationValidator ClassAssociationValidator
-	crawler              ClassCrawler
-	ccnu                 CCNUServiceProxy
-	jxbRepo              JxbRepo
+	classStore          ClassStorage
+	recycleBinManager   ClassRecycleBinManager
+	manualClassManager  ManualClassManager
+	schoolClassExplorer SchoolClassExplorer
+	crawler             ClassCrawler
+	ccnu                CCNUServiceProxy
+	jxbRepo             JxbRepo
 }
 
 func NewClassUsecase(classStore ClassStorage,
 	recycleBinManager ClassRecycleBinManager,
 	manualClassManager ManualClassManager,
 	schoolClassExplorer SchoolClassExplorer,
-	associationValidator ClassAssociationValidator,
 	crawler ClassCrawler,
 	JxbRepo JxbRepo,
 	Cs CCNUServiceProxy) *ClassUsecase {
 
 	return &ClassUsecase{
-		classStore:           classStore,
-		recycleBinManager:    recycleBinManager,
-		manualClassManager:   manualClassManager,
-		schoolClassExplorer:  schoolClassExplorer,
-		associationValidator: associationValidator,
-		crawler:              crawler,
-		jxbRepo:              JxbRepo,
-		ccnu:                 Cs,
+		classStore:          classStore,
+		recycleBinManager:   recycleBinManager,
+		manualClassManager:  manualClassManager,
+		schoolClassExplorer: schoolClassExplorer,
+		crawler:             crawler,
+		jxbRepo:             JxbRepo,
+		ccnu:                Cs,
 	}
 }
 
@@ -121,10 +118,6 @@ func (cluc *ClassUsecase) GetClasses(ctx context.Context, stuID, year, semester 
 }
 
 func (cluc *ClassUsecase) AddClass(ctx context.Context, stuID, year, semester string, info *model.ClassBiz) error {
-	//检查是否添加的课程是否已经存在
-	if cluc.associationValidator.CheckSCIdsExist(ctx, stuID, year, semester, info.ID) {
-		return errcode.ErrClassIsExist
-	}
 	//添加课程
 	err := cluc.manualClassManager.AddClass(ctx, stuID, year, semester, info)
 	if err != nil {
@@ -133,10 +126,6 @@ func (cluc *ClassUsecase) AddClass(ctx context.Context, stuID, year, semester st
 	return nil
 }
 func (cluc *ClassUsecase) DeleteClass(ctx context.Context, stuID, year, semester, classId string) error {
-	//检查是否添加的课程是否已经存在
-	if !cluc.associationValidator.CheckSCIdsExist(ctx, stuID, year, semester, classId) {
-		return errcode.ErrSCIDNOTEXIST
-	}
 	//删除课程
 	err := cluc.classStore.DeleteClass(ctx, stuID, year, semester, classId)
 	if err != nil {
@@ -164,13 +153,9 @@ func (cluc *ClassUsecase) RecoverClassInfo(ctx context.Context, stuID, year, sem
 	return nil
 }
 func (cluc *ClassUsecase) UpdateClass(ctx context.Context, stuID, year, semester string, oldClassId string, newClassInfo *model.ClassBiz) error {
-	//检查是否添加的课程是否已经存在
-	if cluc.associationValidator.CheckSCIdsExist(ctx, stuID, year, semester, newClassInfo.ID) {
-		return errcode.ErrClassIsExist
-	}
 	err := cluc.classStore.UpdateClass(ctx, stuID, year, semester, oldClassId, newClassInfo)
 	if err != nil {
-		return err
+		return errcode.ErrClassUpdate
 	}
 	return nil
 }

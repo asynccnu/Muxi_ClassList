@@ -38,7 +38,6 @@ func wireApp(*conf.Server, *conf.Data, *conf.Registry, *conf.SchoolDay, log.Logg
 		wire.Bind(new(biz.ClassRecycleBinManager), new(*repo.ClassRepo)),
 		wire.Bind(new(biz.ManualClassManager), new(*repo.ClassRepo)),
 		wire.Bind(new(biz.SchoolClassExplorer), new(*repo.ClassRepo)),
-		wire.Bind(new(biz.ClassAssociationValidator), new(*repo.ClassRepo)),
 		wire.Bind(new(biz.JxbRepo), new(*jxb.JxbDBRepo)),
 		wire.Bind(new(biz.CCNUServiceProxy), new(*client.CCNUService)),
 		wire.Bind(new(repo.ClassCache), new(*cache.Cache)),

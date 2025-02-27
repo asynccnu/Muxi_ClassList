@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const RedisNULL = "RedisNULL"
+
 type Cache struct {
 	cli *redis.Client
 }
@@ -176,6 +178,9 @@ func (c *Cache) GetClassIDList(ctx context.Context, stuID, year, semester string
 	if len(res) == 0 {
 		return nil, nil
 	}
+	if len(res) == 1 && res[0] == RedisNULL {
+		return nil, nil
+	}
 	return res, nil
 }
 
@@ -219,9 +224,6 @@ func (c *Cache) GetClassesByID(ctx context.Context, classids ...string) ([]*mode
 }
 
 func (c *Cache) SetClassIDList(ctx context.Context, stuID, year, semester string, classids ...string) error {
-	if len(classids) == 0 {
-		return nil
-	}
 
 	key := c.generateSCKey(stuID, year, semester)
 
@@ -243,8 +245,13 @@ func (c *Cache) SetClassIDList(ctx context.Context, stuID, year, semester string
 	// 构造参数（确保 expire 是数字）
 	expireSeconds := int((7 * 24 * time.Hour).Seconds())
 	args := []interface{}{expireSeconds}
-	for _, id := range classids {
-		args = append(args, id)
+
+	if len(classids) == 0 {
+		args = append(args, RedisNULL)
+	} else {
+		for _, id := range classids {
+			args = append(args, id)
+		}
 	}
 
 	// 执行脚本

@@ -7,6 +7,7 @@ import (
 	bizmodel "github.com/asynccnu/Muxi_ClassList/internal/biz/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/classLog"
 	"github.com/asynccnu/Muxi_ClassList/internal/data/class/model"
+	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -26,7 +27,7 @@ func NewClassRepo(cache ClassCache, recycleBin RecycleBinCache, db *gorm.DB) *Cl
 	}
 }
 
-func (c *ClassRepo) CheckSCIdsExist(ctx context.Context, stuID, year, semester string, classID string) bool {
+func (c *ClassRepo) checkSCIdsExist(ctx context.Context, stuID, year, semester string, classID string) bool {
 	var cnt int64
 	err := c.db.Table(model.StudentClassRelationDOTableName).Where("stu_id = ? AND year = ? AND semester = ? AND cla_id = ?", stuID, year, semester, classID).
 		Count(&cnt).Error
@@ -56,6 +57,13 @@ func (c *ClassRepo) GetAllSchoolClassInfos(ctx context.Context, year, semester s
 }
 
 func (c *ClassRepo) AddClass(ctx context.Context, stuID, year, semester string, class *bizmodel.ClassBiz) error {
+	classDO := model.NewClass(class)
+	class.ID = classDO.ID
+
+	if c.checkSCIdsExist(ctx, stuID, year, semester, classDO.ID) {
+		return errcode.ErrClassIsExist
+	}
+
 	err := c.cache.DeleteClassIDList(ctx, stuID, year, semester)
 	if err != nil {
 		classLog.LogPrinter.Errorf("failed to delete class_id_list[%v %v %v] in cache: %v", stuID, year, semester, err)
@@ -63,15 +71,15 @@ func (c *ClassRepo) AddClass(ctx context.Context, stuID, year, semester string, 
 	}
 
 	err = c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		err := c.db.Clauses(clause.OnConflict{DoNothing: true}).Create(model.NewClass(class)).Error
+		err := c.db.Clauses(clause.OnConflict{DoNothing: true}).Create(classDO).Error
 		if err != nil {
 			return err
 		}
 		err = c.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.StudentClassRelationDO{
 			StuID:           stuID,
-			ClaID:           class.ID,
-			Year:            year,
+			ClaID:           classDO.ID,
 			Semester:        semester,
+			Year:            year,
 			IsManuallyAdded: true,
 		}).Error
 		if err != nil {
@@ -276,6 +284,13 @@ func (c *ClassRepo) GetSpecificClassInfo(ctx context.Context, classID string) (*
 }
 
 func (c *ClassRepo) UpdateClass(ctx context.Context, stuID, year, semester string, oldClassID string, newClass *bizmodel.ClassBiz) error {
+	classDO := model.NewClass(newClass)
+	newClass.ID = classDO.ID
+
+	if c.checkSCIdsExist(ctx, stuID, year, semester, classDO.ID) {
+		return errcode.ErrClassIsExist
+	}
+
 	//先从缓存中删除对应关系
 	err := c.cache.DeleteClassIDList(ctx, stuID, year, semester)
 	if err != nil {
@@ -288,13 +303,13 @@ func (c *ClassRepo) UpdateClass(ctx context.Context, stuID, year, semester strin
 		if err != nil {
 			return err
 		}
-		err = tx.Clauses(clause.OnConflict{DoNothing: true}).Create(model.NewClass(newClass)).Error
+		err = tx.Clauses(clause.OnConflict{DoNothing: true}).Create(classDO).Error
 		if err != nil {
 			return err
 		}
 		err = tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.StudentClassRelationDO{
 			StuID:           stuID,
-			ClaID:           newClass.ID,
+			ClaID:           classDO.ID,
 			Year:            year,
 			Semester:        semester,
 			IsManuallyAdded: true,
@@ -323,6 +338,11 @@ func (c *ClassRepo) UpdateClass(ctx context.Context, stuID, year, semester strin
 }
 
 func (c *ClassRepo) DeleteClass(ctx context.Context, stuID, year, semester string, classID string) error {
+
+	if c.checkSCIdsExist(ctx, stuID, year, semester, classID) {
+		return errcode.ErrClassIsExist
+	}
+
 	//先从缓存中删除对应关系
 	err := c.cache.DeleteClassIDList(ctx, stuID, year, semester)
 	if err != nil {
@@ -388,6 +408,7 @@ func (c *ClassRepo) getClassesFromDB(ctx context.Context, stuID, year, semester 
 	var classes []*model.ClassDO
 
 	err := c.db.WithContext(ctx).Table(model.ClassDOTableName).
+		Select("*").
 		Joins(fmt.Sprintf("LEFT JOIN %s ON %s.id = %s.cla_id", model.StudentClassRelationDOTableName, model.ClassDOTableName, model.StudentClassRelationDOTableName)).
 		Where(fmt.Sprintf("%s.stu_id = ? AND %s.year = ? AND %s.semester = ?", model.StudentClassRelationDOTableName, model.StudentClassRelationDOTableName, model.StudentClassRelationDOTableName),
 			stuID, year, semester).
@@ -413,6 +434,10 @@ func (c *ClassRepo) getClassesFromDBByIDs(ctx context.Context, classIDs ...strin
 }
 
 func batchNewBizClasses(classes []*model.ClassDO) []*bizmodel.ClassBiz {
+	if len(classes) == 0 {
+		return nil
+	}
+
 	bizClasses := make([]*bizmodel.ClassBiz, 0, len(classes))
 	for _, class := range classes {
 		if class == nil {

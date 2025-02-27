@@ -66,8 +66,8 @@ type SchoolClassExplorer interface {
 	GetAllSchoolClassInfos(ctx context.Context, year, semester string, cursor time.Time) []*model.ClassBiz
 }
 
-// 关联校验（辅助能力）
-type ClassAssociationValidator interface {
-	//判断课程和学生ID是否有联系
-	CheckSCIdsExist(ctx context.Context, stuID, year, semester string, classID string) bool
-}
+//// 关联校验（辅助能力）
+//type ClassAssociationValidator interface {
+//	//判断课程和学生ID是否有联系
+//	checkSCIdsExist(ctx context.Context, stuID, year, semester string, classID string) bool
+//}
