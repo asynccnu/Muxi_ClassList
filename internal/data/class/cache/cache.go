@@ -220,22 +220,29 @@ func (c *Cache) GetClassesByID(ctx context.Context, classids ...string) ([]*mode
 
 func (c *Cache) SetClassIDList(ctx context.Context, stuID, year, semester string, classids ...string) error {
 	if len(classids) == 0 {
-		return nil // 无数据直接返回
+		return nil
 	}
 
 	key := c.generateSCKey(stuID, year, semester)
 
-	// Lua 脚本（支持批量添加 + 原子化设置过期时间）
+	// 修复后的 Lua 脚本
 	const luaScript = `
-        redis.call('SADD', KEYS[1], unpack(ARGV, 2))
-        redis.call('EXPIRE', KEYS[1], ARGV[1])
+        -- 将过期时间转换为数字
+        local expire = tonumber(ARGV[1])
+        
+        -- 批量添加元素（需要遍历 ARGV）
+        for i = 2, #ARGV do
+            redis.call('SADD', KEYS[1], ARGV[i])
+        end
+        
+        -- 设置过期时间
+        redis.call('EXPIRE', KEYS[1], expire)
         return 1
     `
 
-	// 构造参数：过期时间（秒） + 所有 classid
+	// 构造参数（确保 expire 是数字）
 	expireSeconds := int((7 * 24 * time.Hour).Seconds())
-	args := make([]interface{}, 0, len(classids)+1)
-	args = append(args, expireSeconds)
+	args := []interface{}{expireSeconds}
 	for _, id := range classids {
 		args = append(args, id)
 	}
@@ -305,15 +312,6 @@ func (c *Cache) DeleteClassIDList(ctx context.Context, stuID, year, semester str
 	// 使用 DEL 命令删除整个集合
 	if err := c.cli.Del(key).Err(); err != nil {
 		return fmt.Errorf("delete %s cache classid_list failed : %w", stuID, err)
-	}
-	return nil
-}
-
-func (c *Cache) DeleteClass(ctx context.Context, classID string) error {
-	key := c.generateClassKey(classID)
-
-	if err := c.cli.Del(key).Err(); err != nil {
-		return fmt.Errorf("delete %s cache class failed: %w", classID, err)
 	}
 	return nil
 }

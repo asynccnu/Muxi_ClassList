@@ -21,8 +21,6 @@ type ClassCache interface {
 	AddClass(ctx context.Context, classes ...*model.ClassDO) error
 	//删除缓存的对应关系
 	DeleteClassIDList(ctx context.Context, stuID, year, semester string) error
-	//删除课程
-	DeleteClass(ctx context.Context, classID string) error
 }
 
 type RecycleBinCache interface {
