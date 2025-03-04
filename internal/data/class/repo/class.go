@@ -339,8 +339,8 @@ func (c *ClassRepo) UpdateClass(ctx context.Context, stuID, year, semester strin
 
 func (c *ClassRepo) DeleteClass(ctx context.Context, stuID, year, semester string, classID string) error {
 
-	if c.checkSCIdsExist(ctx, stuID, year, semester, classID) {
-		return errcode.ErrClassIsExist
+	if !c.checkSCIdsExist(ctx, stuID, year, semester, classID) {
+		return errcode.ErrSCIDNOTEXIST
 	}
 
 	//先从缓存中删除对应关系
