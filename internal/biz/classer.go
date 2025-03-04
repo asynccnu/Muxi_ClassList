@@ -52,6 +52,9 @@ func (cluc *ClassUsecase) GetClasses(ctx context.Context, stuID, year, semester 
 		if len(classesFromLocal) > 0 {
 			classes = classesFromLocal
 		}
+		if err != nil {
+			classLog.LogPrinter.Errorf("get class[%v %v %v] from DB failed: %v", stuID, year, semester, err)
+		}
 
 		// 如果数据库中没有
 		// 或者时间是每周周一，就(有些特殊时间比如2,9月月末和3,10月月初，默认会优先爬取)默认有0.3的概率去爬取，这样是为了防止课表更新了，但一直会从数据库中获取，导致，课表无法更新
@@ -59,6 +62,10 @@ func (cluc *ClassUsecase) GetClasses(ctx context.Context, stuID, year, semester 
 			SearchFromCCNU = true
 
 			crawClasses, jxbids, err := cluc.getCourseFromCrawler(ctx, stuID, year, semester)
+
+			if err != nil {
+				classLog.LogPrinter.Errorf("get class[%v %v %v] from CCNU failed: %v", stuID, year, semester, err)
+			}
 
 			if err == nil {
 				classes = crawClasses
@@ -74,10 +81,17 @@ func (cluc *ClassUsecase) GetClasses(ctx context.Context, stuID, year, semester 
 
 			//从数据库中获取手动添加的课程
 			addedClassesFromLocal, err1 := cluc.manualClassManager.GetAddedClasses(ctx, stuID, year, semester)
+			if err1 != nil {
+				classLog.LogPrinter.Errorf("get added class[%v %v %v] from DB failed: %v", stuID, year, semester, err1)
+			}
+
 			if err1 == nil && len(addedClassesFromLocal) > 0 {
 				classes = append(classes, addedClassesFromLocal...)
 			}
 		} else {
+
+			classLog.LogPrinter.Errorf("get class[%v %v %v] from CCNU failed: %v", stuID, year, semester, err)
+
 			//如果爬取失败
 			SearchFromCCNU = false
 
@@ -88,7 +102,7 @@ func (cluc *ClassUsecase) GetClasses(ctx context.Context, stuID, year, semester 
 				classes = classesFromLocal
 			}
 			if err != nil {
-				//cluc.log.Errorf("get class[%v %v %v] from DB failed: %v", stuID, year, semester, err)
+				classLog.LogPrinter.Errorf("get class[%v %v %v] from DB failed: %v", stuID, year, semester, err)
 			}
 		}
 	}
@@ -114,6 +128,7 @@ func (cluc *ClassUsecase) AddClass(ctx context.Context, stuID, year, semester st
 	//添加课程
 	err := cluc.manualClassManager.AddClass(ctx, stuID, year, semester, info)
 	if err != nil {
+		classLog.LogPrinter.Errorf("Add class[%v %v %v] failed: %v", stuID, year, semester, err)
 		return errcode.ErrClassAdd
 	}
 	return nil
@@ -122,6 +137,7 @@ func (cluc *ClassUsecase) DeleteClass(ctx context.Context, stuID, year, semester
 	//删除课程
 	err := cluc.classStore.DeleteClass(ctx, stuID, year, semester, classId)
 	if err != nil {
+		classLog.LogPrinter.Errorf("Delete class[%v %v %v] failed: %v", stuID, year, semester, err)
 		return errcode.ErrClassDelete
 	}
 	return nil
@@ -129,6 +145,7 @@ func (cluc *ClassUsecase) DeleteClass(ctx context.Context, stuID, year, semester
 func (cluc *ClassUsecase) GetRecycledClassInfos(ctx context.Context, stuID, year, semester string) ([]*model.ClassBiz, error) {
 	classes, err := cluc.recycleBinManager.GetRecycledClasses(ctx, stuID, year, semester)
 	if err != nil {
+		classLog.LogPrinter.Errorf("Get recycled class[%v %v %v] failed: %v", stuID, year, semester, err)
 		return nil, errcode.ErrGetRecycledClasses
 	}
 	return classes, nil
@@ -141,6 +158,7 @@ func (cluc *ClassUsecase) RecoverClassInfo(ctx context.Context, stuID, year, sem
 	}
 	err := cluc.recycleBinManager.RecoverClassFromRecycledBin(ctx, stuID, year, semester, classId)
 	if err != nil {
+		classLog.LogPrinter.Errorf("Recover class[%v %v %v] failed: %v", stuID, year, semester, err)
 		return errcode.ErrRecover
 	}
 	return nil
@@ -148,6 +166,7 @@ func (cluc *ClassUsecase) RecoverClassInfo(ctx context.Context, stuID, year, sem
 func (cluc *ClassUsecase) UpdateClass(ctx context.Context, stuID, year, semester string, oldClassId string, newClassInfo *model.ClassBiz) error {
 	err := cluc.classStore.UpdateClass(ctx, stuID, year, semester, oldClassId, newClassInfo)
 	if err != nil {
+		classLog.LogPrinter.Errorf("Update class[%v %v %v] failed: %v", stuID, year, semester, err)
 		return errcode.ErrClassUpdate
 	}
 	return nil
