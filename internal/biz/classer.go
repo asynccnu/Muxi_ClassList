@@ -262,11 +262,15 @@ func (cluc *ClassUsercase) getCourseFromCrawler(ctx context.Context, stuID strin
 	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second) // 10秒超时,防止影响
 	defer cancel()                                                 // 确保在函数返回前取消上下文，防止资源泄漏
 
+	getCookieStart := time.Now()
+
 	cookie, err := cluc.ccnu.GetCookie(timeoutCtx, stuID)
 	if err != nil {
 		cluc.log.Errorf("Error getting cookie(stu_id:%v) from other service", stuID)
 		return nil, nil, err
 	}
+
+	cluc.log.Infof("GetCookie(stu_id:%v) from other service cost %v", stuID, time.Since(getCookieStart))
 
 	var stu Student
 	if tool.CheckIsUndergraduate(stuID) { //针对是否是本科生，进行分类

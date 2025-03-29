@@ -8,6 +8,8 @@ import (
 	"github.com/asynccnu/Muxi_ClassList/internal/errcode"
 	model2 "github.com/asynccnu/Muxi_ClassList/internal/model"
 	"github.com/asynccnu/Muxi_ClassList/internal/pkg/tool"
+	"github.com/valyala/fastjson"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -22,12 +24,25 @@ var mp = map[string]string{
 }
 
 type Crawler struct {
-	log classLog.Clogger
+	log    classLog.Clogger
+	client *http.Client
 }
 
 func NewClassCrawler(logger classLog.Clogger) *Crawler {
+	client := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        100,              // 最大空闲连接
+			IdleConnTimeout:     90 * time.Second, // 空闲连接超时
+			TLSHandshakeTimeout: 10 * time.Second, // TLS握手超时
+		},
+		Timeout: 30 * time.Second, // 总请求超时
+	}
+	client.Transport = &http.Transport{
+		MaxIdleConnsPerHost: 20, // 每个主机最大空闲连接
+	}
 	return &Crawler{
-		log: logger,
+		log:    logger,
+		client: client,
 	}
 }
 
@@ -99,19 +114,18 @@ func (c *Crawler) GetClassInfoForGraduateStudent(ctx context.Context, r model2.G
 // GetClassInfosForUndergraduate  获取本科生课程信息
 func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model2.GetClassInfosForUndergraduateReq) (*model2.GetClassInfosForUndergraduateResp, error) {
 	var (
-		reply  CrawReply1
-		Xnm    = r.Year
-		Xqm    = r.Semester
-		yn     = tool.CheckSY(Xqm, Xnm)
-		client = &http.Client{}
+		reply CrawReply1
+		Xnm   = r.Year
+		Xqm   = r.Semester
+		yn    = tool.CheckSY(Xqm, Xnm)
 	)
+
+	sendReqStart := time.Now()
 
 	if !yn {
 		return nil, errcode.ErrParam
 	}
-	tmp1 := GetXNM(Xnm)
-	tmp2 := GetXQM(Xqm)
-	formdata := fmt.Sprintf("xnm=%s&xqm=%s&kzlx=ck&xsdm=", tmp1, tmp2)
+	formdata := fmt.Sprintf("xnm=%s&xqm=%s&kzlx=ck&xsdm=", GetXNM(Xnm), GetXQM(Xqm))
 	var data = strings.NewReader(formdata)
 	req, err := http.NewRequest("POST", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXsgrkb.html?gnmkdm=N2151", data)
 	if err != nil {
@@ -120,36 +134,34 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model2.Ge
 			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
-	req.Header.Set("Cookie", r.Cookie) //设置cookie
-	req.Header.Set("Accept", "*/*")
-	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
-	req.Header.Set("Connection", "keep-alive")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
-	req.Header.Set("Origin", "https://xk.ccnu.edu.cn")
-	req.Header.Set("Referer", "https://xk.ccnu.edu.cn/jwglxt/kbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151&layout=default")
-	req.Header.Set("Sec-Fetch-Dest", "empty")
-	req.Header.Set("Sec-Fetch-Mode", "cors")
-	req.Header.Set("Sec-Fetch-Site", "same-origin")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0")
-	req.Header.Set("X-Requested-With", "XMLHttpRequest")
-	req.Header.Set("sec-ch-ua", `"Microsoft Edge";v="123", "Not:A-Brand";v="8", "Chromium";v="123"`)
-	req.Header.Set("sec-ch-ua-mobile", "?0")
-	req.Header.Set("sec-ch-ua-platform", `"Windows"`)
-	resp, err := client.Do(req)
+	req.Header = http.Header{
+		"Cookie":       []string{r.Cookie},
+		"Content-Type": []string{"application/x-www-form-urlencoded;charset=UTF-8"},
+		"User-Agent":   []string{"Mozilla/5.0"}, // 精简UA
+	}
+	resp, err := c.client.Do(req)
 	if err != nil {
 		c.log.Errorw(classLog.Msg, "http request send err",
 			classLog.Reason, err)
 		return nil, errcode.ErrCrawler
 	}
 	defer resp.Body.Close()
-	//fmt.Println(resp)
-	err = json.NewDecoder(resp.Body).Decode(&reply)
+
+	c.log.Infof("发请求耗时%v", time.Since(sendReqStart))
+
+	//err = json.NewDecoder(resp.Body).Decode(&reply)
+	//if err != nil {
+	//	c.log.Errorw(classLog.Msg, "json decode err",
+	//		classLog.Reason, err)
+	//	return nil, errcode.ErrCrawler
+	//}
+	// 读取 Body 到字节数组
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		c.log.Errorw(classLog.Msg, "json decode err",
-			classLog.Reason, err)
-		return nil, errcode.ErrCrawler
+		c.log.Errorf("failed to read response body: %v", err)
+		return nil, err
 	}
-	infos, Scs, err := ToClassInfo1(reply, Xnm, Xqm)
+	infos, Scs, err := extractUndergraduateData(bodyBytes, r.StuID, Xnm, Xqm)
 	if err != nil {
 		c.log.Errorw(classLog.Msg, "func:ToClassInfo2",
 			classLog.Param, fmt.Sprintf("%v,%v,%v", reply, Xnm, Xqm),
@@ -162,35 +174,38 @@ func (c *Crawler) GetClassInfosForUndergraduate(ctx context.Context, r model2.Ge
 	}, nil
 }
 
-// ToClassInfo1 处理本科生
-func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model2.ClassInfo, []*model2.StudentCourse, error) {
-	var infos = make([]*model2.ClassInfo, 0)
-	var Scs = make([]*model2.StudentCourse, 0)
-	for _, v := range reply.KbList {
-		//这个字段为1代表这个课程是已经选上的
-		//所以防止把没选上的课程给包含进来
-		if v.Sxbj != "1" {
+func extractUndergraduateData(rawJson []byte, stuID, xnm, xqm string) ([]*model2.ClassInfo, []*model2.StudentCourse, error) {
+	var p fastjson.Parser
+	v, err := p.ParseBytes(rawJson)
+	if err != nil {
+		return nil, nil, err
+	}
+	kbList := v.Get("kbList")
+	if kbList == nil || kbList.Type() != fastjson.TypeArray {
+		return nil, nil, fmt.Errorf("kbList not found or not an array")
+	}
+	length := len(kbList.GetArray())
+	var infos = make([]*model2.ClassInfo, 0, length)
+	var Scs = make([]*model2.StudentCourse, 0, length)
+	for _, kb := range kbList.GetArray() {
+		if string(kb.GetStringBytes("sxbj")) != "1" {
 			continue
 		}
-
 		//课程信息
 		var info = &model2.ClassInfo{}
-		//var Sc = &biz.StudentCourse{}
-		//info.ClassId = v.Kch //课程编号
-		//info.StuID = reply.Xsxx.Xh                    //学号
-		info.Day, _ = strconv.ParseInt(v.Xqj, 10, 64) //星期几
-		info.Teacher = v.Xm                           //教师姓名
-		info.Where = v.Cdmc                           //上课地点
-		info.ClassWhen = v.Jcs                        //上课是第几节
-		info.WeekDuration = v.Zcd                     //上课的周数
-		info.Classname = v.Kcmc                       //课程名称
-		info.Credit, _ = strconv.ParseFloat(v.Xf, 64) //学分
-		info.Semester = xqm                           //学期
-		info.Year = xnm                               //学年
+		info.Day, _ = strconv.ParseInt(string(kb.GetStringBytes("xqj")), 10, 64) //星期几
+		info.Teacher = string(kb.GetStringBytes("xm"))
+		info.Where = string(kb.GetStringBytes("cdmc"))                           //上课地点
+		info.ClassWhen = string(kb.GetStringBytes("jcs"))                        //上课是第几节
+		info.WeekDuration = string(kb.GetStringBytes("zcd"))                     //上课的周数
+		info.Classname = string(kb.GetStringBytes("kcmc"))                       //课程名称
+		info.Credit, _ = strconv.ParseFloat(string(kb.GetStringBytes("xf")), 64) //学分
+		info.Semester = xqm                                                      //学期
+		info.Year = xnm                                                          //学年
 		//添加周数
-		info.Weeks, _ = strconv.ParseInt(v.Oldzc, 10, 64)
-		info.JxbId = v.JxbID //教学班ID
-		info.UpdateID()      //课程ID
+		info.Weeks, _ = strconv.ParseInt(string(kb.GetStringBytes("oldzc")), 10, 64)
+		info.JxbId = string(kb.GetStringBytes("jxb_id")) //教学班ID
+		info.UpdateID()                                  //课程ID
 
 		//为防止其时间过于紧凑
 		//选择在这里直接给时间赋值
@@ -199,7 +214,7 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model2.ClassInfo, []*mo
 		//-----------------------------------------------------
 		//学生与课程的映射关系
 		Sc := &model2.StudentCourse{
-			StuID:           reply.Xsxx.Xh,
+			StuID:           stuID,
 			ClaID:           info.ID,
 			Year:            xnm,
 			Semester:        xqm,
@@ -210,6 +225,55 @@ func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model2.ClassInfo, []*mo
 	}
 	return infos, Scs, nil
 }
+
+//// ToClassInfo1 处理本科生
+//func ToClassInfo1(reply CrawReply1, xnm, xqm string) ([]*model2.ClassInfo, []*model2.StudentCourse, error) {
+//	var infos = make([]*model2.ClassInfo, 0)
+//	var Scs = make([]*model2.StudentCourse, 0)
+//	for _, v := range reply.KbList {
+//		//这个字段为1代表这个课程是已经选上的
+//		//所以防止把没选上的课程给包含进来
+//		if v.Sxbj != "1" {
+//			continue
+//		}
+//
+//		//课程信息
+//		var info = &model2.ClassInfo{}
+//		//var Sc = &biz.StudentCourse{}
+//		//info.ClassId = v.Kch //课程编号
+//		//info.StuID = reply.Xsxx.Xh                    //学号
+//		info.Day, _ = strconv.ParseInt(v.Xqj, 10, 64) //星期几
+//		info.Teacher = v.Xm                           //教师姓名
+//		info.Where = v.Cdmc                           //上课地点
+//		info.ClassWhen = v.Jcs                        //上课是第几节
+//		info.WeekDuration = v.Zcd                     //上课的周数
+//		info.Classname = v.Kcmc                       //课程名称
+//		info.Credit, _ = strconv.ParseFloat(v.Xf, 64) //学分
+//		info.Semester = xqm                           //学期
+//		info.Year = xnm                               //学年
+//		//添加周数
+//		info.Weeks, _ = strconv.ParseInt(v.Oldzc, 10, 64)
+//		info.JxbId = v.JxbID //教学班ID
+//		info.UpdateID()      //课程ID
+//
+//		//为防止其时间过于紧凑
+//		//选择在这里直接给时间赋值
+//		info.CreatedAt, info.UpdatedAt = time.Now(), time.Now()
+//
+//		//-----------------------------------------------------
+//		//学生与课程的映射关系
+//		Sc := &model2.StudentCourse{
+//			StuID:           reply.Xsxx.Xh,
+//			ClaID:           info.ID,
+//			Year:            xnm,
+//			Semester:        xqm,
+//			IsManuallyAdded: false,
+//		}
+//		infos = append(infos, info) //添加课程
+//		Scs = append(Scs, Sc)       //添加"学生与课程的映射关系"
+//	}
+//	return infos, Scs, nil
+//}
 
 // ToClassInfo2 处理研究生
 func ToClassInfo2(reply CrawReply2, xnm, xqm string) ([]*model2.ClassInfo, []*model2.StudentCourse, error) {
