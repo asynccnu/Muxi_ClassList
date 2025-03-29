@@ -131,46 +131,47 @@ func RandomBool(p float64) bool {
 	randomValue := rand.Intn(n) // 生成 [0.0, 1.0) 之间的随机数
 	return randomValue < int(p*(float64(n)))
 }
-func IsNeedCraw() bool {
-	currentTime := time.Now()
-	//考虑每个学期的情况，9月和2月的月末以及10月和3月的月初，课表容易变化
-	if currentTime.Month() == time.September || currentTime.Month() == time.February {
-		if currentTime.Weekday() == time.Monday && isLastOrFirstWeek(currentTime, false) {
-			return true
-		}
-	}
-	if currentTime.Month() == time.October || currentTime.Month() == time.March {
-		if currentTime.Weekday() == time.Monday && isLastOrFirstWeek(currentTime, true) {
-			return true
-		}
-	}
-	//其他时间默认有0.3的概率
-	return RandomBool(0.3)
-}
-func isLastOrFirstWeek(t time.Time, first bool) bool {
-	// 检查当前日期是否是周一
-	if t.Weekday() != time.Monday {
-		return false
-	}
 
-	// 获取当前月的信息
-	currentMonth := t.Month()
-
-	var week time.Time
-	if !first {
-		// 下一个周：在当前日期基础上加7天
-		week = t.AddDate(0, 0, 7)
-	} else {
-		// 上一周：在当前日期基础上减7天
-		week = t.AddDate(0, 0, -7)
-	}
-
-	// 获取下一个周或者上一周的月信息
-	WeekMonth := week.Month()
-
-	// 如果下一个或者上一周的月份和当前月份不同，那么今天是当前月的最后一个周或者第一周
-	return currentMonth != WeekMonth
-}
+//func IsNeedCraw() bool {
+//	currentTime := time.Now()
+//	//考虑每个学期的情况，9月和2月的月末以及10月和3月的月初，课表容易变化
+//	if currentTime.Month() == time.September || currentTime.Month() == time.February {
+//		if currentTime.Weekday() == time.Monday && isLastOrFirstWeek(currentTime, false) {
+//			return true
+//		}
+//	}
+//	if currentTime.Month() == time.October || currentTime.Month() == time.March {
+//		if currentTime.Weekday() == time.Monday && isLastOrFirstWeek(currentTime, true) {
+//			return true
+//		}
+//	}
+//	//其他时间默认有0.3的概率
+//	return RandomBool(0.3)
+//}
+//func isLastOrFirstWeek(t time.Time, first bool) bool {
+//	// 检查当前日期是否是周一
+//	if t.Weekday() != time.Monday {
+//		return false
+//	}
+//
+//	// 获取当前月的信息
+//	currentMonth := t.Month()
+//
+//	var week time.Time
+//	if !first {
+//		// 下一个周：在当前日期基础上加7天
+//		week = t.AddDate(0, 0, 7)
+//	} else {
+//		// 上一周：在当前日期基础上减7天
+//		week = t.AddDate(0, 0, -7)
+//	}
+//
+//	// 获取下一个周或者上一周的月信息
+//	WeekMonth := week.Month()
+//
+//	// 如果下一个或者上一周的月份和当前月份不同，那么今天是当前月的最后一个周或者第一周
+//	return currentMonth != WeekMonth
+//}
 
 // IsExist 判断文件或者目录是否存在
 func IsExist(path string) bool {

@@ -50,8 +50,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 		}
 
 		// 如果数据库中没有
-		// 或者时间是每周周一，就(有些特殊时间比如2,9月月末和3,10月月初，默认会优先爬取)默认有0.3的概率去爬取，这样是为了防止课表更新了，但一直会从数据库中获取，导致，课表无法更新
-		if err != nil || tool.IsNeedCraw() {
+		if err != nil {
 			SearchFromCCNU = true
 
 			crawClassInfos, crawScs, err := cluc.getCourseFromCrawler(ctx, stuID, year, semester)
