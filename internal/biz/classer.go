@@ -66,6 +66,7 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 			classInfos = crawClassInfos
 			scs = crawScs
 
+			//还要算上手动添加的课程
 			//从数据库中获取手动添加的课程
 			resp2, err1 := cluc.classRepo.GetAddedClasses(ctx, model.GetAddedClassesReq{
 				StudID:   stuID,
@@ -100,12 +101,11 @@ func (cluc *ClassUsercase) GetClasses(ctx context.Context, stuID, year, semester
 		return nil, errcode.ErrClassNotFound
 	}
 
-	wc := model.WrapClassInfo(classInfos)
-
 	//封装class,并获取jxbID
-	classes, jxbIDs := wc.ConvertToClass()
+	classes, jxbIDs := convertToClass(classInfos)
 
-	if SearchFromCCNU { //如果是从CCNU那边查到的，就存储
+	//如果是从CCNU那边查到的，就存储
+	if SearchFromCCNU {
 		//开个协程来存取
 		go func() {
 			cluc.classRepo.SaveClass(context.Background(), stuID, year, semester, classInfos, scs)
@@ -284,4 +284,84 @@ func (cluc *ClassUsercase) getCourseFromCrawler(ctx context.Context, stuID strin
 		return nil, nil, err
 	}
 	return classinfos, scs, nil
+}
+
+func convertToClass(infos []*model.ClassInfo) ([]*model.Class, []string) {
+	if len(infos) == 0 {
+		return nil, nil
+	}
+	Jxbmp := make(map[string]struct{})
+	classes := make([]*model.Class, 0, len(infos))
+	for _, classInfo := range infos {
+		//thisWeek := classInfo.SearchWeek(week)
+		class := &model.Class{
+			Info: classInfo,
+			//ThisWeek: thisWeek && tool.CheckIfThisYear(classInfo.Year, classInfo.Semester),
+		}
+		if classInfo.JxbId != "" {
+			Jxbmp[classInfo.JxbId] = struct{}{}
+		}
+		classes = append(classes, class)
+	}
+	jxbIDs := make([]string, 0, len(Jxbmp))
+	for k := range Jxbmp {
+		jxbIDs = append(jxbIDs, k)
+	}
+	return classes, jxbIDs
+}
+
+// Student 学生接口
+type Student interface {
+	GetClass(ctx context.Context, stuID, year, semester, cookie string, craw ClassCrawler) ([]*model.ClassInfo, []*model.StudentCourse, error)
+}
+type Undergraduate struct{}
+
+func (u *Undergraduate) GetClass(ctx context.Context, stuID, year, semester, cookie string, craw ClassCrawler) ([]*model.ClassInfo, []*model.StudentCourse, error) {
+	var (
+		classInfos = make([]*model.ClassInfo, 0)
+		scs        = make([]*model.StudentCourse, 0)
+	)
+	resp, err := craw.GetClassInfosForUndergraduate(ctx, model.GetClassInfosForUndergraduateReq{
+		StuID:    stuID,
+		Year:     year,
+		Semester: semester,
+		Cookie:   cookie,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if resp != nil {
+		if resp.ClassInfos != nil {
+			classInfos = resp.ClassInfos
+		}
+		if resp.StudentCourses != nil {
+			scs = resp.StudentCourses
+		}
+	}
+	return classInfos, scs, nil
+}
+
+type GraduateStudent struct{}
+
+func (g *GraduateStudent) GetClass(ctx context.Context, stuID, year, semester, cookie string, craw ClassCrawler) ([]*model.ClassInfo, []*model.StudentCourse, error) {
+	var (
+		classInfos = make([]*model.ClassInfo, 0)
+		scs        = make([]*model.StudentCourse, 0)
+	)
+	resp2, err := craw.GetClassInfoForGraduateStudent(ctx, model.GetClassInfoForGraduateStudentReq{
+		StuID:    stuID,
+		Year:     year,
+		Semester: semester,
+		Cookie:   cookie,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if resp2.ClassInfos != nil {
+		classInfos = resp2.ClassInfos
+	}
+	if resp2.StudentCourses != nil {
+		scs = resp2.StudentCourses
+	}
+	return classInfos, scs, nil
 }
