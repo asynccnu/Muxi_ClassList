@@ -30,13 +30,10 @@ func (s StudentAndCourseDBRepo) SaveManyStudentAndCourseToDB(ctx context.Context
 
 	db := s.data.DB(ctx).Table(model.StudentCourseTableName).WithContext(ctx)
 
-	// 处理 StudentCourse
-	for _, sc := range scs {
-		if err := db.Debug().Clauses(clause.OnConflict{DoNothing: true}).Create(sc).Error; err != nil {
-			s.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:create StudentAndCourses(%v)", sc),
-				classLog.Reason, err)
-			return errcode.ErrCourseSave
-		}
+	if err := db.Debug().Clauses(clause.OnConflict{DoNothing: true}).Create(scs).Error; err != nil {
+		s.log.Errorw(classLog.Msg, fmt.Sprintf("Mysql:create StudentAndCourses(%v)", scs),
+			classLog.Reason, err)
+		return errcode.ErrCourseSave
 	}
 	return nil
 }
