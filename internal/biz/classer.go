@@ -270,7 +270,7 @@ func (cluc *ClassUsercase) getCourseFromCrawler(ctx context.Context, stuID strin
 		return nil, nil, err
 	}
 
-	cluc.log.Infof("GetCookie(stu_id:%v) from other service cost %v", stuID, time.Since(getCookieStart))
+	cluc.log.Infof("获取cookie (stu_id:%v) 从其他服务中,花费了 %v", stuID, time.Since(getCookieStart))
 
 	var stu Student
 	if tool.CheckIsUndergraduate(stuID) { //针对是否是本科生，进行分类
